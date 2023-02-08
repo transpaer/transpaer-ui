@@ -1,0 +1,24 @@
+name: consumers
+
+packages:
+  - "consumers_api"
+  - "consumers_backend"
+  - "consumers_frontend"
+
+scripts:
+  compile_api:
+    run: cd consumers_api && dart run build_runner build --delete-conflicting-outputs
+  
+  compile_backend:
+    run: cd consumers_backend && dart compile exe bin/consumers_backend.dart -o consumers_backend
+  
+  compile_frontend:
+    run: cd consumers_frontend && flutter build linux
+  
+  compile:
+    run: melos run compile_api && melos run compile_backend && melos run compile_frontend
+    description: Compile all libs and apps
+
+  test:
+    run: melos exec --ignore "*_frontend" -- dart test
+    description: Run unit tests
