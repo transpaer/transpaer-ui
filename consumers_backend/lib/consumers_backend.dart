@@ -5,6 +5,31 @@ import 'package:shelf/shelf.dart' as shelf;
 
 import 'package:consumers_api/consumers_api.dart' as api;
 
+class SearchHandler extends Function {
+  arango.ArangoDBClient client;
+
+  SearchHandler(this.client);
+
+  Future<shelf.Response> call(shelf.Request req) async {
+    final request =
+        api.TextSearchRequest.fromJson(req.requestedUri.queryParameters);
+    final dbProducts = await client
+        .newQuery()
+        .addLine('FOR p IN product_names')
+        .addLineIfThen(true,
+            'SEARCH ANALYZER(p.name IN TOKENS(@query, "text_en"), "text_en")')
+        .addLine('RETURN p')
+        .addBindVarIfThen(true, 'query', request.query)
+        .runAndReturnFutureList();
+    final apiProducts = dbProducts
+        .map((p) => api.Product(
+            productId: p['id'], name: p['name'], manufacturerId: ''))
+        .toList();
+    final response = api.TextSearchResponse(products: apiProducts);
+    return shelf.Response.ok(jsonEncode(response));
+  }
+}
+
 class ProductHandler extends Function {
   arango.ArangoDBClient client;
 
@@ -21,9 +46,9 @@ class ProductHandler extends Function {
     if (products.length == 1) {
       final dbProduct = products[0];
       final apiProduct = api.Product(
-          product_id: dbProduct['id'],
+          productId: dbProduct['id'],
           name: dbProduct['name'],
-          manufacturer_id: 'B');
+          manufacturerId: '');
       return shelf.Response.ok(jsonEncode(apiProduct));
     } else {
       return shelf.Response.internalServerError();
@@ -58,7 +83,7 @@ class ManufacturersHandler extends Function {
     if (manufacturers.length == 1) {
       final dbManufacturer = manufacturers[0];
       final apiManufacturer = api.Manufacturer(
-          manufacturer_id: dbManufacturer['id'], name: dbManufacturer['name']);
+          manufacturerId: dbManufacturer['id'], name: dbManufacturer['name']);
       return shelf.Response.ok(jsonEncode(apiManufacturer));
     } else {
       return shelf.Response.internalServerError();

@@ -20,6 +20,7 @@ void main(List<String> args) async {
       pass: '');
 
   final router = shelf_router.Router()
+    ..get('/search', consumers_backend.SearchHandler(client))
     ..get('/products/<id>', consumers_backend.ProductHandler(client))
     ..get('/products/<id>/alternatives',
         consumers_backend.AlternativesHandler(client))
