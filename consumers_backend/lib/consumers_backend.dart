@@ -5,6 +5,8 @@ import 'package:shelf/shelf.dart' as shelf;
 
 import 'package:consumers_api/consumers_api.dart' as api;
 
+import 'db_data.dart' as db;
+
 class SearchHandler extends Function {
   arango.ArangoDBClient client;
 
@@ -21,10 +23,8 @@ class SearchHandler extends Function {
         .addLine('RETURN p')
         .addBindVarIfThen(true, 'query', request.query)
         .runAndReturnFutureList();
-    final apiProducts = dbProducts
-        .map((p) => api.Product(
-            productId: p['id'], name: p['name'], manufacturerId: ''))
-        .toList();
+    final apiProducts =
+        dbProducts.map((p) => db.Product.fromJson(p).toApi()).toList();
     final response = api.TextSearchResponse(products: apiProducts);
     return shelf.Response.ok(jsonEncode(response));
   }
@@ -44,11 +44,7 @@ class ProductHandler extends Function {
         .addBindVarIfThen(true, 'id', id)
         .runAndReturnFutureList();
     if (products.length == 1) {
-      final dbProduct = products[0];
-      final apiProduct = api.Product(
-          productId: dbProduct['id'],
-          name: dbProduct['name'],
-          manufacturerId: '');
+      final apiProduct = db.Product.fromJson(products[0]).toApi();
       return shelf.Response.ok(jsonEncode(apiProduct));
     } else {
       return shelf.Response.internalServerError();

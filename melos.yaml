@@ -6,9 +6,16 @@ packages:
   - "consumers_frontend"
 
 scripts:
-  compile_api:
+  generate_api:
     run: cd consumers_api && dart run build_runner build --delete-conflicting-outputs
   
+  generate_backend:
+    run: cd consumers_backend && dart run build_runner build --delete-conflicting-outputs
+  
+  generate:
+    run: melos run generate_api && melos run generate_backend
+    description: Auto-generate JSON parsing code
+
   compile_backend:
     run: cd consumers_backend && dart compile exe bin/consumers_backend.dart -o consumers_backend
   
@@ -19,6 +26,12 @@ scripts:
     run: melos run compile_api && melos run compile_backend && melos run compile_frontend
     description: Compile all libs and apps
 
+  run_backend:
+    run: cd consumers_backend && dart run
+  
+  run_frontend:
+    run: cd consumers_frontend && flutter run
+  
   test:
     run: melos exec --ignore "*_frontend" -- dart test
     description: Run unit tests

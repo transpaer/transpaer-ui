@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import 'package:consumers_api/consumers_api.dart' as api;
 
+const double defaultPadding = 10.0;
+
 Future<api.Product> fetchProduct(String id) async {
   final uri = Uri(
       scheme: 'http', host: 'localhost', port: 8080, path: '/products/' + id);
@@ -44,6 +46,81 @@ class Space extends StatelessWidget {
     return const SizedBox(
       width: 10,
       height: 10,
+    );
+  }
+}
+
+class Title extends StatelessWidget {
+  final String text;
+
+  const Title({
+    super.key,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final style =
+        Theme.of(context).textTheme.headlineMedium?.apply(color: Colors.black);
+    return Padding(
+      padding: const EdgeInsets.all(defaultPadding),
+      child: Text(text, style: style),
+    );
+  }
+}
+
+class Section extends StatelessWidget {
+  final String text;
+
+  const Section({
+    super.key,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.headlineSmall;
+    return Padding(
+      padding: const EdgeInsets.all(defaultPadding),
+      child: Text(text, style: style),
+    );
+  }
+}
+
+class Description extends StatelessWidget {
+  final String text;
+  final String source;
+
+  const Description({
+    super.key,
+    required this.text,
+    required this.source,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textStyle = Theme.of(context).textTheme.bodyLarge?.apply(
+          color: Colors.black,
+        );
+    final sourceStyle = Theme.of(context).textTheme.bodyMedium?.apply(
+          color: Colors.grey,
+        );
+
+    return Container(
+      decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.all(Radius.circular(defaultPadding))),
+      child: Padding(
+        padding: const EdgeInsets.all(defaultPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(text, style: textStyle),
+            const Space(),
+            Text("Source: " + source, style: sourceStyle),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -115,16 +192,50 @@ class HomeView extends StatelessWidget {
   }
 }
 
-class ProductView extends StatefulWidget {
-  final String productId;
+class ProductView extends StatelessWidget {
+  final api.Product product;
 
-  const ProductView({super.key, required this.productId});
+  const ProductView({
+    super.key,
+    required this.product,
+  });
 
   @override
-  State<ProductView> createState() => _ProductViewState();
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(defaultPadding),
+      child: Column(
+        children: [
+          Title(text: product.name),
+          const Space(),
+          Expanded(
+            child: ListView(
+              children: [
+                Section(text: 'Descriptions:'),
+                Description(
+                  text: product.description,
+                  source: "wikidata",
+                ),
+                Section(text: 'Producers:'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _ProductViewState extends State<ProductView>
+class ProductPage extends StatefulWidget {
+  final String productId;
+
+  const ProductPage({super.key, required this.productId});
+
+  @override
+  State<ProductPage> createState() => _ProductPageState();
+}
+
+class _ProductPageState extends State<ProductPage>
     with AutomaticKeepAliveClientMixin {
   late Future<api.Product> _futureProduct;
 
@@ -135,8 +246,8 @@ class _ProductViewState extends State<ProductView>
   }
 
   @override
-  void didUpdateWidget(ProductView view) {
-    super.didUpdateWidget(view);
+  void didUpdateWidget(ProductPage page) {
+    super.didUpdateWidget(page);
     _futureProduct = fetchProduct(widget.productId);
   }
 
@@ -150,7 +261,7 @@ class _ProductViewState extends State<ProductView>
         future: _futureProduct,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            return Text('${snapshot.data!.productId} ${snapshot.data!.name}');
+            return ProductView(product: snapshot.data!);
           } else if (snapshot.hasError) {
             return Text('Error while fetching data:: ${snapshot.error}');
           } else {
@@ -184,7 +295,7 @@ class _TextSearchPageState extends State<TextSearchPage>
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(10.0),
+      padding: const EdgeInsets.all(100.0),
       child: Column(
         children: [
           Row(
@@ -213,7 +324,7 @@ class _TextSearchPageState extends State<TextSearchPage>
               ? const CircularProgressIndicator()
               : Flexible(
                   child: ListView.builder(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(defaultPadding),
                     itemCount: _entries.length,
                     itemBuilder: (BuildContext context, int index) {
                       return ProductInfoWidget(
@@ -268,13 +379,24 @@ class _ConsumersFrontendState extends State<ConsumersFrontend>
     return MaterialApp(
       title: 'Consumers',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        cardColor: Colors.white,
+        scaffoldBackgroundColor: Colors.grey[200],
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.green[800],
+          foregroundColor: Colors.white,
+        ),
+        colorScheme: ColorScheme.fromSwatch().copyWith(
+          primary: Colors.green[800],
+          onPrimary: Colors.white,
+        ),
       ),
       home: Scaffold(
         appBar: AppBar(
           title: const Text('Consumers'),
           bottom: TabBar(
             controller: _tabController,
+            indicatorColor: Colors.lightGreen[100],
+            indicatorWeight: 7,
             tabs: const <Widget>[
               Tab(
                 icon: Icon(Icons.info_outlined),
@@ -301,7 +423,7 @@ class _ConsumersFrontendState extends State<ConsumersFrontend>
               child: Text('Info'),
             ),
             if (_productId != null) ...[
-              ProductView(productId: _productId!)
+              ProductPage(productId: _productId!)
             ] else ...[
               HomeView(
                 onTextSearch: () => _tabController.animateTo(_textSearchTab),

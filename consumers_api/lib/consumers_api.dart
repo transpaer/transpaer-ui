@@ -10,13 +10,17 @@ class Product {
   @JsonKey(name: 'name')
   final String name;
 
-  @JsonKey(name: 'manufacturer_id')
-  final String manufacturerId;
+  @JsonKey(name: 'description')
+  final String description;
+
+  @JsonKey(name: 'manufacturer_ids')
+  final List<String>? manufacturerIds;
 
   Product(
       {required this.productId,
       required this.name,
-      required this.manufacturerId});
+      required this.description,
+      required this.manufacturerIds});
 
   factory Product.fromJson(Map<String, dynamic> json) =>
       _$ProductFromJson(json);
