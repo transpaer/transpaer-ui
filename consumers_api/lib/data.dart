@@ -1,12 +1,10 @@
 import 'package:json_annotation/json_annotation.dart';
 
-import 'package:consumers_api/consumers_api.dart' as api;
-
-part 'db_data.g.dart';
+part 'data.g.dart';
 
 @JsonSerializable()
 class Product {
-  @JsonKey(name: 'id')
+  @JsonKey(name: 'product_id')
   final String productId;
 
   @JsonKey(name: 'name')
@@ -24,15 +22,6 @@ class Product {
       required this.description,
       required this.manufacturerIds});
 
-  api.Product toApi() {
-    return api.Product(
-      productId: productId,
-      name: name,
-      description: description,
-      manufacturerIds: manufacturerIds,
-    );
-  }
-
   factory Product.fromJson(Map<String, dynamic> json) =>
       _$ProductFromJson(json);
   Map<String, dynamic> toJson() => _$ProductToJson(this);
@@ -40,7 +29,7 @@ class Product {
 
 @JsonSerializable()
 class Manufacturer {
-  @JsonKey(name: 'id')
+  @JsonKey(name: 'manufacturer_id')
   final String manufacturerId;
 
   @JsonKey(name: 'name')
@@ -53,14 +42,6 @@ class Manufacturer {
       {required this.manufacturerId,
       required this.name,
       required this.description});
-
-  api.Manufacturer toApi() {
-    return api.Manufacturer(
-      manufacturerId: manufacturerId,
-      name: name,
-      description: description,
-    );
-  }
 
   factory Manufacturer.fromJson(Map<String, dynamic> json) =>
       _$ManufacturerFromJson(json);

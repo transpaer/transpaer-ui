@@ -23,7 +23,7 @@ scripts:
     run: cd consumers_frontend && flutter build linux
   
   compile:
-    run: melos run compile_api && melos run compile_backend && melos run compile_frontend
+    run: melos run compile_backend && melos run compile_frontend
     description: Compile all libs and apps
 
   run_backend:
@@ -35,3 +35,7 @@ scripts:
   test:
     run: melos exec --ignore "*_frontend" -- dart test
     description: Run unit tests
+
+  format:
+    run: melos exec -- dart format . --fix
+    descritption: Reformat the code

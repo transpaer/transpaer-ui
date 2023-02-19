@@ -1,38 +1,10 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+
 import 'package:flutter/material.dart';
 
 import 'package:consumers_api/consumers_api.dart' as api;
 
 const double defaultPadding = 10.0;
-
-Future<api.Product> fetchProduct(String id) async {
-  final uri = Uri(
-      scheme: 'http', host: 'localhost', port: 8080, path: '/products/' + id);
-  final response = await http.get(uri);
-
-  if (response.statusCode == 200) {
-    return api.Product.fromJson(jsonDecode(response.body));
-  } else {
-    throw Exception('Failed to load product: ${response.statusCode}');
-  }
-}
-
-Future<api.TextSearchResponse> searchProducts(String query) async {
-  final uri = Uri(
-      scheme: 'http',
-      host: 'localhost',
-      port: 8080,
-      path: '/search',
-      queryParameters: {'query': query, 'limit': '10'});
-  final response = await http.get(uri);
-
-  if (response.statusCode == 200) {
-    return api.TextSearchResponse.fromJson(jsonDecode(response.body));
-  } else {
-    throw Exception('Failed to load products: ${response.statusCode}');
-  }
-}
 
 void main() {
   runApp(const ConsumersFrontend());
@@ -242,13 +214,13 @@ class _ProductPageState extends State<ProductPage>
   @override
   void initState() {
     super.initState();
-    _futureProduct = fetchProduct(widget.productId);
+    _futureProduct = api.fetchProduct(widget.productId);
   }
 
   @override
   void didUpdateWidget(ProductPage page) {
     super.didUpdateWidget(page);
-    _futureProduct = fetchProduct(widget.productId);
+    _futureProduct = api.fetchProduct(widget.productId);
   }
 
   @override
@@ -295,7 +267,7 @@ class _TextSearchPageState extends State<TextSearchPage>
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(100.0),
+      padding: const EdgeInsets.all(defaultPadding),
       child: Column(
         children: [
           Row(
@@ -343,7 +315,7 @@ class _TextSearchPageState extends State<TextSearchPage>
       _searching = true;
       _entries = [];
     });
-    final result = await searchProducts(text);
+    final result = await api.searchProducts(text);
     setState(() {
       _searching = false;
       _entries = result.products;
