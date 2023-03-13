@@ -20,7 +20,7 @@ scripts:
     run: cd consumers_backend && dart compile exe bin/consumers_backend.dart -o consumers_backend
   
   compile_frontend:
-    run: cd consumers_frontend && flutter build linux
+    run: cd consumers_frontend && flutter build web
   
   compile:
     run: melos run compile_backend && melos run compile_frontend

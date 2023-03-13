@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - '*'
+
+jobs:
+
+  ci:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Configuration
+        run: dart pub global activate melos
+
+      - name: Format
+        run: melos run format_check
+      
+      - name: Generate
+        run: melos run generate          
+
+      - name: Build
+        run: melos run compile          
+
+      - name: Test
+        run: melos run test          
