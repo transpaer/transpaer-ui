@@ -10,7 +10,7 @@ class DbClient {
         scheme: 'http',
         host: 'localhost',
         port: 8529,
-        db: '_system',
+        db: 'consumers',
         user: '',
         pass: '');
   }
@@ -18,11 +18,10 @@ class DbClient {
   Future<List<db.Product>> searchProducts(String tokens) async {
     final dbProducts = await _client
         .newQuery()
-        .addLine('FOR p IN product_names')
-        .addLineIfThen(true,
-            'SEARCH ANALYZER(p.name IN TOKENS(@tokens, "text_en"), "text_en")')
-        .addLine('RETURN p')
-        .addBindVarIfThen(true, 'tokens', tokens)
+        .addLine('FOR p IN products_name_view')
+        .addLine('  SEARCH p.name IN TOKENS(@tokens, "text_en")')
+        .addLine('  RETURN p')
+        .addBindVar('tokens', tokens)
         .runAndReturnFutureList();
 
     return dbProducts.map((p) => db.Product.fromJson(p)).toList();
@@ -32,9 +31,9 @@ class DbClient {
     final products = await _client
         .newQuery()
         .addLine('FOR p IN products')
-        .addLineIfThen(true, 'FILTER p.id == @id')
-        .addLine('RETURN p')
-        .addBindVarIfThen(true, 'id', id)
+        .addLine('  FILTER p.id == @id')
+        .addLine('  RETURN p')
+        .addBindVar('id', id)
         .runAndReturnFutureList();
 
     if (products.length == 1) {
@@ -48,9 +47,9 @@ class DbClient {
     final manufacturers = await _client
         .newQuery()
         .addLine('FOR m IN manufacturers')
-        .addLineIfThen(true, 'FILTER m.id == @id')
-        .addLine('RETURN m')
-        .addBindVarIfThen(true, 'id', id)
+        .addLine('  FILTER m.id == @id')
+        .addLine('  RETURN m')
+        .addBindVar('id', id)
         .runAndReturnFutureList();
 
     if (manufacturers.length == 1) {
@@ -58,5 +57,23 @@ class DbClient {
     } else {
       return null;
     }
+  }
+
+  Future<List<db.Product>> findAlternatives(String id) async {
+    final List<dynamic> dbProducts = await _client
+        .newQuery()
+        .addLine('FOR p IN products')
+        .addLine('  FILTER p.category == "smartphone" AND p.id != @id')
+        .addLine('  LET score')
+        .addLine('    = (@id IN p.follows)')
+        .addLine('    + 0.99 * p.certifications.bcorp')
+        .addLine('  LET randomized_score = score + 0.01 * RAND()')
+        .addLine('  SORT randomized_score DESC')
+        .addLine('  LIMIT 5')
+        .addLine('  RETURN p')
+        .addBindVar('id', id)
+        .runAndReturnFutureList();
+
+    return dbProducts.map((p) => db.Product.fromJson(p)).toList();
   }
 }

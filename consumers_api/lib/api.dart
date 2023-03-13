@@ -21,7 +21,7 @@ class TextSearchRequest {
 
 @JsonSerializable()
 class TextSearchResponse {
-  final List<Product> products;
+  final List<ProductFull> products;
 
   TextSearchResponse({required this.products});
 

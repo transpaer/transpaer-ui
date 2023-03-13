@@ -1,4 +1,5 @@
 import 'dart:io' as io;
+import 'dart:convert' as convert;
 
 import 'package:shelf/shelf.dart' as shelf;
 import 'package:shelf/shelf_io.dart' as shelf_io;
@@ -12,12 +13,13 @@ void main(List<String> args) async {
   final ip = io.InternetAddress.anyIPv4;
 
   final client = DbClient();
+  final encoder = convert.JsonEncoder.withIndent('  ');
 
   final router = shelf_router.Router()
-    ..get('/search', SearchHandler(client))
-    ..get('/products/<id>', ProductHandler(client))
-    ..get('/products/<id>/alternatives', AlternativesHandler(client))
-    ..get('/manufacturers/<id>', ManufacturersHandler(client));
+    ..get('/search', SearchHandler(client, encoder))
+    ..get('/products/<id>', ProductHandler(client, encoder))
+    ..get('/products/<id>/alternatives', AlternativesHandler(client, encoder))
+    ..get('/manufacturers/<id>', ManufacturersHandler(client, encoder));
 
   final handler =
       shelf.Pipeline().addMiddleware(shelf.logRequests()).addHandler(router);

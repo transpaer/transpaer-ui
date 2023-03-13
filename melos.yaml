@@ -36,6 +36,10 @@ scripts:
     run: melos exec --ignore "*_frontend" -- dart test
     description: Run unit tests
 
-  format:
+  format_check:
+    run: melos exec -- dart format .
+    descritption: Check code formating
+  
+  format_fix:
     run: melos exec -- dart format . --fix
     descritption: Reformat the code

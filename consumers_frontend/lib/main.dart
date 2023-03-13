@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:consumers_api/consumers_api.dart' as api;
 
 const double defaultPadding = 10.0;
+const double tileWidth = 180;
+const double tileHeight = 240;
 
 void main() {
   runApp(const ConsumersFrontend());
@@ -32,8 +34,10 @@ class Title extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style =
-        Theme.of(context).textTheme.headlineMedium?.apply(color: Colors.black);
+    final style = Theme.of(context)
+        .textTheme
+        .headlineMedium
+        ?.copyWith(color: Colors.black);
     return Padding(
       padding: const EdgeInsets.all(defaultPadding),
       child: Text(text, style: style),
@@ -71,10 +75,10 @@ class Description extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textStyle = Theme.of(context).textTheme.bodyLarge?.apply(
+    final textStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
           color: Colors.black,
         );
-    final sourceStyle = Theme.of(context).textTheme.bodyMedium?.apply(
+    final sourceStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
           color: Colors.grey,
         );
 
@@ -98,7 +102,7 @@ class Description extends StatelessWidget {
 }
 
 class ProductInfoWidget extends StatelessWidget {
-  final api.Product product;
+  final api.ProductFull product;
   final Function(String) onSelected;
 
   const ProductInfoWidget({required this.product, required this.onSelected});
@@ -111,6 +115,81 @@ class ProductInfoWidget extends StatelessWidget {
         onTap: () => onSelected(product.productId),
         title: Text(product.name),
       ),
+    );
+  }
+}
+
+class ProductTileWidget extends StatelessWidget {
+  final api.ProductShort product;
+  final Function(String) onSelected;
+
+  const ProductTileWidget({required this.product, required this.onSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    final titleStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+        );
+    final textStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
+          color: Colors.black,
+        );
+
+    return Padding(
+      padding: const EdgeInsets.all(defaultPadding),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () {
+            onSelected(product.productId);
+          },
+          child: Container(
+            width: tileWidth,
+            decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius:
+                    BorderRadius.all(Radius.circular(defaultPadding))),
+            child: Padding(
+              padding: const EdgeInsets.all(defaultPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(product.name, style: titleStyle),
+                  const Space(),
+                  Text(product.description, style: textStyle),
+                  const Space(),
+                  BadgesView(badges: product.badges),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class BadgesView extends StatelessWidget {
+  static const double badgeSize = 32;
+
+  final List<String>? badges;
+
+  const BadgesView({required this.badges});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (badges != null) ...[
+          for (final badge in badges!)
+            Image(
+              image: AssetImage('images/${badge}.png'),
+              height: badgeSize,
+              width: badgeSize,
+            ),
+        ],
+      ],
     );
   }
 }
@@ -164,12 +243,65 @@ class HomeView extends StatelessWidget {
   }
 }
 
+class ManufacturerView extends StatelessWidget {
+  final api.Manufacturer manufacturer;
+  final String source;
+
+  const ManufacturerView({
+    super.key,
+    required this.manufacturer,
+    required this.source,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final titleStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+        );
+    final textStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
+          color: Colors.black,
+        );
+    final sourceStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Colors.grey,
+        );
+
+    return Container(
+      decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.all(Radius.circular(defaultPadding))),
+      child: Padding(
+        padding: const EdgeInsets.all(defaultPadding),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(manufacturer.name, style: titleStyle),
+                  const Space(),
+                  Text(manufacturer.description, style: textStyle),
+                  const Space(),
+                  Text("Source: " + source, style: sourceStyle),
+                ],
+              ),
+            ),
+            BadgesView(badges: manufacturer.badges),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class ProductView extends StatelessWidget {
-  final api.Product product;
+  final api.ProductFull product;
+  final Function(String) onReload;
 
   const ProductView({
     super.key,
     required this.product,
+    required this.onReload,
   });
 
   @override
@@ -189,6 +321,29 @@ class ProductView extends StatelessWidget {
                   source: "wikidata",
                 ),
                 Section(text: 'Producers:'),
+                if (product.manufacturers != null) ...[
+                  for (final manufacturer in product.manufacturers!)
+                    ManufacturerView(
+                      manufacturer: manufacturer,
+                      source: "wikidata",
+                    )
+                ],
+                Section(text: 'Alternatives'),
+                SizedBox(
+                  height: tileHeight,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: [
+                      if (product.manufacturers != null) ...[
+                        for (final alternative in product.alternatives!)
+                          ProductTileWidget(
+                            product: alternative,
+                            onSelected: onReload,
+                          ),
+                      ],
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -200,8 +355,10 @@ class ProductView extends StatelessWidget {
 
 class ProductPage extends StatefulWidget {
   final String productId;
+  final Function(String) onReload;
 
-  const ProductPage({super.key, required this.productId});
+  const ProductPage(
+      {super.key, required this.productId, required this.onReload});
 
   @override
   State<ProductPage> createState() => _ProductPageState();
@@ -209,7 +366,7 @@ class ProductPage extends StatefulWidget {
 
 class _ProductPageState extends State<ProductPage>
     with AutomaticKeepAliveClientMixin {
-  late Future<api.Product> _futureProduct;
+  late Future<api.ProductFull> _futureProduct;
 
   @override
   void initState() {
@@ -229,11 +386,14 @@ class _ProductPageState extends State<ProductPage>
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: FutureBuilder<api.Product>(
+      child: FutureBuilder<api.ProductFull>(
         future: _futureProduct,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            return ProductView(product: snapshot.data!);
+            return ProductView(
+              product: snapshot.data!,
+              onReload: widget.onReload,
+            );
           } else if (snapshot.hasError) {
             return Text('Error while fetching data:: ${snapshot.error}');
           } else {
@@ -259,7 +419,7 @@ class _TextSearchPageState extends State<TextSearchPage>
   final _searchFieldController = TextEditingController();
 
   bool _searching = false;
-  List<api.Product> _entries = [];
+  List<api.ProductFull> _entries = [];
 
   @override
   bool get wantKeepAlive => true;
@@ -395,7 +555,14 @@ class _ConsumersFrontendState extends State<ConsumersFrontend>
               child: Text('Info'),
             ),
             if (_productId != null) ...[
-              ProductPage(productId: _productId!)
+              ProductPage(
+                productId: _productId!,
+                onReload: (productId) {
+                  setState(() {
+                    _productId = productId;
+                  });
+                },
+              )
             ] else ...[
               HomeView(
                 onTextSearch: () => _tabController.animateTo(_textSearchTab),

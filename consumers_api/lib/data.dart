@@ -2,8 +2,36 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'data.g.dart';
 
+const String BADGE_BCORP = "bcorp";
+
 @JsonSerializable()
-class Product {
+class ProductShort {
+  @JsonKey(name: 'product_id')
+  final String productId;
+
+  @JsonKey(name: 'name')
+  final String name;
+
+  @JsonKey(name: 'description')
+  final String description;
+
+  @JsonKey(name: 'badges')
+  final List<String> badges;
+
+  ProductShort({
+    required this.productId,
+    required this.name,
+    required this.description,
+    required this.badges,
+  });
+
+  factory ProductShort.fromJson(Map<String, dynamic> json) =>
+      _$ProductShortFromJson(json);
+  Map<String, dynamic> toJson() => _$ProductShortToJson(this);
+}
+
+@JsonSerializable()
+class ProductFull {
   @JsonKey(name: 'product_id')
   final String productId;
 
@@ -16,15 +44,24 @@ class Product {
   @JsonKey(name: 'manufacturer_ids')
   final List<String>? manufacturerIds;
 
-  Product(
-      {required this.productId,
-      required this.name,
-      required this.description,
-      required this.manufacturerIds});
+  @JsonKey(name: 'manufacturers')
+  final List<Manufacturer>? manufacturers;
 
-  factory Product.fromJson(Map<String, dynamic> json) =>
-      _$ProductFromJson(json);
-  Map<String, dynamic> toJson() => _$ProductToJson(this);
+  @JsonKey(name: 'alternatives')
+  final List<ProductShort>? alternatives;
+
+  ProductFull({
+    required this.productId,
+    required this.name,
+    required this.description,
+    required this.manufacturerIds,
+    this.manufacturers,
+    this.alternatives,
+  });
+
+  factory ProductFull.fromJson(Map<String, dynamic> json) =>
+      _$ProductFullFromJson(json);
+  Map<String, dynamic> toJson() => _$ProductFullToJson(this);
 }
 
 @JsonSerializable()
@@ -38,10 +75,15 @@ class Manufacturer {
   @JsonKey(name: 'description')
   final String description;
 
-  Manufacturer(
-      {required this.manufacturerId,
-      required this.name,
-      required this.description});
+  @JsonKey(name: 'badges')
+  final List<String> badges;
+
+  Manufacturer({
+    required this.manufacturerId,
+    required this.name,
+    required this.description,
+    required this.badges,
+  });
 
   factory Manufacturer.fromJson(Map<String, dynamic> json) =>
       _$ManufacturerFromJson(json);

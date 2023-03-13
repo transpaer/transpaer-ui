@@ -5,13 +5,13 @@ import 'package:http/http.dart' as http;
 import 'data.dart';
 import 'api.dart';
 
-Future<Product> fetchProduct(String id) async {
+Future<ProductFull> fetchProduct(String id) async {
   final uri = Uri(
       scheme: 'http', host: 'localhost', port: 8080, path: '/products/' + id);
   final response = await http.get(uri);
 
   if (response.statusCode == 200) {
-    return Product.fromJson(jsonDecode(response.body));
+    return ProductFull.fromJson(jsonDecode(response.body));
   } else {
     throw Exception('Failed to load product: ${response.statusCode}');
   }
