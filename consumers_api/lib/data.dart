@@ -2,7 +2,66 @@ import 'package:json_annotation/json_annotation.dart';
 
 part 'data.g.dart';
 
-const String BADGE_BCORP = "bcorp";
+enum BadgeName {
+  @JsonValue('bcorp')
+  bcorp,
+
+  @JsonValue('tco')
+  tco,
+}
+
+extension BadgeNameExtension on BadgeName {
+  String get name {
+    return ["bcorp", "tco"][index];
+  }
+
+  InfoTopic toInfoTopic() {
+    switch (this) {
+      case BadgeName.bcorp:
+        return InfoTopic.bcorp;
+      case BadgeName.tco:
+        return InfoTopic.tco;
+    }
+  }
+}
+
+enum InfoTopic {
+  @JsonValue('info--main')
+  main,
+
+  @JsonValue('cert--bcorp')
+  bcorp,
+
+  @JsonValue('cert--tco')
+  tco,
+}
+
+extension InfoTopicExtension on InfoTopic {
+  String get name {
+    return ["info--main", "badge--bcorp", "badge--tco"][index];
+  }
+}
+
+@JsonSerializable()
+class Info {
+  @JsonKey(name: 'title')
+  final String title;
+
+  @JsonKey(name: 'description')
+  final String description;
+
+  @JsonKey(name: 'usage')
+  final String? usage;
+
+  Info({
+    required this.title,
+    required this.description,
+    required this.usage,
+  });
+
+  factory Info.fromJson(Map<String, dynamic> json) => _$InfoFromJson(json);
+  Map<String, dynamic> toJson() => _$InfoToJson(this);
+}
 
 @JsonSerializable()
 class ProductShort {
@@ -16,7 +75,7 @@ class ProductShort {
   final String description;
 
   @JsonKey(name: 'badges')
-  final List<String> badges;
+  final List<BadgeName> badges;
 
   ProductShort({
     required this.productId,
@@ -76,7 +135,7 @@ class Manufacturer {
   final String description;
 
   @JsonKey(name: 'badges')
-  final List<String> badges;
+  final List<BadgeName> badges;
 
   Manufacturer({
     required this.manufacturerId,

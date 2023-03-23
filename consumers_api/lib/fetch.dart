@@ -5,6 +5,22 @@ import 'package:http/http.dart' as http;
 import 'data.dart';
 import 'api.dart';
 
+Future<Info> fetchInfo(InfoTopic topic) async {
+  final uri = Uri(
+    scheme: 'http',
+    host: 'localhost',
+    port: 8080,
+    path: '/info/' + topic.name,
+  );
+  final response = await http.get(uri);
+
+  if (response.statusCode == 200) {
+    return Info.fromJson(jsonDecode(response.body));
+  } else {
+    throw Exception('Failed to load info: ${response.statusCode}');
+  }
+}
+
 Future<ProductFull> fetchProduct(String id) async {
   final uri = Uri(
       scheme: 'http', host: 'localhost', port: 8080, path: '/products/' + id);

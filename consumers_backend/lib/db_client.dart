@@ -27,6 +27,22 @@ class DbClient {
     return dbProducts.map((p) => db.Product.fromJson(p)).toList();
   }
 
+  Future<db.Info?> getInfo(String id) async {
+    final infos = await _client
+        .newQuery()
+        .addLine('FOR i IN info')
+        .addLine('  FILTER i.id == @id')
+        .addLine('  RETURN i')
+        .addBindVar('id', id)
+        .runAndReturnFutureList();
+
+    if (infos.length == 1) {
+      return db.Info.fromJson(infos[0]);
+    } else {
+      return null;
+    }
+  }
+
   Future<db.Product?> getProduct(String id) async {
     final products = await _client
         .newQuery()
@@ -67,6 +83,7 @@ class DbClient {
         .addLine('  LET score')
         .addLine('    = (@id IN p.follows)')
         .addLine('    + 0.99 * p.certifications.bcorp')
+        .addLine('    + 0.30 * p.certifications.tco')
         .addLine('  LET randomized_score = score + 0.01 * RAND()')
         .addLine('  SORT randomized_score DESC')
         .addLine('  LIMIT 5')

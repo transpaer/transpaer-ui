@@ -65,12 +65,12 @@ class Section extends StatelessWidget {
 
 class Description extends StatelessWidget {
   final String text;
-  final String source;
+  final String? source;
 
   const Description({
     super.key,
     required this.text,
-    required this.source,
+    this.source,
   });
 
   @override
@@ -92,11 +92,162 @@ class Description extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(text, style: textStyle),
-            const Space(),
-            Text("Source: " + source, style: sourceStyle),
+            if (source != null) ...[
+              const Space(),
+              Text("Source: " + source!, style: sourceStyle),
+            ]
           ],
         ),
       ),
+    );
+  }
+}
+
+extension InfoTopicGuiExtension on api.InfoTopic {
+  String get icon {
+    return ["main", "bcorp", "tco"][index];
+  }
+}
+
+class InfoWidget extends StatelessWidget {
+  final api.Info info;
+
+  const InfoWidget({
+    super.key,
+    required this.info,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(defaultPadding),
+      child: Column(
+        children: [
+          Title(text: info.title),
+          const Space(),
+          Expanded(
+            child: ListView(
+              children: [
+                Section(text: 'Description:'),
+                Description(text: info.description),
+                if (info.usage != null) ...[
+                  Section(text: 'Usage:'),
+                  Description(text: info.usage!),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class InfoView extends StatefulWidget {
+  final api.InfoTopic infoTopic;
+
+  const InfoView({super.key, required this.infoTopic});
+
+  @override
+  State<InfoView> createState() => _InfoViewState();
+}
+
+class _InfoViewState extends State<InfoView>
+    with AutomaticKeepAliveClientMixin {
+  late Future<api.Info> _futureInfo;
+
+  @override
+  void initState() {
+    super.initState();
+    _futureInfo = api.fetchInfo(widget.infoTopic);
+  }
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: FutureBuilder<api.Info>(
+        future: _futureInfo,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return InfoWidget(
+              info: snapshot.data!,
+            );
+          } else if (snapshot.hasError) {
+            return Text('Error while fetching data:: ${snapshot.error}');
+          } else {
+            return const CircularProgressIndicator();
+          }
+        },
+      ),
+    );
+  }
+}
+
+class InfoPage extends StatefulWidget {
+  final api.InfoTopic infoTopic;
+
+  const InfoPage({super.key, required this.infoTopic});
+
+  @override
+  State<InfoPage> createState() => _InfoPageState();
+}
+
+class _InfoPageState extends State<InfoPage>
+    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
+  static const double tabIconSize = 32;
+
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController =
+        TabController(length: api.InfoTopic.values.length, vsync: this);
+    _tabController.animateTo(api.InfoTopic.main.index);
+  }
+
+  @override
+  void didUpdateWidget(InfoPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _tabController.animateTo(widget.infoTopic.index);
+  }
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        TabBar(
+          controller: _tabController,
+          labelColor: Colors.green[800],
+          indicatorColor: Colors.green[800],
+          indicatorWeight: 7,
+          tabs: <Widget>[
+            for (final value in api.InfoTopic.values)
+              Tab(
+                icon: Image(
+                  image: AssetImage('images/${value.icon}.png'),
+                  height: tabIconSize,
+                  width: tabIconSize,
+                ),
+              ),
+          ],
+        ),
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: <Widget>[
+              for (final value in api.InfoTopic.values)
+                InfoView(infoTopic: value),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -122,8 +273,13 @@ class ProductInfoWidget extends StatelessWidget {
 class ProductTileWidget extends StatelessWidget {
   final api.ProductShort product;
   final Function(String) onSelected;
+  final Function(api.BadgeName) onBadgeTap;
 
-  const ProductTileWidget({required this.product, required this.onSelected});
+  const ProductTileWidget({
+    required this.product,
+    required this.onSelected,
+    required this.onBadgeTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -146,9 +302,9 @@ class ProductTileWidget extends StatelessWidget {
           child: Container(
             width: tileWidth,
             decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius:
-                    BorderRadius.all(Radius.circular(defaultPadding))),
+              color: Theme.of(context).cardColor,
+              borderRadius: BorderRadius.all(Radius.circular(defaultPadding)),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(defaultPadding),
               child: Column(
@@ -158,7 +314,10 @@ class ProductTileWidget extends StatelessWidget {
                   const Space(),
                   Text(product.description, style: textStyle),
                   const Space(),
-                  BadgesView(badges: product.badges),
+                  BadgeRow(
+                    badges: product.badges,
+                    onTap: onBadgeTap,
+                  ),
                 ],
               ),
             ),
@@ -169,29 +328,68 @@ class ProductTileWidget extends StatelessWidget {
   }
 }
 
-class BadgesView extends StatelessWidget {
+class Badge extends StatelessWidget {
   static const double badgeSize = 32;
 
-  final List<String>? badges;
+  final api.BadgeName badge;
+  final Function(api.BadgeName) onTap;
 
-  const BadgesView({required this.badges});
+  const Badge({required this.badge, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          onTap(badge);
+        },
+        child: Image(
+          image: AssetImage('images/${badge.name}.png'),
+          height: badgeSize,
+          width: badgeSize,
+        ),
+      ),
+    );
+  }
+}
+
+class BadgeFlex extends StatelessWidget {
+  static const double badgeSize = 32;
+
+  final List<api.BadgeName>? badges;
+  final Axis axis;
+  final Function(api.BadgeName) onTap;
+
+  const BadgeFlex(
+      {required this.badges, required this.axis, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Flex(
+      direction: axis,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (badges != null) ...[
-          for (final badge in badges!)
-            Image(
-              image: AssetImage('images/${badge}.png'),
-              height: badgeSize,
-              width: badgeSize,
-            ),
+          for (final badge in badges!) Badge(badge: badge, onTap: onTap)
         ],
       ],
     );
   }
+}
+
+class BadgeColumn extends BadgeFlex {
+  const BadgeColumn({
+    List<api.BadgeName>? badges,
+    required Function(api.BadgeName) onTap,
+  }) : super(badges: badges, axis: Axis.vertical, onTap: onTap);
+}
+
+class BadgeRow extends BadgeFlex {
+  const BadgeRow({
+    List<api.BadgeName>? badges,
+    required Function(api.BadgeName) onTap,
+  }) : super(badges: badges, axis: Axis.horizontal, onTap: onTap);
 }
 
 class HomeView extends StatelessWidget {
@@ -246,11 +444,13 @@ class HomeView extends StatelessWidget {
 class ManufacturerView extends StatelessWidget {
   final api.Manufacturer manufacturer;
   final String source;
+  final Function(api.BadgeName) onBadgeTap;
 
   const ManufacturerView({
     super.key,
     required this.manufacturer,
     required this.source,
+    required this.onBadgeTap,
   });
 
   @override
@@ -286,7 +486,10 @@ class ManufacturerView extends StatelessWidget {
                 ],
               ),
             ),
-            BadgesView(badges: manufacturer.badges),
+            BadgeColumn(
+              badges: manufacturer.badges,
+              onTap: onBadgeTap,
+            ),
           ],
         ),
       ),
@@ -296,12 +499,14 @@ class ManufacturerView extends StatelessWidget {
 
 class ProductView extends StatelessWidget {
   final api.ProductFull product;
-  final Function(String) onReload;
+  final Function(String) onAlternativeTap;
+  final Function(api.BadgeName) onBadgeTap;
 
   const ProductView({
     super.key,
     required this.product,
-    required this.onReload,
+    required this.onAlternativeTap,
+    required this.onBadgeTap,
   });
 
   @override
@@ -326,6 +531,7 @@ class ProductView extends StatelessWidget {
                     ManufacturerView(
                       manufacturer: manufacturer,
                       source: "wikidata",
+                      onBadgeTap: onBadgeTap,
                     )
                 ],
                 Section(text: 'Alternatives'),
@@ -338,7 +544,8 @@ class ProductView extends StatelessWidget {
                         for (final alternative in product.alternatives!)
                           ProductTileWidget(
                             product: alternative,
-                            onSelected: onReload,
+                            onSelected: onAlternativeTap,
+                            onBadgeTap: onBadgeTap,
                           ),
                       ],
                     ],
@@ -355,10 +562,15 @@ class ProductView extends StatelessWidget {
 
 class ProductPage extends StatefulWidget {
   final String productId;
-  final Function(String) onReload;
+  final Function(String) onAlternativeTap;
+  final Function(api.BadgeName) onBadgeTap;
 
-  const ProductPage(
-      {super.key, required this.productId, required this.onReload});
+  const ProductPage({
+    super.key,
+    required this.productId,
+    required this.onAlternativeTap,
+    required this.onBadgeTap,
+  });
 
   @override
   State<ProductPage> createState() => _ProductPageState();
@@ -375,8 +587,8 @@ class _ProductPageState extends State<ProductPage>
   }
 
   @override
-  void didUpdateWidget(ProductPage page) {
-    super.didUpdateWidget(page);
+  void didUpdateWidget(ProductPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
     _futureProduct = api.fetchProduct(widget.productId);
   }
 
@@ -392,7 +604,8 @@ class _ProductPageState extends State<ProductPage>
           if (snapshot.hasData) {
             return ProductView(
               product: snapshot.data!,
-              onReload: widget.onReload,
+              onAlternativeTap: widget.onAlternativeTap,
+              onBadgeTap: widget.onBadgeTap,
             );
           } else if (snapshot.hasError) {
             return Text('Error while fetching data:: ${snapshot.error}');
@@ -493,8 +706,10 @@ class ConsumersFrontend extends StatefulWidget {
 class _ConsumersFrontendState extends State<ConsumersFrontend>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  String? _productId = null;
+  String? _productId;
+  api.InfoTopic _infoTopic = api.InfoTopic.main;
 
+  final int _infoTab = 0;
   final int _productTab = 1;
   final int _textSearchTab = 2;
   final int _mapSearchTab = 3;
@@ -551,16 +766,20 @@ class _ConsumersFrontendState extends State<ConsumersFrontend>
         body: TabBarView(
           controller: _tabController,
           children: <Widget>[
-            Center(
-              child: Text('Info'),
-            ),
+            InfoPage(infoTopic: _infoTopic),
             if (_productId != null) ...[
               ProductPage(
                 productId: _productId!,
-                onReload: (productId) {
+                onAlternativeTap: (productId) {
                   setState(() {
                     _productId = productId;
                   });
+                },
+                onBadgeTap: (badgeName) {
+                  setState(() {
+                    _infoTopic = badgeName.toInfoTopic();
+                  });
+                  _tabController.animateTo(_infoTab);
                 },
               )
             ] else ...[

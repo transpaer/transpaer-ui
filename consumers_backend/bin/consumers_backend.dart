@@ -17,6 +17,7 @@ void main(List<String> args) async {
 
   final router = shelf_router.Router()
     ..get('/search', SearchHandler(client, encoder))
+    ..get('/info/<id>', InfoHandler(client, encoder))
     ..get('/products/<id>', ProductHandler(client, encoder))
     ..get('/products/<id>/alternatives', AlternativesHandler(client, encoder))
     ..get('/manufacturers/<id>', ManufacturersHandler(client, encoder));

@@ -7,6 +7,23 @@ import 'package:consumers_api/consumers_api.dart' as api;
 import 'db_client.dart' as db_client;
 import 'retrievers.dart' as retrievers;
 
+class InfoHandler {
+  db_client.DbClient client;
+  JsonEncoder encoder;
+
+  InfoHandler(this.client, this.encoder);
+
+  Future<shelf.Response> call(shelf.Request req, String id) async {
+    final dbInfo = await client.getInfo(id);
+    if (dbInfo != null) {
+      final apiInfo = dbInfo.toApi();
+      return shelf.Response.ok(encoder.convert(apiInfo));
+    } else {
+      return shelf.Response.notFound(null);
+    }
+  }
+}
+
 class SearchHandler {
   db_client.DbClient client;
   JsonEncoder encoder;

@@ -5,16 +5,43 @@ import 'package:consumers_api/consumers_api.dart' as api;
 part 'db_data.g.dart';
 
 @JsonSerializable()
+class Info {
+  @JsonKey(name: 'title')
+  final String title;
+
+  @JsonKey(name: 'description')
+  final String description;
+
+  @JsonKey(name: 'usage')
+  final String? usage;
+
+  Info({required this.title, required this.description, this.usage});
+
+  api.Info toApi() {
+    return api.Info(title: title, description: description, usage: usage);
+  }
+
+  factory Info.fromJson(Map<String, dynamic> json) => _$InfoFromJson(json);
+  Map<String, dynamic> toJson() => _$InfoToJson(this);
+}
+
+@JsonSerializable()
 class Certifications {
   @JsonKey(name: 'bcorp')
   final bool bcorp;
 
-  Certifications({required this.bcorp});
+  @JsonKey(name: 'tco')
+  final bool tco;
 
-  List<String> toBadges() {
-    var badges = <String>[];
+  Certifications({required this.bcorp, required this.tco});
+
+  List<api.BadgeName> toBadges() {
+    var badges = <api.BadgeName>[];
     if (bcorp) {
-      badges.add(api.BADGE_BCORP);
+      badges.add(api.BadgeName.bcorp);
+    }
+    if (tco) {
+      badges.add(api.BadgeName.tco);
     }
     return badges;
   }

@@ -3,27 +3,42 @@ import 'package:consumers_api/consumers_api.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test('Serialize Product', () {
-    final item = ProductShort(
+  test('Serde Product', () {
+    final originalString =
+        '{"product_id":"P","name":"N","description":"D","badges":["bcorps","tco"]}';
+    final originalItem = ProductShort(
       productId: "P",
       name: "N",
       description: "D",
-      badges: <String>["B1", "B2"],
+      badges: <BadgeName>[BadgeName.bcorps, BadgeName.tco],
     );
-    final result = jsonEncode(item);
-    expect(result,
-        '{"product_id":"P","name":"N","description":"D","badges":["B1","B2"]}');
+
+    final resultString = jsonEncode(originalItem);
+    final resultItem = ProductShort.fromJson(jsonDecode(originalString));
+
+    expect(resultString, originalString);
+    expect(resultItem.productId, originalItem.productId);
+    expect(resultItem.name, originalItem.name);
+    expect(resultItem.description, originalItem.description);
+    expect(resultItem.badges, originalItem.badges);
   });
 
-  test('Serialize Manufacturer', () {
-    final item = Manufacturer(
+  test('Serde Manufacturer', () {
+    final originalString = '{"manufacturer_id":"M","name":"N","description":"D","badges":["bcorps","tco"]}';
+    final originalItem = Manufacturer(
       manufacturerId: "M",
       name: "N",
       description: "D",
-      badges: <String>["B1", "B2"],
+      badges: <BadgeName>[BadgeName.bcorps, BadgeName.tco],
     );
-    final result = jsonEncode(item);
-    expect(result,
-        '{"manufacturer_id":"M","name":"N","description":"D","badges":["B1","B2"]}');
+    
+    final resultString = jsonEncode(originalItem);
+    final resultItem = Manufacturer.fromJson(jsonDecode(originalString));
+    
+    expect(resultString, originalString);
+    expect(resultItem.manufacturerId, originalItem.manufacturerId);
+    expect(resultItem.name, originalItem.name);
+    expect(resultItem.description, originalItem.description);
+    expect(resultItem.badges, originalItem.badges);
   });
 }
