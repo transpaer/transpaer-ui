@@ -29,6 +29,9 @@ jobs:
       - name: Generate
         run: melos run generate          
 
+      - name: Assets
+        run: melos run fetch_assets
+
       - name: Build
         run: melos run compile          
 

@@ -43,3 +43,6 @@ scripts:
   format_fix:
     run: melos exec -- dart format . --fix
     descritption: Reformat the code
+
+  fetch_assets:
+    run: ./scripts/fetch_assets.sh
