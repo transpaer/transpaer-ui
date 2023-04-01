@@ -44,19 +44,19 @@ extension InfoTopicExtension on InfoTopic {
 
 @JsonSerializable()
 class Info {
+  @JsonKey(name: 'id')
+  final String id;
+
   @JsonKey(name: 'title')
   final String title;
 
-  @JsonKey(name: 'description')
-  final String description;
-
-  @JsonKey(name: 'usage')
-  final String? usage;
+  @JsonKey(name: 'article')
+  final String article;
 
   Info({
+    required this.id,
     required this.title,
-    required this.description,
-    required this.usage,
+    required this.article,
   });
 
   factory Info.fromJson(Map<String, dynamic> json) => _$InfoFromJson(json);

@@ -12,6 +12,7 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.2
+  flutter_markdown: ^0.6.14
 
   consumers_api:
     path: ../consumers_api

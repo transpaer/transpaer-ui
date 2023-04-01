@@ -6,19 +6,19 @@ part 'db_data.g.dart';
 
 @JsonSerializable()
 class Info {
+  @JsonKey(name: 'id')
+  final String id;
+
   @JsonKey(name: 'title')
   final String title;
 
-  @JsonKey(name: 'description')
-  final String description;
+  @JsonKey(name: 'article')
+  final String article;
 
-  @JsonKey(name: 'usage')
-  final String? usage;
-
-  Info({required this.title, required this.description, this.usage});
+  Info({required this.id, required this.title, required this.article});
 
   api.Info toApi() {
-    return api.Info(title: title, description: description, usage: usage);
+    return api.Info(id: id, title: title, article: article);
   }
 
   factory Info.fromJson(Map<String, dynamic> json) => _$InfoFromJson(json);

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 import 'package:consumers_api/consumers_api.dart' as api;
 
@@ -103,6 +104,30 @@ class Description extends StatelessWidget {
   }
 }
 
+class Article extends StatelessWidget {
+  final String markdown;
+
+  const Article({
+    super.key,
+    required this.markdown,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius: BorderRadius.all(Radius.circular(defaultPadding))),
+        child: Padding(
+          padding: const EdgeInsets.all(defaultPadding),
+          child: Markdown(data: markdown),
+        ),
+      ),
+    );
+  }
+}
+
 extension InfoTopicGuiExtension on api.InfoTopic {
   String get icon {
     return ["main", "bcorp", "tco"][index];
@@ -125,18 +150,7 @@ class InfoWidget extends StatelessWidget {
         children: [
           Title(text: info.title),
           const Space(),
-          Expanded(
-            child: ListView(
-              children: [
-                Section(text: 'Description:'),
-                Description(text: info.description),
-                if (info.usage != null) ...[
-                  Section(text: 'Usage:'),
-                  Description(text: info.usage!),
-                ],
-              ],
-            ),
-          ),
+          Article(markdown: info.article),
         ],
       ),
     );
