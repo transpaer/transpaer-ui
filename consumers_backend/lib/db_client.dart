@@ -5,14 +5,15 @@ import 'db_data.dart' as db;
 class DbClient {
   late arango.ArangoDBClient _client;
 
-  DbClient() {
+  DbClient(
+      {required String host, required String user, required String password}) {
     _client = arango.ArangoDBClient(
         scheme: 'http',
-        host: 'localhost',
+        host: host,
         port: 8529,
         db: 'consumers',
-        user: '',
-        pass: '');
+        user: user,
+        pass: password);
   }
 
   Future<List<db.Product>> searchProducts(String tokens) async {
