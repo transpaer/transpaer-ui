@@ -7,6 +7,20 @@ import 'package:consumers_api/consumers_api.dart' as api;
 import 'db_client.dart' as db_client;
 import 'retrievers.dart' as retrievers;
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Origin, Content-Type',
+};
+
+class HealthCheckHandler {
+  HealthCheckHandler();
+
+  Future<shelf.Response> call(shelf.Request req) async {
+    return shelf.Response.ok(null, headers: corsHeaders);
+  }
+}
+
 class InfoHandler {
   db_client.DbClient client;
   JsonEncoder encoder;
@@ -17,9 +31,9 @@ class InfoHandler {
     final dbInfo = await client.getInfo(id);
     if (dbInfo != null) {
       final apiInfo = dbInfo.toApi();
-      return shelf.Response.ok(encoder.convert(apiInfo));
+      return shelf.Response.ok(encoder.convert(apiInfo), headers: corsHeaders);
     } else {
-      return shelf.Response.notFound(null);
+      return shelf.Response.notFound(null, headers: corsHeaders);
     }
   }
 }
@@ -36,7 +50,7 @@ class SearchHandler {
     final dbProducts = await client.searchProducts(request.query);
     final apiProducts = dbProducts.map((p) => p.toApiFull()).toList();
     final response = api.TextSearchResponse(products: apiProducts);
-    return shelf.Response.ok(encoder.convert(response));
+    return shelf.Response.ok(encoder.convert(response), headers: corsHeaders);
   }
 }
 
@@ -65,9 +79,10 @@ class ProductHandler {
       final apiProduct = dbProduct.toApiFull(
           manufacturers: apiManufacturers, alternatives: alternatives);
 
-      return shelf.Response.ok(encoder.convert(apiProduct));
+      return shelf.Response.ok(encoder.convert(apiProduct),
+          headers: corsHeaders);
     } else {
-      return shelf.Response.notFound(null);
+      return shelf.Response.notFound(null, headers: corsHeaders);
     }
   }
 }
@@ -83,9 +98,9 @@ class AlternativesHandler {
     if (dbProduct != null) {
       final List<api.ProductShort> products =
           await retrievers.retrieveAlternatives(client, dbProduct);
-      return shelf.Response.ok(encoder.convert(products));
+      return shelf.Response.ok(encoder.convert(products), headers: corsHeaders);
     } else {
-      return shelf.Response.notFound(null);
+      return shelf.Response.notFound(null, headers: corsHeaders);
     }
   }
 }
@@ -100,9 +115,10 @@ class ManufacturersHandler {
     final dbManufacturer = await client.getManufacturer(id);
     if (dbManufacturer != null) {
       final apiManufacturer = dbManufacturer.toApi();
-      return shelf.Response.ok(encoder.convert(apiManufacturer));
+      return shelf.Response.ok(encoder.convert(apiManufacturer),
+          headers: corsHeaders);
     } else {
-      return shelf.Response.notFound(null);
+      return shelf.Response.notFound(null, headers: corsHeaders);
     }
   }
 }

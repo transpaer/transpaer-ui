@@ -24,17 +24,18 @@ void main() {
   });
 
   test('Serde Manufacturer', () {
-    final originalString = '{"manufacturer_id":"M","name":"N","description":"D","badges":["bcorp","tco"]}';
+    final originalString =
+        '{"manufacturer_id":"M","name":"N","description":"D","badges":["bcorp","tco"]}';
     final originalItem = Manufacturer(
       manufacturerId: "M",
       name: "N",
       description: "D",
       badges: <BadgeName>[BadgeName.bcorp, BadgeName.tco],
     );
-    
+
     final resultString = jsonEncode(originalItem);
     final resultItem = Manufacturer.fromJson(jsonDecode(originalString));
-    
+
     expect(resultString, originalString);
     expect(resultItem.manufacturerId, originalItem.manufacturerId);
     expect(resultItem.name, originalItem.name);

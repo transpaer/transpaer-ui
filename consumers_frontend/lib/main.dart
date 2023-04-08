@@ -5,12 +5,20 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 
 import 'package:consumers_api/consumers_api.dart' as api;
 
+import 'package:consumers_frontend/configuration.dart';
+
 const double defaultPadding = 10.0;
 const double tileWidth = 180;
 const double tileHeight = 240;
 
-void main() {
-  runApp(const ConsumersFrontend());
+void main() async {
+  final config = Config.load();
+  final fetcher = api.Fetcher(
+    scheme: config.backend_scheme,
+    host: config.backend_host,
+    port: config.backend_port,
+  );
+  runApp(ConsumersFrontend(fetcher: fetcher));
 }
 
 class Space extends StatelessWidget {
@@ -159,21 +167,26 @@ class InfoWidget extends StatelessWidget {
 
 class InfoView extends StatefulWidget {
   final api.InfoTopic infoTopic;
+  final api.Fetcher fetcher;
 
-  const InfoView({super.key, required this.infoTopic});
+  const InfoView({super.key, required this.infoTopic, required this.fetcher});
 
   @override
-  State<InfoView> createState() => _InfoViewState();
+  State<InfoView> createState() => _InfoViewState(fetcher: fetcher);
 }
 
 class _InfoViewState extends State<InfoView>
     with AutomaticKeepAliveClientMixin {
+  final api.Fetcher fetcher;
+
   late Future<api.Info> _futureInfo;
+
+  _InfoViewState({required this.fetcher});
 
   @override
   void initState() {
     super.initState();
-    _futureInfo = api.fetchInfo(widget.infoTopic);
+    _futureInfo = fetcher.fetchInfo(widget.infoTopic);
   }
 
   @override
@@ -202,18 +215,23 @@ class _InfoViewState extends State<InfoView>
 
 class InfoPage extends StatefulWidget {
   final api.InfoTopic infoTopic;
+  final api.Fetcher fetcher;
 
-  const InfoPage({super.key, required this.infoTopic});
+  const InfoPage({super.key, required this.infoTopic, required this.fetcher});
 
   @override
-  State<InfoPage> createState() => _InfoPageState();
+  State<InfoPage> createState() => _InfoPageState(fetcher: fetcher);
 }
 
 class _InfoPageState extends State<InfoPage>
     with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
   static const double tabIconSize = 32;
 
+  final api.Fetcher fetcher;
+
   late TabController _tabController;
+
+  _InfoPageState({required this.fetcher});
 
   @override
   void initState() {
@@ -257,7 +275,7 @@ class _InfoPageState extends State<InfoPage>
             controller: _tabController,
             children: <Widget>[
               for (final value in api.InfoTopic.values)
-                InfoView(infoTopic: value),
+                InfoView(infoTopic: value, fetcher: fetcher),
             ],
           ),
         ),
@@ -578,32 +596,37 @@ class ProductPage extends StatefulWidget {
   final String productId;
   final Function(String) onAlternativeTap;
   final Function(api.BadgeName) onBadgeTap;
+  final api.Fetcher fetcher;
 
   const ProductPage({
     super.key,
     required this.productId,
     required this.onAlternativeTap,
     required this.onBadgeTap,
+    required this.fetcher,
   });
 
   @override
-  State<ProductPage> createState() => _ProductPageState();
+  State<ProductPage> createState() => _ProductPageState(fetcher: fetcher);
 }
 
 class _ProductPageState extends State<ProductPage>
     with AutomaticKeepAliveClientMixin {
+  final api.Fetcher fetcher;
   late Future<api.ProductFull> _futureProduct;
+
+  _ProductPageState({required this.fetcher});
 
   @override
   void initState() {
     super.initState();
-    _futureProduct = api.fetchProduct(widget.productId);
+    _futureProduct = fetcher.fetchProduct(widget.productId);
   }
 
   @override
   void didUpdateWidget(ProductPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _futureProduct = api.fetchProduct(widget.productId);
+    _futureProduct = fetcher.fetchProduct(widget.productId);
   }
 
   @override
@@ -634,19 +657,24 @@ class _ProductPageState extends State<ProductPage>
 
 class TextSearchPage extends StatefulWidget {
   final Function(String) onSelected;
+  final api.Fetcher fetcher;
 
-  const TextSearchPage({super.key, required this.onSelected});
+  const TextSearchPage(
+      {super.key, required this.onSelected, required this.fetcher});
 
   @override
-  State<TextSearchPage> createState() => _TextSearchPageState();
+  State<TextSearchPage> createState() => _TextSearchPageState(fetcher: fetcher);
 }
 
 class _TextSearchPageState extends State<TextSearchPage>
     with AutomaticKeepAliveClientMixin {
   final _searchFieldController = TextEditingController();
+  final api.Fetcher fetcher;
 
   bool _searching = false;
   List<api.ProductFull> _entries = [];
+
+  _TextSearchPageState({required this.fetcher});
 
   @override
   bool get wantKeepAlive => true;
@@ -702,7 +730,7 @@ class _TextSearchPageState extends State<TextSearchPage>
       _searching = true;
       _entries = [];
     });
-    final result = await api.searchProducts(text);
+    final result = await fetcher.searchProducts(text);
     setState(() {
       _searching = false;
       _entries = result.products;
@@ -711,23 +739,31 @@ class _TextSearchPageState extends State<TextSearchPage>
 }
 
 class ConsumersFrontend extends StatefulWidget {
-  const ConsumersFrontend({super.key});
+  final api.Fetcher fetcher;
+
+  ConsumersFrontend({super.key, required this.fetcher});
 
   @override
-  State<ConsumersFrontend> createState() => _ConsumersFrontendState();
+  State<ConsumersFrontend> createState() =>
+      _ConsumersFrontendState(fetcher: fetcher);
 }
 
 class _ConsumersFrontendState extends State<ConsumersFrontend>
     with TickerProviderStateMixin {
+  static const int _infoTab = 0;
+  static const int _productTab = 1;
+  static const int _textSearchTab = 2;
+  static const int _mapSearchTab = 3;
+  static const int _qrcScanTab = 4;
+
+  final api.Fetcher fetcher;
+
   late TabController _tabController;
+
   String? _productId;
   api.InfoTopic _infoTopic = api.InfoTopic.main;
 
-  final int _infoTab = 0;
-  final int _productTab = 1;
-  final int _textSearchTab = 2;
-  final int _mapSearchTab = 3;
-  final int _qrcScanTab = 4;
+  _ConsumersFrontendState({required this.fetcher});
 
   @override
   void initState() {
@@ -738,7 +774,7 @@ class _ConsumersFrontendState extends State<ConsumersFrontend>
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Consumers',
+      title: 'Sustainify',
       theme: ThemeData(
         cardColor: Colors.white,
         scaffoldBackgroundColor: Colors.grey[200],
@@ -753,7 +789,7 @@ class _ConsumersFrontendState extends State<ConsumersFrontend>
       ),
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('Consumers'),
+          title: const Text('Sustainify'),
           bottom: TabBar(
             controller: _tabController,
             indicatorColor: Colors.lightGreen[100],
@@ -780,7 +816,7 @@ class _ConsumersFrontendState extends State<ConsumersFrontend>
         body: TabBarView(
           controller: _tabController,
           children: <Widget>[
-            InfoPage(infoTopic: _infoTopic),
+            InfoPage(infoTopic: _infoTopic, fetcher: fetcher),
             if (_productId != null) ...[
               ProductPage(
                 productId: _productId!,
@@ -795,6 +831,7 @@ class _ConsumersFrontendState extends State<ConsumersFrontend>
                   });
                   _tabController.animateTo(_infoTab);
                 },
+                fetcher: fetcher,
               )
             ] else ...[
               HomeView(
@@ -803,12 +840,15 @@ class _ConsumersFrontendState extends State<ConsumersFrontend>
                 onQrcScan: () => _tabController.animateTo(_qrcScanTab),
               )
             ],
-            TextSearchPage(onSelected: (productId) {
-              setState(() {
-                _productId = productId;
-              });
-              _tabController.animateTo(_productTab);
-            }),
+            TextSearchPage(
+              onSelected: (productId) {
+                setState(() {
+                  _productId = productId;
+                });
+                _tabController.animateTo(_productTab);
+              },
+              fetcher: fetcher,
+            ),
             Center(
               child: Text('Map search'),
             ),

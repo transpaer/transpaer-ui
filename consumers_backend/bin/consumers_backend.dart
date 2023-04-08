@@ -20,6 +20,7 @@ void main(List<String> args) async {
   final encoder = convert.JsonEncoder.withIndent('  ');
 
   final router = shelf_router.Router()
+    ..get('/', HealthCheckHandler())
     ..get('/search', SearchHandler(client, encoder))
     ..get('/info/<id>', InfoHandler(client, encoder))
     ..get('/products/<id>', ProductHandler(client, encoder))
