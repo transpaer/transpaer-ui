@@ -28,12 +28,45 @@ class Fetcher {
     }
   }
 
+  Future<Organisation> fetchOrganisation(String id) async {
+    final uri = Uri(
+      scheme: scheme,
+      host: host,
+      port: port,
+      path: '/organisation/' + id,
+    );
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      return Organisation.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to load organisation: ${response.statusCode}');
+    }
+  }
+
+  Future<OrganisationTextSearchResponse> searchOrganisations(
+      String query) async {
+    final uri = Uri(
+        scheme: scheme,
+        host: host,
+        port: port,
+        path: '/search/organisations',
+        queryParameters: {'query': query, 'limit': '10'});
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      return OrganisationTextSearchResponse.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to load organisations: ${response.statusCode}');
+    }
+  }
+
   Future<ProductFull> fetchProduct(String id) async {
     final uri = Uri(
       scheme: scheme,
       host: host,
       port: port,
-      path: '/products/' + id,
+      path: '/product/' + id,
     );
     final response = await http.get(uri);
 
@@ -44,17 +77,17 @@ class Fetcher {
     }
   }
 
-  Future<TextSearchResponse> searchProducts(String query) async {
+  Future<ProductTextSearchResponse> searchProducts(String query) async {
     final uri = Uri(
         scheme: scheme,
         host: host,
         port: port,
-        path: '/search',
+        path: '/search/products',
         queryParameters: {'query': query, 'limit': '10'});
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {
-      return TextSearchResponse.fromJson(jsonDecode(response.body));
+      return ProductTextSearchResponse.fromJson(jsonDecode(response.body));
     } else {
       throw Exception('Failed to load products: ${response.statusCode}');
     }

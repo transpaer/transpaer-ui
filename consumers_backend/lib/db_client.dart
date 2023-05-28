@@ -11,9 +11,21 @@ class DbClient {
         scheme: 'http',
         host: host,
         port: 8529,
-        db: 'consumers',
+        db: 'sustainity',
         user: user,
         pass: password);
+  }
+
+  Future<List<db.Organisation>> searchOrganisations(String tokens) async {
+    final dbOrganisations = await _client
+        .newQuery()
+        .addLine('FOR o IN organisations_name_view')
+        .addLine('  SEARCH o.name IN TOKENS(@tokens, "text_en")')
+        .addLine('  RETURN o')
+        .addBindVar('tokens', tokens)
+        .runAndReturnFutureList();
+
+    return dbOrganisations.map((p) => db.Organisation.fromJson(p)).toList();
   }
 
   Future<List<db.Product>> searchProducts(String tokens) async {
@@ -44,6 +56,22 @@ class DbClient {
     }
   }
 
+  Future<db.Organisation?> getOrganisation(String id) async {
+    final organisations = await _client
+        .newQuery()
+        .addLine('FOR o IN organisations')
+        .addLine('  FILTER o.id == @id')
+        .addLine('  RETURN o')
+        .addBindVar('id', id)
+        .runAndReturnFutureList();
+
+    if (organisations.length == 1) {
+      return db.Organisation.fromJson(organisations[0]);
+    } else {
+      return null;
+    }
+  }
+
   Future<db.Product?> getProduct(String id) async {
     final products = await _client
         .newQuery()
@@ -55,22 +83,6 @@ class DbClient {
 
     if (products.length == 1) {
       return db.Product.fromJson(products[0]);
-    } else {
-      return null;
-    }
-  }
-
-  Future<db.Manufacturer?> getManufacturer(String id) async {
-    final manufacturers = await _client
-        .newQuery()
-        .addLine('FOR m IN manufacturers')
-        .addLine('  FILTER m.id == @id')
-        .addLine('  RETURN m')
-        .addBindVar('id', id)
-        .runAndReturnFutureList();
-
-    if (manufacturers.length == 1) {
-      return db.Manufacturer.fromJson(manufacturers[0]);
     } else {
       return null;
     }

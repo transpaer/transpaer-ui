@@ -25,6 +25,25 @@ extension BadgeNameExtension on BadgeName {
   }
 }
 
+enum ScorerName {
+  // Fashion Transparency Index
+  @JsonValue('fti')
+  fti,
+}
+
+extension ScorerNameExtension on ScorerName {
+  String get name {
+    return ["fti"][index];
+  }
+
+  InfoTopic toInfoTopic() {
+    switch (this) {
+      case ScorerName.fti:
+        return InfoTopic.fti;
+    }
+  }
+}
+
 enum InfoTopic {
   @JsonValue('info--main')
   main,
@@ -34,11 +53,14 @@ enum InfoTopic {
 
   @JsonValue('cert--tco')
   tco,
+
+  @JsonValue('cert--fti')
+  fti,
 }
 
 extension InfoTopicExtension on InfoTopic {
   String get name {
-    return ["info--main", "badge--bcorp", "badge--tco"][index];
+    return ["info--main", "badge--bcorp", "badge--tco", "badge--fti"][index];
   }
 }
 
@@ -64,6 +86,36 @@ class Info {
 }
 
 @JsonSerializable()
+class Organisation {
+  @JsonKey(name: 'organisation_id')
+  final String organisationId;
+
+  @JsonKey(name: 'name')
+  final String name;
+
+  @JsonKey(name: 'description')
+  final String description;
+
+  @JsonKey(name: 'badges')
+  final List<BadgeName> badges;
+
+  @JsonKey(name: 'scores')
+  final Map<ScorerName, int> scores;
+
+  Organisation({
+    required this.organisationId,
+    required this.name,
+    required this.description,
+    required this.badges,
+    required this.scores,
+  });
+
+  factory Organisation.fromJson(Map<String, dynamic> json) =>
+      _$OrganisationFromJson(json);
+  Map<String, dynamic> toJson() => _$OrganisationToJson(this);
+}
+
+@JsonSerializable()
 class ProductShort {
   @JsonKey(name: 'product_id')
   final String productId;
@@ -77,11 +129,15 @@ class ProductShort {
   @JsonKey(name: 'badges')
   final List<BadgeName> badges;
 
+  @JsonKey(name: 'scores')
+  final Map<ScorerName, int> scores;
+
   ProductShort({
     required this.productId,
     required this.name,
     required this.description,
     required this.badges,
+    required this.scores,
   });
 
   factory ProductShort.fromJson(Map<String, dynamic> json) =>
@@ -104,7 +160,7 @@ class ProductFull {
   final List<String>? manufacturerIds;
 
   @JsonKey(name: 'manufacturers')
-  final List<Manufacturer>? manufacturers;
+  final List<Organisation>? manufacturers;
 
   @JsonKey(name: 'alternatives')
   final List<ProductShort>? alternatives;
@@ -121,30 +177,4 @@ class ProductFull {
   factory ProductFull.fromJson(Map<String, dynamic> json) =>
       _$ProductFullFromJson(json);
   Map<String, dynamic> toJson() => _$ProductFullToJson(this);
-}
-
-@JsonSerializable()
-class Manufacturer {
-  @JsonKey(name: 'manufacturer_id')
-  final String manufacturerId;
-
-  @JsonKey(name: 'name')
-  final String name;
-
-  @JsonKey(name: 'description')
-  final String description;
-
-  @JsonKey(name: 'badges')
-  final List<BadgeName> badges;
-
-  Manufacturer({
-    required this.manufacturerId,
-    required this.name,
-    required this.description,
-    required this.badges,
-  });
-
-  factory Manufacturer.fromJson(Map<String, dynamic> json) =>
-      _$ManufacturerFromJson(json);
-  Map<String, dynamic> toJson() => _$ManufacturerToJson(this);
 }

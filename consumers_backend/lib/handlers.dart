@@ -38,19 +38,54 @@ class InfoHandler {
   }
 }
 
-class SearchHandler {
+class OrganisationSearchHandler {
   db_client.DbClient client;
   JsonEncoder encoder;
 
-  SearchHandler(this.client, this.encoder);
+  OrganisationSearchHandler(this.client, this.encoder);
+
+  Future<shelf.Response> call(shelf.Request req) async {
+    final request = api.OrganisationTextSearchRequest.fromJson(
+        req.requestedUri.queryParameters);
+    final dbOrganisations = await client.searchOrganisations(request.query);
+    final apiOrganisations = dbOrganisations.map((p) => p.toApi()).toList();
+    final response =
+        api.OrganisationTextSearchResponse(organisations: apiOrganisations);
+    return shelf.Response.ok(encoder.convert(response), headers: corsHeaders);
+  }
+}
+
+class ProductSearchHandler {
+  db_client.DbClient client;
+  JsonEncoder encoder;
+
+  ProductSearchHandler(this.client, this.encoder);
 
   Future<shelf.Response> call(shelf.Request req) async {
     final request =
-        api.TextSearchRequest.fromJson(req.requestedUri.queryParameters);
+        api.ProductTextSearchRequest.fromJson(req.requestedUri.queryParameters);
     final dbProducts = await client.searchProducts(request.query);
     final apiProducts = dbProducts.map((p) => p.toApiFull()).toList();
-    final response = api.TextSearchResponse(products: apiProducts);
+    final response = api.ProductTextSearchResponse(products: apiProducts);
     return shelf.Response.ok(encoder.convert(response), headers: corsHeaders);
+  }
+}
+
+class OrganisationHandler {
+  db_client.DbClient client;
+  JsonEncoder encoder;
+
+  OrganisationHandler(this.client, this.encoder);
+
+  Future<shelf.Response> call(shelf.Request req, String id) async {
+    final dbOrganisation = await client.getOrganisation(id);
+    if (dbOrganisation != null) {
+      final apiOrganisation = dbOrganisation.toApi();
+      return shelf.Response.ok(encoder.convert(apiOrganisation),
+          headers: corsHeaders);
+    } else {
+      return shelf.Response.notFound(null, headers: corsHeaders);
+    }
   }
 }
 
@@ -63,11 +98,11 @@ class ProductHandler {
   Future<shelf.Response> call(shelf.Request req, String id) async {
     final dbProduct = await client.getProduct(id);
     if (dbProduct != null) {
-      List<api.Manufacturer>? apiManufacturers;
+      List<api.Organisation>? apiManufacturers;
       if (dbProduct.manufacturerIds != null) {
         apiManufacturers = [];
         for (final manufacturerId in dbProduct.manufacturerIds!) {
-          final dbManufacturer = await client.getManufacturer(manufacturerId);
+          final dbManufacturer = await client.getOrganisation(manufacturerId);
           if (dbManufacturer != null) {
             apiManufacturers.add(dbManufacturer.toApi());
           }
@@ -99,24 +134,6 @@ class AlternativesHandler {
       final List<api.ProductShort> products =
           await retrievers.retrieveAlternatives(client, dbProduct);
       return shelf.Response.ok(encoder.convert(products), headers: corsHeaders);
-    } else {
-      return shelf.Response.notFound(null, headers: corsHeaders);
-    }
-  }
-}
-
-class ManufacturersHandler {
-  db_client.DbClient client;
-  JsonEncoder encoder;
-
-  ManufacturersHandler(this.client, this.encoder);
-
-  Future<shelf.Response> call(shelf.Request req, String id) async {
-    final dbManufacturer = await client.getManufacturer(id);
-    if (dbManufacturer != null) {
-      final apiManufacturer = dbManufacturer.toApi();
-      return shelf.Response.ok(encoder.convert(apiManufacturer),
-          headers: corsHeaders);
     } else {
       return shelf.Response.notFound(null, headers: corsHeaders);
     }

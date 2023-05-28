@@ -33,7 +33,10 @@ class Certifications {
   @JsonKey(name: 'tco')
   final bool tco;
 
-  Certifications({required this.bcorp, required this.tco});
+  @JsonKey(name: 'fti')
+  final int? fti;
+
+  Certifications({required this.bcorp, required this.tco, required this.fti});
 
   List<api.BadgeName> toBadges() {
     var badges = <api.BadgeName>[];
@@ -44,6 +47,14 @@ class Certifications {
       badges.add(api.BadgeName.tco);
     }
     return badges;
+  }
+
+  Map<api.ScorerName, int> toScores() {
+    var scores = <api.ScorerName, int>{};
+    if (fti != null) {
+      scores[api.ScorerName.fti] = fti!;
+    }
+    return scores;
   }
 
   factory Certifications.fromJson(Map<String, dynamic> json) =>
@@ -90,11 +101,12 @@ class Product {
       name: name,
       description: description,
       badges: certifications.toBadges(),
+      scores: certifications.toScores(),
     );
   }
 
   api.ProductFull toApiFull({
-    List<api.Manufacturer>? manufacturers,
+    List<api.Organisation>? manufacturers,
     List<api.ProductShort>? alternatives,
   }) {
     return api.ProductFull(
@@ -113,9 +125,9 @@ class Product {
 }
 
 @JsonSerializable()
-class Manufacturer {
+class Organisation {
   @JsonKey(name: 'id')
-  final String manufacturerId;
+  final String organisationId;
 
   @JsonKey(name: 'name')
   final String name;
@@ -126,23 +138,23 @@ class Manufacturer {
   @JsonKey(name: 'certifications')
   final Certifications certifications;
 
-  Manufacturer({
-    required this.manufacturerId,
+  Organisation({
+    required this.organisationId,
     required this.name,
     required this.description,
     required this.certifications,
   });
 
-  api.Manufacturer toApi() {
-    return api.Manufacturer(
-      manufacturerId: manufacturerId,
-      name: name,
-      description: description,
-      badges: certifications.toBadges(),
-    );
+  api.Organisation toApi() {
+    return api.Organisation(
+        organisationId: organisationId,
+        name: name,
+        description: description,
+        badges: certifications.toBadges(),
+        scores: certifications.toScores());
   }
 
-  factory Manufacturer.fromJson(Map<String, dynamic> json) =>
-      _$ManufacturerFromJson(json);
-  Map<String, dynamic> toJson() => _$ManufacturerToJson(this);
+  factory Organisation.fromJson(Map<String, dynamic> json) =>
+      _$OrganisationFromJson(json);
+  Map<String, dynamic> toJson() => _$OrganisationToJson(this);
 }

@@ -21,11 +21,12 @@ void main(List<String> args) async {
 
   final router = shelf_router.Router()
     ..get('/', HealthCheckHandler())
-    ..get('/search', SearchHandler(client, encoder))
+    ..get('/search/products', ProductSearchHandler(client, encoder))
+    ..get('/search/organisations', OrganisationSearchHandler(client, encoder))
     ..get('/info/<id>', InfoHandler(client, encoder))
-    ..get('/products/<id>', ProductHandler(client, encoder))
-    ..get('/products/<id>/alternatives', AlternativesHandler(client, encoder))
-    ..get('/manufacturers/<id>', ManufacturersHandler(client, encoder));
+    ..get('/organisation/<id>', OrganisationHandler(client, encoder))
+    ..get('/product/<id>', ProductHandler(client, encoder))
+    ..get('/product/<id>/alternatives', AlternativesHandler(client, encoder));
 
   final handler =
       shelf.Pipeline().addMiddleware(shelf.logRequests()).addHandler(router);
