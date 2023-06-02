@@ -88,11 +88,11 @@ class DbClient {
     }
   }
 
-  Future<List<db.Product>> findAlternatives(String id) async {
+  Future<List<db.Product>> findAlternatives(String id, String category) async {
     final List<dynamic> dbProducts = await _client
         .newQuery()
         .addLine('FOR p IN products')
-        .addLine('  FILTER p.category == "smartphone" AND p.id != @id')
+        .addLine('  FILTER VALUE(p, ["categories", @category]) AND p.id != @id')
         .addLine('  LET score')
         .addLine('    = (@id IN p.follows)')
         .addLine('    + 0.99 * p.certifications.bcorp')
@@ -102,6 +102,7 @@ class DbClient {
         .addLine('  LIMIT 5')
         .addLine('  RETURN p')
         .addBindVar('id', id)
+        .addBindVar('category', category)
         .runAndReturnFutureList();
 
     return dbProducts.map((p) => db.Product.fromJson(p)).toList();

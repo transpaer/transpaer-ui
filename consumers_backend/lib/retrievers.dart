@@ -6,7 +6,12 @@ import 'db_data.dart' as db;
 Future<List<api.ProductShort>> retrieveAlternatives(
     db_client.DbClient client, db.Product product) async {
   List<api.ProductShort> alternatives = [];
-  for (final dbProduct in await client.findAlternatives(product.productId)) {
+  final String? category = product.getCategory();
+  if (category == null) {
+    return alternatives;
+  }
+  for (final dbProduct
+      in await client.findAlternatives(product.productId, category)) {
     alternatives.add(dbProduct.toApiShort());
   }
 
