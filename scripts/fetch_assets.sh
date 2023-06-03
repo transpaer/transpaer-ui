@@ -1,9 +1,9 @@
 #!/bin/bash
 
-VERSION="0.1.0"
-DOWNLOADS="https://github.com/bluedot-community/consumers-ui-assets/releases/download"
-PACKAGE="consumers_assets-$VERSION.zip"
+VERSION="0.1.1"
+DOWNLOADS="https://github.com/sustainity-dev/sustainity-ui-assets/releases/download"
+PACKAGE="sustainity_assets-$VERSION.zip"
 RELEASE="$DOWNLOADS/v$VERSION/$PACKAGE"
 
-cd consumers_frontend && rm -rf images && wget -q $RELEASE && unzip -q $PACKAGE && rm $PACKAGE
+cd sustainity_frontend && rm -rf images && wget -q $RELEASE && unzip -q $PACKAGE && rm $PACKAGE
 

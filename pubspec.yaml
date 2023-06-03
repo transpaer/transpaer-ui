@@ -1,4 +1,4 @@
-name: consumers_ui_workspacee
+name: sustainity_ui_workspace
 
 environment:
   sdk: '>=2.18.0 <3.0.0'

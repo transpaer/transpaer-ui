@@ -1,0 +1,36 @@
+name: sustainity_frontend
+description: sustainity.dev frontend.
+publish_to: 'none'
+
+version: 0.1.0
+
+environment:
+  sdk: '>=2.19.2 <3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.2
+  flutter_markdown: ^0.6.14
+  json_annotation: ^4.8.0
+  json_serializable: ^6.5.4
+
+  sustainity_api:
+    path: ../sustainity_api
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^2.0.0
+  build_runner: ^2.1.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - images/main.png
+    - images/bcorp.png
+    - images/tco.png
+    - images/fti.png
+
