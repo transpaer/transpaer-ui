@@ -29,7 +29,7 @@ class ScoreData {
 
   Color get color {
     var value = 0.0;
-    switch (this.scorer) {
+    switch (scorer) {
       case api.ScorerName.fti:
         value = score / 100.0;
     }
@@ -198,21 +198,17 @@ class InfoView extends StatefulWidget {
   const InfoView({super.key, required this.infoTopic, required this.fetcher});
 
   @override
-  State<InfoView> createState() => _InfoViewState(fetcher: fetcher);
+  State<InfoView> createState() => _InfoViewState();
 }
 
 class _InfoViewState extends State<InfoView>
     with AutomaticKeepAliveClientMixin {
-  final api.Fetcher fetcher;
-
   late Future<api.Info> _futureInfo;
-
-  _InfoViewState({required this.fetcher});
 
   @override
   void initState() {
     super.initState();
-    _futureInfo = fetcher.fetchInfo(widget.infoTopic);
+    _futureInfo = widget.fetcher.fetchInfo(widget.infoTopic);
   }
 
   @override
@@ -240,25 +236,22 @@ class _InfoViewState extends State<InfoView>
   }
 }
 
-class InfoPage extends StatefulWidget {
+class LibraryPage extends StatefulWidget {
   final api.InfoTopic infoTopic;
   final api.Fetcher fetcher;
 
-  const InfoPage({super.key, required this.infoTopic, required this.fetcher});
+  const LibraryPage(
+      {super.key, required this.infoTopic, required this.fetcher});
 
   @override
-  State<InfoPage> createState() => _InfoPageState(fetcher: fetcher);
+  State<LibraryPage> createState() => _LibraryPageState();
 }
 
-class _InfoPageState extends State<InfoPage>
+class _LibraryPageState extends State<LibraryPage>
     with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
   static const double tabIconSize = 32;
 
-  final api.Fetcher fetcher;
-
   late TabController _tabController;
-
-  _InfoPageState({required this.fetcher});
 
   @override
   void initState() {
@@ -269,7 +262,7 @@ class _InfoPageState extends State<InfoPage>
   }
 
   @override
-  void didUpdateWidget(InfoPage oldWidget) {
+  void didUpdateWidget(LibraryPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     _tabController.animateTo(widget.infoTopic.index);
   }
@@ -303,7 +296,7 @@ class _InfoPageState extends State<InfoPage>
             controller: _tabController,
             children: <Widget>[
               for (final value in api.InfoTopic.values)
-                InfoView(infoTopic: value, fetcher: fetcher),
+                InfoView(infoTopic: value, fetcher: widget.fetcher),
             ],
           ),
         ),
@@ -621,67 +614,6 @@ class OrganisationWidget extends StatelessWidget {
   }
 }
 
-class HomeView extends StatelessWidget {
-  final Function() onOrganisationTextSearch;
-  final Function() onProductTextSearch;
-  final Function() onMapSearch;
-  final Function() onQrcScan;
-
-  const HomeView({
-    super.key,
-    required this.onOrganisationTextSearch,
-    required this.onProductTextSearch,
-    required this.onMapSearch,
-    required this.onQrcScan,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(100.0),
-      child: Column(
-        children: [
-          Expanded(
-            flex: 2,
-            child: FilledButton.icon(
-              icon: const Icon(Icons.manage_search_outlined),
-              label: const Text('Producer/shop search'),
-              onPressed: () => onOrganisationTextSearch(),
-            ),
-          ),
-          const Spacer(),
-          Expanded(
-            flex: 2,
-            child: FilledButton.icon(
-              icon: const Icon(Icons.manage_search_outlined),
-              label: const Text('Product search'),
-              onPressed: () => onProductTextSearch(),
-            ),
-          ),
-          const Spacer(),
-          Expanded(
-            flex: 2,
-            child: FilledButton.icon(
-              icon: const Icon(Icons.map_outlined),
-              label: const Text('Map search'),
-              onPressed: onMapSearch,
-            ),
-          ),
-          const Spacer(),
-          Expanded(
-            flex: 2,
-            child: FilledButton.icon(
-              icon: const Icon(Icons.qr_code_scanner_outlined),
-              label: const Text('QRC scan'),
-              onPressed: onQrcScan,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class OrganisationView extends StatelessWidget {
   final api.Organisation organisation;
   final String source;
@@ -729,16 +661,12 @@ class OrganisationView extends StatelessWidget {
 
 class ProductView extends StatelessWidget {
   final api.ProductFull product;
-  final Function(String) onAlternativeTap;
-  final Function(api.BadgeName) onBadgeTap;
-  final Function(api.ScorerName) onScorerTap;
+  final Navigation navigation;
 
   const ProductView({
     super.key,
     required this.product,
-    required this.onAlternativeTap,
-    required this.onBadgeTap,
-    required this.onScorerTap,
+    required this.navigation,
   });
 
   @override
@@ -763,8 +691,8 @@ class ProductView extends StatelessWidget {
                     OrganisationWidget(
                       organisation: manufacturer,
                       source: "wikidata",
-                      onBadgeTap: onBadgeTap,
-                      onScorerTap: onScorerTap,
+                      onBadgeTap: navigation.onBadgeTap,
+                      onScorerTap: navigation.onScorerTap,
                     )
                 ],
                 const Section(text: 'Alternatives'),
@@ -777,9 +705,9 @@ class ProductView extends StatelessWidget {
                         for (final alternative in product.alternatives!)
                           ProductTileWidget(
                             product: alternative,
-                            onSelected: onAlternativeTap,
-                            onBadgeTap: onBadgeTap,
-                            onScorerTap: onScorerTap,
+                            onSelected: navigation.goToProduct,
+                            onBadgeTap: navigation.onBadgeTap,
+                            onScorerTap: navigation.onScorerTap,
                           ),
                       ],
                     ],
@@ -794,80 +722,38 @@ class ProductView extends StatelessWidget {
   }
 }
 
-class PreviewPage extends StatelessWidget {
-  final PreviewData preview;
-  final Function(String) onProductTap;
-  final Function(api.BadgeName) onBadgeTap;
-  final Function(api.ScorerName) onScorerTap;
-  final api.Fetcher fetcher;
-
-  const PreviewPage({
-    super.key,
-    required this.preview,
-    required this.onProductTap,
-    required this.onBadgeTap,
-    required this.onScorerTap,
-    required this.fetcher,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    switch (preview.variant) {
-      case PreviewVariant.organisation:
-        return OrganisationPage(
-          organisationId: preview.itemId,
-          onBadgeTap: onBadgeTap,
-          onScorerTap: onScorerTap,
-          fetcher: fetcher,
-        );
-      case PreviewVariant.product:
-        return ProductPage(
-          productId: preview.itemId,
-          onAlternativeTap: onProductTap,
-          onBadgeTap: onBadgeTap,
-          onScorerTap: onScorerTap,
-          fetcher: fetcher,
-        );
-    }
-  }
-}
-
 class OrganisationPage extends StatefulWidget {
   final String organisationId;
-  final Function(api.BadgeName) onBadgeTap;
-  final Function(api.ScorerName) onScorerTap;
+  final Navigation navigation;
   final api.Fetcher fetcher;
 
   const OrganisationPage({
     super.key,
     required this.organisationId,
-    required this.onBadgeTap,
-    required this.onScorerTap,
+    required this.navigation,
     required this.fetcher,
   });
 
   @override
-  State<OrganisationPage> createState() =>
-      _OrganisationPageState(fetcher: fetcher);
+  State<OrganisationPage> createState() => _OrganisationPageState();
 }
 
 class _OrganisationPageState extends State<OrganisationPage>
     with AutomaticKeepAliveClientMixin {
-  final api.Fetcher fetcher;
   late Future<api.Organisation> _futureOrganisation;
-
-  _OrganisationPageState({required this.fetcher});
 
   @override
   void initState() {
     super.initState();
-    _futureOrganisation = fetcher.fetchOrganisation(widget.organisationId);
+    _futureOrganisation =
+        widget.fetcher.fetchOrganisation(widget.organisationId);
   }
 
   @override
   void didUpdateWidget(OrganisationPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _futureOrganisation = fetcher.fetchOrganisation(widget.organisationId);
+    _futureOrganisation =
+        widget.fetcher.fetchOrganisation(widget.organisationId);
   }
 
   @override
@@ -883,8 +769,8 @@ class _OrganisationPageState extends State<OrganisationPage>
           if (snapshot.hasData) {
             return OrganisationView(
               organisation: snapshot.data!,
-              onBadgeTap: widget.onBadgeTap,
-              onScorerTap: widget.onScorerTap,
+              onBadgeTap: widget.navigation.onBadgeTap,
+              onScorerTap: widget.navigation.onScorerTap,
               source: "wikidata",
             );
           } else if (snapshot.hasError) {
@@ -900,41 +786,34 @@ class _OrganisationPageState extends State<OrganisationPage>
 
 class ProductPage extends StatefulWidget {
   final String productId;
-  final Function(String) onAlternativeTap;
-  final Function(api.BadgeName) onBadgeTap;
-  final Function(api.ScorerName) onScorerTap;
+  final Navigation navigation;
   final api.Fetcher fetcher;
 
   const ProductPage({
     super.key,
     required this.productId,
-    required this.onAlternativeTap,
-    required this.onBadgeTap,
-    required this.onScorerTap,
+    required this.navigation,
     required this.fetcher,
   });
 
   @override
-  State<ProductPage> createState() => _ProductPageState(fetcher: fetcher);
+  State<ProductPage> createState() => _ProductPageState();
 }
 
 class _ProductPageState extends State<ProductPage>
     with AutomaticKeepAliveClientMixin {
-  final api.Fetcher fetcher;
   late Future<api.ProductFull> _futureProduct;
-
-  _ProductPageState({required this.fetcher});
 
   @override
   void initState() {
     super.initState();
-    _futureProduct = fetcher.fetchProduct(widget.productId);
+    _futureProduct = widget.fetcher.fetchProduct(widget.productId);
   }
 
   @override
   void didUpdateWidget(ProductPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _futureProduct = fetcher.fetchProduct(widget.productId);
+    _futureProduct = widget.fetcher.fetchProduct(widget.productId);
   }
 
   @override
@@ -950,9 +829,7 @@ class _ProductPageState extends State<ProductPage>
           if (snapshot.hasData) {
             return ProductView(
               product: snapshot.data!,
-              onAlternativeTap: widget.onAlternativeTap,
-              onBadgeTap: widget.onBadgeTap,
-              onScorerTap: widget.onScorerTap,
+              navigation: widget.navigation,
             );
           } else if (snapshot.hasError) {
             return Text('Error while fetching data: ${snapshot.error}');
@@ -977,18 +854,15 @@ class OrganisationTextSearchPage extends StatefulWidget {
 
   @override
   State<OrganisationTextSearchPage> createState() =>
-      _OrganisationTextSearchPageState(fetcher: fetcher);
+      _OrganisationTextSearchPageState();
 }
 
 class _OrganisationTextSearchPageState extends State<OrganisationTextSearchPage>
     with AutomaticKeepAliveClientMixin {
   final _searchFieldController = TextEditingController();
-  final api.Fetcher fetcher;
 
   bool _searching = false;
   List<api.Organisation> _entries = [];
-
-  _OrganisationTextSearchPageState({required this.fetcher});
 
   @override
   bool get wantKeepAlive => true;
@@ -1045,7 +919,7 @@ class _OrganisationTextSearchPageState extends State<OrganisationTextSearchPage>
       _searching = true;
       _entries = [];
     });
-    final result = await fetcher.searchOrganisations(text);
+    final result = await widget.fetcher.searchOrganisations(text);
     setState(() {
       _searching = false;
       _entries = result.organisations;
@@ -1064,19 +938,15 @@ class ProductTextSearchPage extends StatefulWidget {
   });
 
   @override
-  State<ProductTextSearchPage> createState() =>
-      _ProductTextSearchPageState(fetcher: fetcher);
+  State<ProductTextSearchPage> createState() => _ProductTextSearchPageState();
 }
 
 class _ProductTextSearchPageState extends State<ProductTextSearchPage>
     with AutomaticKeepAliveClientMixin {
   final _searchFieldController = TextEditingController();
-  final api.Fetcher fetcher;
 
   bool _searching = false;
   List<api.ProductFull> _entries = [];
-
-  _ProductTextSearchPageState({required this.fetcher});
 
   @override
   bool get wantKeepAlive => true;
@@ -1133,12 +1003,256 @@ class _ProductTextSearchPageState extends State<ProductTextSearchPage>
       _searching = true;
       _entries = [];
     });
-    final result = await fetcher.searchProducts(text);
+    final result = await widget.fetcher.searchProducts(text);
     setState(() {
       _searching = false;
       _entries = result.products;
     });
   }
+}
+
+class ProductArguments {
+  final String id;
+
+  ProductArguments({required this.id});
+}
+
+class ProductScreen extends StatelessWidget {
+  final String? productId;
+  final Navigation navigation;
+  final api.Fetcher fetcher;
+
+  const ProductScreen({
+    super.key,
+    required this.productId,
+    required this.navigation,
+    required this.fetcher,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Product"),
+      ),
+      body: ProductPage(
+        productId: productId!,
+        navigation: navigation,
+        fetcher: fetcher,
+      ),
+    );
+  }
+}
+
+class OrganisationArguments {
+  final String id;
+
+  OrganisationArguments({required this.id});
+}
+
+class OrganisationScreen extends StatelessWidget {
+  final String organisationId;
+  final api.Fetcher fetcher;
+  final Navigation navigation;
+
+  const OrganisationScreen({
+    super.key,
+    required this.organisationId,
+    required this.fetcher,
+    required this.navigation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Organisation"),
+      ),
+      body: OrganisationPage(
+        organisationId: organisationId,
+        navigation: navigation,
+        fetcher: fetcher,
+      ),
+    );
+  }
+}
+
+class LibraryArguments {
+  final api.InfoTopic topic;
+
+  LibraryArguments({required this.topic});
+}
+
+class LibraryScreen extends StatelessWidget {
+  final api.InfoTopic topic;
+  final api.Fetcher fetcher;
+  final Navigation navigation;
+
+  const LibraryScreen({
+    super.key,
+    required this.topic,
+    required this.navigation,
+    required this.fetcher,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Library"),
+      ),
+      body: InfoView(
+        infoTopic: topic,
+        fetcher: fetcher,
+      ),
+    );
+  }
+}
+
+class RootScreen extends StatefulWidget {
+  final api.Fetcher fetcher;
+  final Navigation navigation;
+
+  const RootScreen({
+    super.key,
+    required this.fetcher,
+    required this.navigation,
+  });
+
+  @override
+  State<RootScreen> createState() => _RootScreenState();
+}
+
+class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
+  static const int _tabNum = 5;
+
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: _tabNum, vsync: this);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Sustainity'),
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.lightGreen[100],
+          indicatorWeight: 7,
+          tabs: const <Widget>[
+            Tab(
+              icon: Icon(Icons.menu_book_outlined),
+            ),
+            Tab(
+              icon: Icon(Icons.manage_search_outlined),
+            ),
+            Tab(
+              icon: Icon(Icons.manage_search_outlined),
+            ),
+            Tab(
+              icon: Icon(Icons.map_outlined),
+            ),
+            Tab(
+              icon: Icon(Icons.qr_code_scanner_outlined),
+            ),
+          ],
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: <Widget>[
+          LibraryPage(
+            infoTopic: api.InfoTopic.main,
+            fetcher: widget.fetcher,
+          ),
+          OrganisationTextSearchPage(
+            onSelected: widget.navigation.goToOrganisation,
+            fetcher: widget.fetcher,
+          ),
+          ProductTextSearchPage(
+            onSelected: widget.navigation.goToProduct,
+            fetcher: widget.fetcher,
+          ),
+          const Center(
+            child: Text('Map search'),
+          ),
+          const Center(
+            child: Text('QRC search'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+enum NavigationPath {
+  root,
+  product,
+  organisation,
+  library,
+}
+
+class Navigation {
+  static const rootPath = "/";
+  static const productPath = "/product:";
+  static const organisationPath = "/organisation:";
+  static const libraryPath = "/library:";
+
+  final BuildContext context;
+
+  Navigation(this.context);
+
+  void goToProduct(String productId) {
+    Navigator.pushNamed(
+      context,
+      "$productPath$productId",
+      arguments: AppArguments(
+        NavigationPath.product,
+        ProductArguments(id: productId),
+      ),
+    );
+  }
+
+  void goToOrganisation(String organisationId) {
+    Navigator.pushNamed(
+      context,
+      "$organisationPath$organisationId",
+      arguments: AppArguments(
+        NavigationPath.organisation,
+        OrganisationArguments(id: organisationId),
+      ),
+    );
+  }
+
+  void goToLibrary(api.InfoTopic topic) {
+    Navigator.pushNamed(
+      context,
+      "$libraryPath${topic.name}",
+      arguments: AppArguments(
+        NavigationPath.library,
+        LibraryArguments(topic: topic),
+      ),
+    );
+  }
+
+  void onBadgeTap(api.BadgeName badge) {
+    goToLibrary(badge.toInfoTopic());
+  }
+
+  void onScorerTap(api.ScorerName scorer) {
+    goToLibrary(scorer.toInfoTopic());
+  }
+}
+
+class AppArguments {
+  final NavigationPath path;
+  final dynamic args;
+
+  AppArguments(this.path, this.args);
 }
 
 class SustainityFrontend extends StatefulWidget {
@@ -1147,149 +1261,115 @@ class SustainityFrontend extends StatefulWidget {
   const SustainityFrontend({super.key, required this.fetcher});
 
   @override
-  State<SustainityFrontend> createState() =>
-      _SustainityFrontendState(fetcher: fetcher);
+  State<SustainityFrontend> createState() => _SustainityFrontendState();
 }
 
 class _SustainityFrontendState extends State<SustainityFrontend>
     with TickerProviderStateMixin {
-  static const int _infoTab = 0;
-  static const int _previewTab = 1;
-  static const int _organisationTextSearchTab = 2;
-  static const int _productTextSearchTab = 3;
-  static const int _mapSearchTab = 4;
-  static const int _qrcScanTab = 5;
-
-  final api.Fetcher fetcher;
-
-  late TabController _tabController;
-
-  PreviewData? _preview;
-  api.InfoTopic _infoTopic = api.InfoTopic.main;
-
-  _SustainityFrontendState({required this.fetcher});
-
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: 6, vsync: this);
-  }
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Sustainify',
-      theme: ThemeData(
-        cardColor: Colors.white,
-        scaffoldBackgroundColor: Colors.grey[200],
-        appBarTheme: AppBarTheme(
-          backgroundColor: Colors.green[800],
-          foregroundColor: Colors.white,
-        ),
-        colorScheme: ColorScheme.fromSwatch().copyWith(
-          primary: Colors.green[800],
-          onPrimary: Colors.white,
-        ),
-      ),
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Sustainify'),
-          bottom: TabBar(
-            controller: _tabController,
-            indicatorColor: Colors.lightGreen[100],
-            indicatorWeight: 7,
-            tabs: const <Widget>[
-              Tab(
-                icon: Icon(Icons.info_outlined),
-              ),
-              Tab(
-                icon: Icon(Icons.shopping_basket_outlined),
-              ),
-              Tab(
-                icon: Icon(Icons.manage_search_outlined),
-              ),
-              Tab(
-                icon: Icon(Icons.manage_search_outlined),
-              ),
-              Tab(
-                icon: Icon(Icons.map_outlined),
-              ),
-              Tab(
-                icon: Icon(Icons.qr_code_scanner_outlined),
-              ),
-            ],
+        title: 'Sustainify',
+        theme: ThemeData(
+          cardColor: Colors.white,
+          scaffoldBackgroundColor: Colors.grey[200],
+          appBarTheme: AppBarTheme(
+            backgroundColor: Colors.green[800],
+            foregroundColor: Colors.white,
+          ),
+          colorScheme: ColorScheme.fromSwatch().copyWith(
+            primary: Colors.green[800],
+            onPrimary: Colors.white,
           ),
         ),
-        body: TabBarView(
-          controller: _tabController,
-          children: <Widget>[
-            InfoPage(infoTopic: _infoTopic, fetcher: fetcher),
-            if (_preview != null) ...[
-              PreviewPage(
-                preview: _preview!,
-                onProductTap: (productId) {
-                  setState(() {
-                    _preview = PreviewData(
-                        itemId: productId, variant: PreviewVariant.product);
-                  });
-                },
-                onBadgeTap: (badgeName) {
-                  setState(() {
-                    _infoTopic = badgeName.toInfoTopic();
-                  });
-                  _tabController.animateTo(_infoTab);
-                },
-                onScorerTap: (scorerName) {
-                  setState(() {
-                    _infoTopic = scorerName.toInfoTopic();
-                  });
-                  _tabController.animateTo(_infoTab);
-                },
-                fetcher: fetcher,
-              )
-            ] else ...[
-              HomeView(
-                onOrganisationTextSearch: () =>
-                    _tabController.animateTo(_organisationTextSearchTab),
-                onProductTextSearch: () =>
-                    _tabController.animateTo(_productTextSearchTab),
-                onMapSearch: () => _tabController.animateTo(_mapSearchTab),
-                onQrcScan: () => _tabController.animateTo(_qrcScanTab),
-              )
-            ],
-            OrganisationTextSearchPage(
-              onSelected: (organisationId) {
-                setState(() {
-                  _preview = PreviewData(
-                    variant: PreviewVariant.organisation,
-                    itemId: organisationId,
+        initialRoute: "/",
+        onGenerateRoute: (settings) {
+          AppArguments appArgs;
+          if (settings.arguments != null) {
+            appArgs = settings.arguments as AppArguments;
+          } else {
+            appArgs = parseArgs(settings.name);
+          }
+          switch (appArgs.path) {
+            case NavigationPath.root:
+              return MaterialPageRoute(
+                settings: settings,
+                builder: (context) {
+                  return RootScreen(
+                    fetcher: widget.fetcher,
+                    navigation: Navigation(context),
                   );
-                });
-                _tabController.animateTo(_previewTab);
-              },
-              fetcher: fetcher,
-            ),
-            ProductTextSearchPage(
-              onSelected: (productId) {
-                setState(() {
-                  _preview = PreviewData(
-                    variant: PreviewVariant.product,
-                    itemId: productId,
+                },
+              );
+            case NavigationPath.product:
+              final args = appArgs.args as ProductArguments;
+              return MaterialPageRoute(
+                settings: settings,
+                builder: (context) {
+                  return ProductScreen(
+                    productId: args.id,
+                    fetcher: widget.fetcher,
+                    navigation: Navigation(context),
                   );
-                });
-                _tabController.animateTo(_previewTab);
-              },
-              fetcher: fetcher,
-            ),
-            const Center(
-              child: Text('Map search'),
-            ),
-            const Center(
-              child: Text('QRC search'),
-            ),
-          ],
-        ),
-      ),
-    );
+                },
+              );
+            case NavigationPath.organisation:
+              final args = appArgs.args as OrganisationArguments;
+              return MaterialPageRoute(
+                settings: settings,
+                builder: (context) {
+                  return OrganisationScreen(
+                    organisationId: args.id,
+                    fetcher: widget.fetcher,
+                    navigation: Navigation(context),
+                  );
+                },
+              );
+            case NavigationPath.library:
+              final args = appArgs.args as LibraryArguments;
+              return MaterialPageRoute(
+                settings: settings,
+                builder: (context) {
+                  return LibraryScreen(
+                    topic: args.topic,
+                    fetcher: widget.fetcher,
+                    navigation: Navigation(context),
+                  );
+                },
+              );
+          }
+        });
+  }
+
+  AppArguments parseArgs(String? path) {
+    if (path == null || path == Navigation.rootPath) {
+      return AppArguments(NavigationPath.root, null);
+    }
+
+    if (path.startsWith(Navigation.productPath)) {
+      final productId = path.substring(Navigation.productPath.length);
+      return AppArguments(
+        NavigationPath.product,
+        ProductArguments(id: productId),
+      );
+    }
+
+    if (path.startsWith(Navigation.organisationPath)) {
+      final organisationId = path.substring(Navigation.organisationPath.length);
+      return AppArguments(
+        NavigationPath.organisation,
+        OrganisationArguments(id: organisationId),
+      );
+    }
+
+    if (path.startsWith(Navigation.libraryPath)) {
+      final topic = path.substring(Navigation.libraryPath.length);
+      return AppArguments(
+        NavigationPath.library,
+        LibraryArguments(topic: api.InfoTopicExtension.fromString(topic)),
+      );
+    }
+
+    return AppArguments(NavigationPath.root, null);
   }
 }

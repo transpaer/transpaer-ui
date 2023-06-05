@@ -3,6 +3,14 @@ import 'package:sustainity_api/sustainity_api.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test('Serde Topic', () {
+    expect(InfoTopic.main, InfoTopicExtension.fromString('info--main'));
+    expect(InfoTopic.bcorp, InfoTopicExtension.fromString('badge--bcorp'));
+    expect(InfoTopic.tco, InfoTopicExtension.fromString('badge--tco'));
+    expect(InfoTopic.fti, InfoTopicExtension.fromString('badge--fti'));
+    expect(InfoTopic.main, InfoTopicExtension.fromString('wrong value'));
+  });
+
   test('Serde Product', () {
     final originalString =
         '{"product_id":"P","name":"N","description":"D","badges":["bcorp","tco"],"scores":{"fti":25}}';
