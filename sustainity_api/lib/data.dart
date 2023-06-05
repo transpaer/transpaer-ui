@@ -62,6 +62,11 @@ extension InfoTopicExtension on InfoTopic {
   String get name {
     return ["info--main", "badge--bcorp", "badge--tco", "badge--fti"][index];
   }
+
+  static InfoTopic fromString(String string) {
+    return InfoTopic.values
+        .firstWhere((t) => t.name == string, orElse: () => InfoTopic.main);
+  }
 }
 
 @JsonSerializable()
