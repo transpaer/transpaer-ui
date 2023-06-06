@@ -4,8 +4,40 @@ import 'package:sustainity_api/sustainity_api.dart' as api;
 
 part 'db_data.g.dart';
 
+enum Source {
+  @JsonValue('wikidata')
+  wikidata,
+}
+
+extension SourceExtension on Source {
+  api.Source toApi() {
+    switch (this) {
+      case Source.wikidata:
+        return api.Source.wikidata;
+    }
+  }
+}
+
 @JsonSerializable()
-class Info {
+class Image {
+  @JsonKey(name: 'image')
+  final String image;
+
+  @JsonKey(name: 'source')
+  final Source source;
+
+  Image({required this.image, required this.source});
+
+  api.Image toApi() {
+    return api.Image(image: image, source: source.toApi());
+  }
+
+  factory Image.fromJson(Map<String, dynamic> json) => _$ImageFromJson(json);
+  Map<String, dynamic> toJson() => _$ImageToJson(this);
+}
+
+@JsonSerializable()
+class LibraryInfo {
   @JsonKey(name: 'id')
   final String id;
 
@@ -15,14 +47,15 @@ class Info {
   @JsonKey(name: 'article')
   final String article;
 
-  Info({required this.id, required this.title, required this.article});
+  LibraryInfo({required this.id, required this.title, required this.article});
 
-  api.Info toApi() {
-    return api.Info(id: id, title: title, article: article);
+  api.LibraryInfo toApi() {
+    return api.LibraryInfo(id: id, title: title, article: article);
   }
 
-  factory Info.fromJson(Map<String, dynamic> json) => _$InfoFromJson(json);
-  Map<String, dynamic> toJson() => _$InfoToJson(this);
+  factory LibraryInfo.fromJson(Map<String, dynamic> json) =>
+      _$LibraryInfoFromJson(json);
+  Map<String, dynamic> toJson() => _$LibraryInfoToJson(this);
 }
 
 @JsonSerializable()
@@ -162,6 +195,9 @@ class Product {
   @JsonKey(name: 'categories')
   final Categories categories;
 
+  @JsonKey(name: 'images')
+  final List<Image>? images;
+
   @JsonKey(name: 'manufacturer_ids')
   final List<String>? manufacturerIds;
 
@@ -179,6 +215,7 @@ class Product {
     required this.name,
     required this.description,
     required this.categories,
+    required this.images,
     required this.manufacturerIds,
     required this.follows,
     required this.followedBy,
@@ -203,6 +240,9 @@ class Product {
       productId: productId,
       name: name,
       description: description,
+      images: images != null
+          ? images!.map((i) => i.toApi()).toList()
+          : <api.Image>[],
       manufacturerIds: manufacturerIds,
       manufacturers: manufacturers,
       alternatives: alternatives,
@@ -286,6 +326,12 @@ class Organisation {
   @JsonKey(name: 'description')
   final String description;
 
+  @JsonKey(name: 'images')
+  final List<Image>? images;
+
+  @JsonKey(name: 'websites')
+  final List<String>? websites;
+
   @JsonKey(name: 'certifications')
   final Certifications certifications;
 
@@ -293,6 +339,8 @@ class Organisation {
     required this.organisationId,
     required this.name,
     required this.description,
+    required this.images,
+    required this.websites,
     required this.certifications,
   });
 
@@ -301,6 +349,10 @@ class Organisation {
         organisationId: organisationId,
         name: name,
         description: description,
+        images: images != null
+            ? images!.map((i) => i.toApi()).toList()
+            : <api.Image>[],
+        websites: websites != null ? websites! : <String>[],
         badges: certifications.toBadges(),
         scores: certifications.toScores());
   }
@@ -308,4 +360,30 @@ class Organisation {
   factory Organisation.fromJson(Map<String, dynamic> json) =>
       _$OrganisationFromJson(json);
   Map<String, dynamic> toJson() => _$OrganisationToJson(this);
+}
+
+@JsonSerializable()
+class SearchResult {
+  @JsonKey(name: 'id')
+  final String id;
+
+  @JsonKey(name: 'name')
+  final String name;
+
+  SearchResult({
+    required this.id,
+    required this.name,
+  });
+
+  api.SearchResult toApi(api.SearchResultVariant variant) {
+    return api.SearchResult(
+      id: id,
+      label: name,
+      variant: variant,
+    );
+  }
+
+  factory SearchResult.fromJson(Map<String, dynamic> json) =>
+      _$SearchResultFromJson(json);
+  Map<String, dynamic> toJson() => _$SearchResultToJson(this);
 }

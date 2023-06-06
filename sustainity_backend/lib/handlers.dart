@@ -21,14 +21,14 @@ class HealthCheckHandler {
   }
 }
 
-class InfoHandler {
+class LibraryHandler {
   db_client.DbClient client;
   JsonEncoder encoder;
 
-  InfoHandler(this.client, this.encoder);
+  LibraryHandler(this.client, this.encoder);
 
   Future<shelf.Response> call(shelf.Request req, String id) async {
-    final dbInfo = await client.getInfo(id);
+    final dbInfo = await client.getLibraryInfo(id);
     if (dbInfo != null) {
       final apiInfo = dbInfo.toApi();
       return shelf.Response.ok(encoder.convert(apiInfo), headers: corsHeaders);
@@ -38,35 +38,18 @@ class InfoHandler {
   }
 }
 
-class OrganisationSearchHandler {
+class TextSearchHandler {
   db_client.DbClient client;
   JsonEncoder encoder;
 
-  OrganisationSearchHandler(this.client, this.encoder);
-
-  Future<shelf.Response> call(shelf.Request req) async {
-    final request = api.OrganisationTextSearchRequest.fromJson(
-        req.requestedUri.queryParameters);
-    final dbOrganisations = await client.searchOrganisations(request.query);
-    final apiOrganisations = dbOrganisations.map((p) => p.toApi()).toList();
-    final response =
-        api.OrganisationTextSearchResponse(organisations: apiOrganisations);
-    return shelf.Response.ok(encoder.convert(response), headers: corsHeaders);
-  }
-}
-
-class ProductSearchHandler {
-  db_client.DbClient client;
-  JsonEncoder encoder;
-
-  ProductSearchHandler(this.client, this.encoder);
+  TextSearchHandler(this.client, this.encoder);
 
   Future<shelf.Response> call(shelf.Request req) async {
     final request =
-        api.ProductTextSearchRequest.fromJson(req.requestedUri.queryParameters);
-    final dbProducts = await client.searchProducts(request.query);
-    final apiProducts = dbProducts.map((p) => p.toApiFull()).toList();
-    final response = api.ProductTextSearchResponse(products: apiProducts);
+        api.TextSearchRequest.fromJson(req.requestedUri.queryParameters);
+    final apiSearchResults =
+        await retrievers.retrieveSearchResults(client, request.query);
+    final response = api.TextSearchResponse(results: apiSearchResults);
     return shelf.Response.ok(encoder.convert(response), headers: corsHeaders);
   }
 }
