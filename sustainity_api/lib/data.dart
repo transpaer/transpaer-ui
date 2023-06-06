@@ -15,12 +15,12 @@ extension BadgeNameExtension on BadgeName {
     return ["bcorp", "tco"][index];
   }
 
-  InfoTopic toInfoTopic() {
+  LibraryTopic toLibraryTopic() {
     switch (this) {
       case BadgeName.bcorp:
-        return InfoTopic.bcorp;
+        return LibraryTopic.bcorp;
       case BadgeName.tco:
-        return InfoTopic.tco;
+        return LibraryTopic.tco;
     }
   }
 }
@@ -36,41 +36,53 @@ extension ScorerNameExtension on ScorerName {
     return ["fti"][index];
   }
 
-  InfoTopic toInfoTopic() {
+  LibraryTopic toLibraryTopic() {
     switch (this) {
       case ScorerName.fti:
-        return InfoTopic.fti;
+        return LibraryTopic.fti;
     }
   }
 }
 
-enum InfoTopic {
-  @JsonValue('info--main')
+enum LibraryTopic {
   main,
-
-  @JsonValue('cert--bcorp')
   bcorp,
-
-  @JsonValue('cert--tco')
   tco,
-
-  @JsonValue('cert--fti')
   fti,
 }
 
-extension InfoTopicExtension on InfoTopic {
+extension LibraryTopicExtension on LibraryTopic {
   String get name {
-    return ["info--main", "badge--bcorp", "badge--tco", "badge--fti"][index];
+    return ["info:main", "cert:bcorp", "cert:tco", "cert:fti"][index];
   }
 
-  static InfoTopic fromString(String string) {
-    return InfoTopic.values
-        .firstWhere((t) => t.name == string, orElse: () => InfoTopic.main);
+  static LibraryTopic fromString(String string) {
+    return LibraryTopic.values
+        .firstWhere((t) => t.name == string, orElse: () => LibraryTopic.main);
   }
 }
 
+enum Source {
+  @JsonValue('wikidata')
+  wikidata,
+}
+
 @JsonSerializable()
-class Info {
+class Image {
+  @JsonKey(name: 'image')
+  final String image;
+
+  @JsonKey(name: 'source')
+  final Source source;
+
+  Image({required this.image, required this.source});
+
+  factory Image.fromJson(Map<String, dynamic> json) => _$ImageFromJson(json);
+  Map<String, dynamic> toJson() => _$ImageToJson(this);
+}
+
+@JsonSerializable()
+class LibraryInfo {
   @JsonKey(name: 'id')
   final String id;
 
@@ -80,14 +92,15 @@ class Info {
   @JsonKey(name: 'article')
   final String article;
 
-  Info({
+  LibraryInfo({
     required this.id,
     required this.title,
     required this.article,
   });
 
-  factory Info.fromJson(Map<String, dynamic> json) => _$InfoFromJson(json);
-  Map<String, dynamic> toJson() => _$InfoToJson(this);
+  factory LibraryInfo.fromJson(Map<String, dynamic> json) =>
+      _$LibraryInfoFromJson(json);
+  Map<String, dynamic> toJson() => _$LibraryInfoToJson(this);
 }
 
 @JsonSerializable()
@@ -101,6 +114,12 @@ class Organisation {
   @JsonKey(name: 'description')
   final String description;
 
+  @JsonKey(name: 'images')
+  final List<Image> images;
+
+  @JsonKey(name: 'websites')
+  final List<String> websites;
+
   @JsonKey(name: 'badges')
   final List<BadgeName> badges;
 
@@ -111,6 +130,8 @@ class Organisation {
     required this.organisationId,
     required this.name,
     required this.description,
+    required this.images,
+    required this.websites,
     required this.badges,
     required this.scores,
   });
@@ -161,6 +182,9 @@ class ProductFull {
   @JsonKey(name: 'description')
   final String description;
 
+  @JsonKey(name: 'images')
+  final List<Image> images;
+
   @JsonKey(name: 'manufacturer_ids')
   final List<String>? manufacturerIds;
 
@@ -174,6 +198,7 @@ class ProductFull {
     required this.productId,
     required this.name,
     required this.description,
+    required this.images,
     required this.manufacturerIds,
     this.manufacturers,
     this.alternatives,
@@ -182,4 +207,30 @@ class ProductFull {
   factory ProductFull.fromJson(Map<String, dynamic> json) =>
       _$ProductFullFromJson(json);
   Map<String, dynamic> toJson() => _$ProductFullToJson(this);
+}
+
+enum SearchResultVariant {
+  @JsonValue('product')
+  product,
+
+  @JsonValue('organisation')
+  organisation,
+}
+
+@JsonSerializable()
+class SearchResult {
+  @JsonKey(name: 'variant')
+  final SearchResultVariant variant;
+
+  @JsonKey(name: 'label')
+  final String label;
+
+  @JsonKey(name: 'id')
+  final String id;
+
+  SearchResult({required this.variant, required this.label, required this.id});
+
+  factory SearchResult.fromJson(Map<String, dynamic> json) =>
+      _$SearchResultFromJson(json);
+  Map<String, dynamic> toJson() => _$SearchResultToJson(this);
 }

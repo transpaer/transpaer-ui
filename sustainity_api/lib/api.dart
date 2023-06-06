@@ -5,53 +5,24 @@ import 'data.dart';
 part 'api.g.dart';
 
 @JsonSerializable()
-class OrganisationTextSearchRequest {
+class TextSearchRequest {
   @JsonKey(name: 'query')
   final String query;
 
-  @JsonKey(name: 'limit')
-  final String? limit;
+  TextSearchRequest({required this.query});
 
-  OrganisationTextSearchRequest({required this.query, this.limit = "10"});
-
-  factory OrganisationTextSearchRequest.fromJson(Map<String, dynamic> json) =>
-      _$OrganisationTextSearchRequestFromJson(json);
-  Map<String, dynamic> toJson() => _$OrganisationTextSearchRequestToJson(this);
+  factory TextSearchRequest.fromJson(Map<String, dynamic> json) =>
+      _$TextSearchRequestFromJson(json);
+  Map<String, dynamic> toJson() => _$TextSearchRequestToJson(this);
 }
 
 @JsonSerializable()
-class OrganisationTextSearchResponse {
-  final List<Organisation> organisations;
+class TextSearchResponse {
+  final List<SearchResult> results;
 
-  OrganisationTextSearchResponse({required this.organisations});
+  TextSearchResponse({required this.results});
 
-  factory OrganisationTextSearchResponse.fromJson(Map<String, dynamic> json) =>
-      _$OrganisationTextSearchResponseFromJson(json);
-  Map<String, dynamic> toJson() => _$OrganisationTextSearchResponseToJson(this);
-}
-
-@JsonSerializable()
-class ProductTextSearchRequest {
-  @JsonKey(name: 'query')
-  final String query;
-
-  @JsonKey(name: 'limit')
-  final String? limit;
-
-  ProductTextSearchRequest({required this.query, this.limit = "10"});
-
-  factory ProductTextSearchRequest.fromJson(Map<String, dynamic> json) =>
-      _$ProductTextSearchRequestFromJson(json);
-  Map<String, dynamic> toJson() => _$ProductTextSearchRequestToJson(this);
-}
-
-@JsonSerializable()
-class ProductTextSearchResponse {
-  final List<ProductFull> products;
-
-  ProductTextSearchResponse({required this.products});
-
-  factory ProductTextSearchResponse.fromJson(Map<String, dynamic> json) =>
-      _$ProductTextSearchResponseFromJson(json);
-  Map<String, dynamic> toJson() => _$ProductTextSearchResponseToJson(this);
+  factory TextSearchResponse.fromJson(Map<String, dynamic> json) =>
+      _$TextSearchResponseFromJson(json);
+  Map<String, dynamic> toJson() => _$TextSearchResponseToJson(this);
 }

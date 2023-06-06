@@ -8,6 +8,7 @@ import 'package:sustainity_frontend/configuration.dart';
 const double defaultPadding = 10.0;
 const double tileWidth = 180;
 const double tileHeight = 240;
+const double imageSize = 220;
 
 void main() async {
   final config = Config.load();
@@ -155,21 +156,35 @@ class Article extends StatelessWidget {
                 const BorderRadius.all(Radius.circular(defaultPadding))),
         child: Padding(
           padding: const EdgeInsets.all(defaultPadding),
-          child: Markdown(data: markdown),
+          child: Markdown(
+            data: markdown,
+            selectable: true,
+            styleSheet: MarkdownStyleSheet(
+              blockquoteDecoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                border: Border(
+                  left: BorderSide(
+                    width: 3,
+                    color: Theme.of(context).dividerColor,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-extension InfoTopicGuiExtension on api.InfoTopic {
+extension InfoTopicGuiExtension on api.LibraryTopic {
   String get icon {
     return ["main", "bcorp", "tco", "fti"][index];
   }
 }
 
 class InfoWidget extends StatelessWidget {
-  final api.Info info;
+  final api.LibraryInfo info;
 
   const InfoWidget({
     super.key,
@@ -191,24 +206,60 @@ class InfoWidget extends StatelessWidget {
   }
 }
 
-class InfoView extends StatefulWidget {
-  final api.InfoTopic infoTopic;
-  final api.Fetcher fetcher;
+class SourcedImage extends StatelessWidget {
+  static const url1 = "https://commons.wikimedia.org/wiki/Special:FilePath";
 
-  const InfoView({super.key, required this.infoTopic, required this.fetcher});
+  final api.Image image;
+
+  const SourcedImage(this.image, {super.key});
 
   @override
-  State<InfoView> createState() => _InfoViewState();
+  Widget build(BuildContext context) {
+    String link;
+    String url;
+    String source;
+    switch (image.source) {
+      case api.Source.wikidata:
+        link = "$url1/${image.image}";
+        url = "$link?width=200";
+        source = "wikidata";
+        break;
+    }
+
+    return Column(
+      children: [
+        Image.network(
+          url,
+          width: imageSize,
+          height: imageSize,
+        ),
+        Tooltip(
+          message: link,
+          child: Text("Source: $source"),
+        ),
+      ],
+    );
+  }
 }
 
-class _InfoViewState extends State<InfoView>
+class LibraryView extends StatefulWidget {
+  final api.LibraryTopic topic;
+  final api.Fetcher fetcher;
+
+  const LibraryView({super.key, required this.topic, required this.fetcher});
+
+  @override
+  State<LibraryView> createState() => _LibraryViewState();
+}
+
+class _LibraryViewState extends State<LibraryView>
     with AutomaticKeepAliveClientMixin {
-  late Future<api.Info> _futureInfo;
+  late Future<api.LibraryInfo> _futureInfo;
 
   @override
   void initState() {
     super.initState();
-    _futureInfo = widget.fetcher.fetchInfo(widget.infoTopic);
+    _futureInfo = widget.fetcher.fetchLibraryInfo(widget.topic);
   }
 
   @override
@@ -218,7 +269,7 @@ class _InfoViewState extends State<InfoView>
   Widget build(BuildContext context) {
     super.build(context);
     return Center(
-      child: FutureBuilder<api.Info>(
+      child: FutureBuilder<api.LibraryInfo>(
         future: _futureInfo,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
@@ -237,11 +288,10 @@ class _InfoViewState extends State<InfoView>
 }
 
 class LibraryPage extends StatefulWidget {
-  final api.InfoTopic infoTopic;
+  final api.LibraryTopic topic;
   final api.Fetcher fetcher;
 
-  const LibraryPage(
-      {super.key, required this.infoTopic, required this.fetcher});
+  const LibraryPage({super.key, required this.topic, required this.fetcher});
 
   @override
   State<LibraryPage> createState() => _LibraryPageState();
@@ -257,14 +307,14 @@ class _LibraryPageState extends State<LibraryPage>
   void initState() {
     super.initState();
     _tabController =
-        TabController(length: api.InfoTopic.values.length, vsync: this);
-    _tabController.animateTo(api.InfoTopic.main.index);
+        TabController(length: api.LibraryTopic.values.length, vsync: this);
+    _tabController.animateTo(api.LibraryTopic.main.index);
   }
 
   @override
   void didUpdateWidget(LibraryPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _tabController.animateTo(widget.infoTopic.index);
+    _tabController.animateTo(widget.topic.index);
   }
 
   @override
@@ -281,7 +331,7 @@ class _LibraryPageState extends State<LibraryPage>
           indicatorColor: Colors.green[800],
           indicatorWeight: 7,
           tabs: <Widget>[
-            for (final value in api.InfoTopic.values)
+            for (final value in api.LibraryTopic.values)
               Tab(
                 icon: Image(
                   image: AssetImage('images/${value.icon}.png'),
@@ -295,8 +345,8 @@ class _LibraryPageState extends State<LibraryPage>
           child: TabBarView(
             controller: _tabController,
             children: <Widget>[
-              for (final value in api.InfoTopic.values)
-                InfoView(infoTopic: value, fetcher: widget.fetcher),
+              for (final value in api.LibraryTopic.values)
+                LibraryView(topic: value, fetcher: widget.fetcher),
             ],
           ),
         ),
@@ -305,45 +355,43 @@ class _LibraryPageState extends State<LibraryPage>
   }
 }
 
-class OrganisationInfoWidget extends StatelessWidget {
-  final api.Organisation organisation;
-  final Function(String) onSelected;
+class SearchEntryWidget extends StatelessWidget {
+  final api.SearchResult entry;
+  final Navigation navigation;
 
-  const OrganisationInfoWidget({
+  const SearchEntryWidget({
     super.key,
-    required this.organisation,
-    required this.onSelected,
+    required this.entry,
+    required this.navigation,
   });
 
   @override
   Widget build(BuildContext context) {
+    Widget icon;
+    Function() onTap;
+    switch (entry.variant) {
+      case api.SearchResultVariant.organisation:
+        icon = const Tooltip(
+          message: "manufacturer / organisation / business / shop",
+          child: Icon(Icons.business_outlined),
+        );
+        onTap = () => navigation.goToOrganisation(entry.id);
+        break;
+      case api.SearchResultVariant.product:
+        icon = const Tooltip(
+          message: "product / brand / item category",
+          child: Icon(Icons.shopping_basket_outlined),
+        );
+        onTap = () => navigation.goToProduct(entry.id);
+        break;
+    }
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: ListTile(
-        onTap: () => onSelected(organisation.organisationId),
-        title: Text(organisation.name),
-      ),
-    );
-  }
-}
-
-class ProductInfoWidget extends StatelessWidget {
-  final api.ProductFull product;
-  final Function(String) onSelected;
-
-  const ProductInfoWidget({
-    super.key,
-    required this.product,
-    required this.onSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: ListTile(
-        onTap: () => onSelected(product.productId),
-        title: Text(product.name),
+        onTap: onTap,
+        leading: icon,
+        title: Text(entry.label),
       ),
     );
   }
@@ -644,12 +692,26 @@ class OrganisationView extends StatelessWidget {
                   text: organisation.description,
                   source: "wikidata",
                 ),
+                const Section(text: 'Certifications'),
                 RibbonRow(
                   badges: organisation.badges,
                   scores: organisation.scores,
                   onBadgeTap: onBadgeTap,
                   onScorerTap: onScorerTap,
                 ),
+                const Section(text: 'Images'),
+                organisation.images.isNotEmpty
+                    ? SizedBox(
+                        height: tileHeight,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            for (final image in organisation.images)
+                              SourcedImage(image)
+                          ],
+                        ),
+                      )
+                    : const Center(child: Text("No images...")),
               ],
             ),
           ),
@@ -695,24 +757,41 @@ class ProductView extends StatelessWidget {
                       onScorerTap: navigation.onScorerTap,
                     )
                 ],
+                const Section(text: 'Images'),
+                product.images.isNotEmpty
+                    ? SizedBox(
+                        height: tileHeight,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            for (final image in product.images)
+                              SourcedImage(image)
+                          ],
+                        ),
+                      )
+                    : const Center(child: Text("No images...")),
                 const Section(text: 'Alternatives'),
-                SizedBox(
-                  height: tileHeight,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: [
-                      if (product.manufacturers != null) ...[
-                        for (final alternative in product.alternatives!)
-                          ProductTileWidget(
-                            product: alternative,
-                            onSelected: navigation.goToProduct,
-                            onBadgeTap: navigation.onBadgeTap,
-                            onScorerTap: navigation.onScorerTap,
-                          ),
-                      ],
-                    ],
-                  ),
-                ),
+                product.images.isNotEmpty
+                    ? SizedBox(
+                        height: tileHeight,
+                        child: ListView(
+                          scrollDirection: Axis.horizontal,
+                          children: [
+                            if (product.manufacturers != null) ...[
+                              for (final alternative in product.alternatives!)
+                                ProductTileWidget(
+                                  product: alternative,
+                                  onSelected: navigation.goToProduct,
+                                  onBadgeTap: navigation.onBadgeTap,
+                                  onScorerTap: navigation.onScorerTap,
+                                ),
+                            ],
+                          ],
+                        ),
+                      )
+                    : const Center(
+                        child: Text(
+                            "No alternatives?... That might be some problem in our data...")),
               ],
             ),
           ),
@@ -842,27 +921,26 @@ class _ProductPageState extends State<ProductPage>
   }
 }
 
-class OrganisationTextSearchPage extends StatefulWidget {
-  final Function(String) onSelected;
+class TextSearchPage extends StatefulWidget {
   final api.Fetcher fetcher;
+  final Navigation navigation;
 
-  const OrganisationTextSearchPage({
+  const TextSearchPage({
     super.key,
-    required this.onSelected,
     required this.fetcher,
+    required this.navigation,
   });
 
   @override
-  State<OrganisationTextSearchPage> createState() =>
-      _OrganisationTextSearchPageState();
+  State<TextSearchPage> createState() => _TextSearchPageState();
 }
 
-class _OrganisationTextSearchPageState extends State<OrganisationTextSearchPage>
+class _TextSearchPageState extends State<TextSearchPage>
     with AutomaticKeepAliveClientMixin {
   final _searchFieldController = TextEditingController();
 
   bool _searching = false;
-  List<api.Organisation> _entries = [];
+  List<api.SearchResult> _entries = [];
 
   @override
   bool get wantKeepAlive => true;
@@ -903,9 +981,10 @@ class _OrganisationTextSearchPageState extends State<OrganisationTextSearchPage>
                     padding: const EdgeInsets.all(defaultPadding),
                     itemCount: _entries.length,
                     itemBuilder: (BuildContext context, int index) {
-                      return OrganisationInfoWidget(
-                          organisation: _entries[index],
-                          onSelected: widget.onSelected);
+                      return SearchEntryWidget(
+                        entry: _entries[index],
+                        navigation: widget.navigation,
+                      );
                     },
                   ),
                 ),
@@ -919,94 +998,10 @@ class _OrganisationTextSearchPageState extends State<OrganisationTextSearchPage>
       _searching = true;
       _entries = [];
     });
-    final result = await widget.fetcher.searchOrganisations(text);
+    final result = await widget.fetcher.textSearch(text);
     setState(() {
       _searching = false;
-      _entries = result.organisations;
-    });
-  }
-}
-
-class ProductTextSearchPage extends StatefulWidget {
-  final Function(String) onSelected;
-  final api.Fetcher fetcher;
-
-  const ProductTextSearchPage({
-    super.key,
-    required this.onSelected,
-    required this.fetcher,
-  });
-
-  @override
-  State<ProductTextSearchPage> createState() => _ProductTextSearchPageState();
-}
-
-class _ProductTextSearchPageState extends State<ProductTextSearchPage>
-    with AutomaticKeepAliveClientMixin {
-  final _searchFieldController = TextEditingController();
-
-  bool _searching = false;
-  List<api.ProductFull> _entries = [];
-
-  @override
-  bool get wantKeepAlive => true;
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return Padding(
-      padding: const EdgeInsets.all(defaultPadding),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Flexible(
-                child: TextField(
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Text search',
-                  ),
-                  controller: _searchFieldController,
-                  onSubmitted: _onSubmitted,
-                ),
-              ),
-              const Space(),
-              FilledButton(
-                onPressed: _searching
-                    ? null
-                    : () => _onSubmitted(_searchFieldController.text),
-                child: const Text('Search'),
-              ),
-            ],
-          ),
-          const Space(),
-          _searching
-              ? const CircularProgressIndicator()
-              : Flexible(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(defaultPadding),
-                    itemCount: _entries.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return ProductInfoWidget(
-                          product: _entries[index],
-                          onSelected: widget.onSelected);
-                    },
-                  ),
-                ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _onSubmitted(String text) async {
-    setState(() {
-      _searching = true;
-      _entries = [];
-    });
-    final result = await widget.fetcher.searchProducts(text);
-    setState(() {
-      _searching = false;
-      _entries = result.products;
+      _entries = result.results;
     });
   }
 }
@@ -1078,13 +1073,13 @@ class OrganisationScreen extends StatelessWidget {
 }
 
 class LibraryArguments {
-  final api.InfoTopic topic;
+  final api.LibraryTopic topic;
 
   LibraryArguments({required this.topic});
 }
 
 class LibraryScreen extends StatelessWidget {
-  final api.InfoTopic topic;
+  final api.LibraryTopic topic;
   final api.Fetcher fetcher;
   final Navigation navigation;
 
@@ -1101,8 +1096,8 @@ class LibraryScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text("Library"),
       ),
-      body: InfoView(
-        infoTopic: topic,
+      body: LibraryView(
+        topic: topic,
         fetcher: fetcher,
       ),
     );
@@ -1124,7 +1119,7 @@ class RootScreen extends StatefulWidget {
 }
 
 class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
-  static const int _tabNum = 5;
+  static const int _tabNum = 4;
 
   late TabController _tabController;
 
@@ -1151,9 +1146,6 @@ class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
               icon: Icon(Icons.manage_search_outlined),
             ),
             Tab(
-              icon: Icon(Icons.manage_search_outlined),
-            ),
-            Tab(
               icon: Icon(Icons.map_outlined),
             ),
             Tab(
@@ -1166,16 +1158,12 @@ class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
         controller: _tabController,
         children: <Widget>[
           LibraryPage(
-            infoTopic: api.InfoTopic.main,
+            topic: api.LibraryTopic.main,
             fetcher: widget.fetcher,
           ),
-          OrganisationTextSearchPage(
-            onSelected: widget.navigation.goToOrganisation,
+          TextSearchPage(
             fetcher: widget.fetcher,
-          ),
-          ProductTextSearchPage(
-            onSelected: widget.navigation.goToProduct,
-            fetcher: widget.fetcher,
+            navigation: widget.navigation,
           ),
           const Center(
             child: Text('Map search'),
@@ -1228,7 +1216,7 @@ class Navigation {
     );
   }
 
-  void goToLibrary(api.InfoTopic topic) {
+  void goToLibrary(api.LibraryTopic topic) {
     Navigator.pushNamed(
       context,
       "$libraryPath${topic.name}",
@@ -1240,11 +1228,11 @@ class Navigation {
   }
 
   void onBadgeTap(api.BadgeName badge) {
-    goToLibrary(badge.toInfoTopic());
+    goToLibrary(badge.toLibraryTopic());
   }
 
   void onScorerTap(api.ScorerName scorer) {
-    goToLibrary(scorer.toInfoTopic());
+    goToLibrary(scorer.toLibraryTopic());
   }
 }
 
@@ -1366,7 +1354,7 @@ class _SustainityFrontendState extends State<SustainityFrontend>
       final topic = path.substring(Navigation.libraryPath.length);
       return AppArguments(
         NavigationPath.library,
-        LibraryArguments(topic: api.InfoTopicExtension.fromString(topic)),
+        LibraryArguments(topic: api.LibraryTopicExtension.fromString(topic)),
       );
     }
 

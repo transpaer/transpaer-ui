@@ -4,11 +4,11 @@ import 'package:test/test.dart';
 
 void main() {
   test('Serde Topic', () {
-    expect(InfoTopic.main, InfoTopicExtension.fromString('info--main'));
-    expect(InfoTopic.bcorp, InfoTopicExtension.fromString('badge--bcorp'));
-    expect(InfoTopic.tco, InfoTopicExtension.fromString('badge--tco'));
-    expect(InfoTopic.fti, InfoTopicExtension.fromString('badge--fti'));
-    expect(InfoTopic.main, InfoTopicExtension.fromString('wrong value'));
+    expect(LibraryTopic.main, LibraryTopicExtension.fromString('cert:main'));
+    expect(LibraryTopic.bcorp, LibraryTopicExtension.fromString('cert:bcorp'));
+    expect(LibraryTopic.tco, LibraryTopicExtension.fromString('cert:tco'));
+    expect(LibraryTopic.fti, LibraryTopicExtension.fromString('cert:fti'));
+    expect(LibraryTopic.main, LibraryTopicExtension.fromString('wrong value'));
   });
 
   test('Serde Product', () {
@@ -35,12 +35,14 @@ void main() {
 
   test('Serde Organisation', () {
     final originalString =
-        '{"organisation_id":"O","name":"N","description":"D","badges":["bcorp","tco"],"scores":{"fti":25}}';
+        '{"organisation_id":"O","name":"N","description":"D","images":[{"image":"I","source":"wikidata"}],"websites":["www.example.com"],"badges":["bcorp","tco"],"scores":{"fti":25}}';
     final originalItem = Organisation(
       organisationId: "O",
       name: "N",
       description: "D",
-      badges: <BadgeName>[BadgeName.bcorp, BadgeName.tco],
+      images: [Image(image: "I", source: Source.wikidata)],
+      websites: ["www.example.com"],
+      badges: [BadgeName.bcorp, BadgeName.tco],
       scores: {ScorerName.fti: 25},
     );
 

@@ -12,17 +12,17 @@ class Fetcher {
 
   Fetcher({required this.scheme, required this.host, required this.port});
 
-  Future<Info> fetchInfo(InfoTopic topic) async {
+  Future<LibraryInfo> fetchLibraryInfo(LibraryTopic topic) async {
     final uri = Uri(
       scheme: scheme,
       host: host,
       port: port,
-      path: '/info/' + topic.name,
+      path: "/library/${topic.name}",
     );
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {
-      return Info.fromJson(jsonDecode(response.body));
+      return LibraryInfo.fromJson(jsonDecode(response.body));
     } else {
       throw Exception('Failed to load info: ${response.statusCode}');
     }
@@ -33,7 +33,7 @@ class Fetcher {
       scheme: scheme,
       host: host,
       port: port,
-      path: '/organisation/' + id,
+      path: "/organisation/$id",
     );
     final response = await http.get(uri);
 
@@ -44,29 +44,12 @@ class Fetcher {
     }
   }
 
-  Future<OrganisationTextSearchResponse> searchOrganisations(
-      String query) async {
-    final uri = Uri(
-        scheme: scheme,
-        host: host,
-        port: port,
-        path: '/search/organisations',
-        queryParameters: {'query': query, 'limit': '10'});
-    final response = await http.get(uri);
-
-    if (response.statusCode == 200) {
-      return OrganisationTextSearchResponse.fromJson(jsonDecode(response.body));
-    } else {
-      throw Exception('Failed to load organisations: ${response.statusCode}');
-    }
-  }
-
   Future<ProductFull> fetchProduct(String id) async {
     final uri = Uri(
       scheme: scheme,
       host: host,
       port: port,
-      path: '/product/' + id,
+      path: "/product/$id",
     );
     final response = await http.get(uri);
 
@@ -77,19 +60,19 @@ class Fetcher {
     }
   }
 
-  Future<ProductTextSearchResponse> searchProducts(String query) async {
+  Future<TextSearchResponse> textSearch(String query) async {
     final uri = Uri(
         scheme: scheme,
         host: host,
         port: port,
-        path: '/search/products',
-        queryParameters: {'query': query, 'limit': '10'});
+        path: '/search/text',
+        queryParameters: {'query': query});
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {
-      return ProductTextSearchResponse.fromJson(jsonDecode(response.body));
+      return TextSearchResponse.fromJson(jsonDecode(response.body));
     } else {
-      throw Exception('Failed to load products: ${response.statusCode}');
+      throw Exception('Failed to load items: ${response.statusCode}');
     }
   }
 }
