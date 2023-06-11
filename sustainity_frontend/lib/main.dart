@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
+import 'package:url_launcher/url_launcher.dart' as url_launcher;
+
 import 'package:sustainity_api/sustainity_api.dart' as api;
 
 import 'package:sustainity_frontend/configuration.dart';
@@ -177,9 +179,16 @@ class Article extends StatelessWidget {
   }
 }
 
-extension InfoTopicGuiExtension on api.LibraryTopic {
+extension LibraryTopicGuiExtension on api.LibraryTopic {
   String get icon {
-    return ["main", "bcorp", "tco", "fti"][index];
+    return [
+      "main",
+      "main",
+      "bcorp",
+      "eu_ecolabel",
+      "tco",
+      "fti",
+    ][index];
   }
 }
 
@@ -478,7 +487,7 @@ class Badge extends StatelessWidget {
           onTap(badge);
         },
         child: Image(
-          image: AssetImage('images/${badge.name}.png'),
+          image: AssetImage('images/${badge.toLibraryTopic().icon}.png'),
           height: badgeSize,
           width: badgeSize,
         ),
@@ -517,7 +526,8 @@ class Score extends StatelessWidget {
             child: Row(
               children: [
                 Image(
-                  image: AssetImage('images/${score.scorer.name}.png'),
+                  image: AssetImage(
+                      'images/${score.scorer.toLibraryTopic().icon}.png'),
                   height: badgeSize,
                   width: badgeSize,
                 ),
@@ -601,6 +611,102 @@ class RibbonRow extends RibbonFlex {
             onScorerTap: onScorerTap);
 }
 
+class OperationsMenu extends StatelessWidget {
+  final PreviewVariant variant;
+  final Navigation navigation;
+
+  const OperationsMenu({
+    super.key,
+    required this.variant,
+    required this.navigation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    var tipText = "";
+    switch (variant) {
+      case PreviewVariant.organisation:
+        tipText = "Are you associated with this organisation? Read these tips!";
+        break;
+      case PreviewVariant.product:
+        tipText =
+            "Are you associated with producer of this item? Read these tips!";
+        break;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(defaultPadding),
+      child: Column(
+        children: [
+          ElevatedButton.icon(
+            onPressed: () {
+              navigation.goToLibrary(api.LibraryTopic.forProducers);
+            },
+            icon: const Icon(Icons.tips_and_updates_outlined),
+            label: Padding(
+              padding: const EdgeInsets.all(defaultPadding),
+              child: Text(tipText),
+            ),
+          ),
+          const Space(),
+          ElevatedButton.icon(
+            onPressed: () async {
+              final url = Uri.parse(
+                  'https://github.com/sustainity-dev/issues/issues/new');
+              await url_launcher.launchUrl(url);
+            },
+            icon: const Icon(Icons.bug_report_outlined),
+            label: const Padding(
+              padding: EdgeInsets.all(defaultPadding),
+              child: Text("Found problem with data? Report it to us!"),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CategoryAlternativesWidget extends StatelessWidget {
+  final api.CategoryAlternatives ca;
+  final Navigation navigation;
+
+  const CategoryAlternativesWidget({
+    super.key,
+    required this.ca,
+    required this.navigation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Section(text: 'Alternatives (category: "${ca.category}")'),
+        ca.alternatives.isNotEmpty
+            ? SizedBox(
+                height: tileHeight,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    for (final alternative in ca.alternatives)
+                      ProductTileWidget(
+                        product: alternative,
+                        onSelected: navigation.goToProduct,
+                        onBadgeTap: navigation.onBadgeTap,
+                        onScorerTap: navigation.onScorerTap,
+                      ),
+                  ],
+                ),
+              )
+            : const Center(
+                child: Text(
+                    "No alternatives?... That might be some problem in our data...")),
+      ],
+    );
+  }
+}
+
 class OrganisationWidget extends StatelessWidget {
   final api.Organisation organisation;
   final String source;
@@ -665,15 +771,13 @@ class OrganisationWidget extends StatelessWidget {
 class OrganisationView extends StatelessWidget {
   final api.Organisation organisation;
   final String source;
-  final Function(api.BadgeName) onBadgeTap;
-  final Function(api.ScorerName) onScorerTap;
+  final Navigation navigation;
 
   const OrganisationView({
     super.key,
     required this.organisation,
     required this.source,
-    required this.onBadgeTap,
-    required this.onScorerTap,
+    required this.navigation,
   });
 
   @override
@@ -696,8 +800,8 @@ class OrganisationView extends StatelessWidget {
                 RibbonRow(
                   badges: organisation.badges,
                   scores: organisation.scores,
-                  onBadgeTap: onBadgeTap,
-                  onScorerTap: onScorerTap,
+                  onBadgeTap: navigation.onBadgeTap,
+                  onScorerTap: navigation.onScorerTap,
                 ),
                 const Section(text: 'Images'),
                 organisation.images.isNotEmpty
@@ -712,6 +816,10 @@ class OrganisationView extends StatelessWidget {
                         ),
                       )
                     : const Center(child: Text("No images...")),
+                OperationsMenu(
+                  variant: PreviewVariant.organisation,
+                  navigation: navigation,
+                ),
               ],
             ),
           ),
@@ -770,28 +878,12 @@ class ProductView extends StatelessWidget {
                         ),
                       )
                     : const Center(child: Text("No images...")),
-                const Section(text: 'Alternatives'),
-                product.images.isNotEmpty
-                    ? SizedBox(
-                        height: tileHeight,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          children: [
-                            if (product.manufacturers != null) ...[
-                              for (final alternative in product.alternatives!)
-                                ProductTileWidget(
-                                  product: alternative,
-                                  onSelected: navigation.goToProduct,
-                                  onBadgeTap: navigation.onBadgeTap,
-                                  onScorerTap: navigation.onScorerTap,
-                                ),
-                            ],
-                          ],
-                        ),
-                      )
-                    : const Center(
-                        child: Text(
-                            "No alternatives?... That might be some problem in our data...")),
+                for (final a in product.alternatives)
+                  CategoryAlternativesWidget(ca: a, navigation: navigation),
+                OperationsMenu(
+                  variant: PreviewVariant.product,
+                  navigation: navigation,
+                ),
               ],
             ),
           ),
@@ -848,9 +940,8 @@ class _OrganisationPageState extends State<OrganisationPage>
           if (snapshot.hasData) {
             return OrganisationView(
               organisation: snapshot.data!,
-              onBadgeTap: widget.navigation.onBadgeTap,
-              onScorerTap: widget.navigation.onScorerTap,
               source: "wikidata",
+              navigation: widget.navigation,
             );
           } else if (snapshot.hasError) {
             return Text('Error while fetching data: ${snapshot.error}');

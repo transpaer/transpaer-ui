@@ -92,7 +92,7 @@ class ProductHandler {
         }
       }
 
-      final List<api.ProductShort> alternatives =
+      final List<api.CategoryAlternatives> alternatives =
           await retrievers.retrieveAlternatives(client, dbProduct);
       final apiProduct = dbProduct.toApiFull(
           manufacturers: apiManufacturers, alternatives: alternatives);
@@ -114,9 +114,10 @@ class AlternativesHandler {
   Future<shelf.Response> call(shelf.Request req, String id) async {
     final dbProduct = await client.getProduct(id);
     if (dbProduct != null) {
-      final List<api.ProductShort> products =
+      final List<api.CategoryAlternatives> alternatives =
           await retrievers.retrieveAlternatives(client, dbProduct);
-      return shelf.Response.ok(encoder.convert(products), headers: corsHeaders);
+      return shelf.Response.ok(encoder.convert(alternatives),
+          headers: corsHeaders);
     } else {
       return shelf.Response.notFound(null, headers: corsHeaders);
     }
