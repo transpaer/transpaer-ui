@@ -15,6 +15,7 @@ dependencies:
   flutter_markdown: ^0.6.14
   json_annotation: ^4.8.0
   json_serializable: ^6.5.4
+  url_launcher: ^6.1.11
 
   sustainity_api:
     path: ../sustainity_api
@@ -31,6 +32,7 @@ flutter:
   assets:
     - images/main.png
     - images/bcorp.png
+    - images/eu_ecolabel.png
     - images/tco.png
     - images/fti.png
 

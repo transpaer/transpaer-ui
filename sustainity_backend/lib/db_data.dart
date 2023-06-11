@@ -96,6 +96,9 @@ class Categories {
   @JsonKey(name: 'musical_instrument')
   final bool musicalInstrument;
 
+  @JsonKey(name: 'washing_machine')
+  final bool washingMachine;
+
   @JsonKey(name: 'car')
   final bool car;
 
@@ -130,6 +133,7 @@ class Categories {
     this.microprocessor = false,
     this.calculator = false,
     this.musicalInstrument = false,
+    this.washingMachine = false,
     this.car = false,
     this.motorcycle = false,
     this.boat = false,
@@ -149,18 +153,28 @@ class Certifications {
   @JsonKey(name: 'bcorp')
   final bool bcorp;
 
+  @JsonKey(name: 'eu_ecolabel')
+  final bool euEcolabel;
+
   @JsonKey(name: 'tco')
   final bool tco;
 
   @JsonKey(name: 'fti')
   final int? fti;
 
-  Certifications({required this.bcorp, required this.tco, required this.fti});
+  Certifications(
+      {required this.bcorp,
+      required this.euEcolabel,
+      required this.tco,
+      required this.fti});
 
   List<api.BadgeName> toBadges() {
     var badges = <api.BadgeName>[];
     if (bcorp) {
       badges.add(api.BadgeName.bcorp);
+    }
+    if (euEcolabel) {
+      badges.add(api.BadgeName.euEcolabel);
     }
     if (tco) {
       badges.add(api.BadgeName.tco);
@@ -233,8 +247,8 @@ class Product {
   }
 
   api.ProductFull toApiFull({
-    List<api.Organisation>? manufacturers,
-    List<api.ProductShort>? alternatives,
+    required List<api.Organisation>? manufacturers,
+    required List<api.CategoryAlternatives> alternatives,
   }) {
     return api.ProductFull(
       productId: productId,
@@ -249,65 +263,69 @@ class Product {
     );
   }
 
-  String? getCategory() {
+  List<String> getCategories() {
+    var result = <String>[];
     if (categories.smartphone) {
-      return 'smartphone';
+      result.add('smartphone');
     }
     if (categories.smartwatch) {
-      return 'smartwatch';
+      result.add('smartwatch');
     }
     if (categories.tablet) {
-      return 'tablet';
+      result.add('tablet');
     }
     if (categories.laptop) {
-      return 'laptop';
+      result.add('laptop');
     }
     if (categories.computer) {
-      return 'computer';
+      result.add('computer');
     }
     if (categories.gameConsole) {
-      return 'game_console';
+      result.add('game_console');
     }
     if (categories.gameController) {
-      return 'game_controller';
+      result.add('game_controller');
     }
     if (categories.camera) {
-      return 'camera';
+      result.add('camera');
     }
     if (categories.cameraLens) {
-      return 'camera_lens';
+      result.add('camera_lens');
     }
     if (categories.microprocessor) {
-      return 'microprocessor';
+      result.add('microprocessor');
     }
     if (categories.calculator) {
-      return 'calculator';
+      result.add('calculator');
     }
     if (categories.musicalInstrument) {
-      return 'musical_instrument';
+      result.add('musical_instrument');
+    }
+    if (categories.washingMachine) {
+      result.add('washing_machine');
     }
     if (categories.car) {
-      return 'car';
+      result.add('car');
     }
     if (categories.motorcycle) {
-      return 'motorcycle';
+      result.add('motorcycle');
     }
     if (categories.boat) {
-      return 'boat';
+      result.add('boat');
     }
     if (categories.drone) {
-      return 'drone';
+      result.add('drone');
     }
     if (categories.drink) {
-      return 'drink';
+      result.add('drink');
     }
     if (categories.food) {
-      return 'food';
+      result.add('food');
     }
     if (categories.toy) {
-      return 'toy';
+      result.add('toy');
     }
-    return null;
+    return result;
   }
 
   factory Product.fromJson(Map<String, dynamic> json) =>

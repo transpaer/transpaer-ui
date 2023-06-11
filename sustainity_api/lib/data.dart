@@ -6,19 +6,24 @@ enum BadgeName {
   @JsonValue('bcorp')
   bcorp,
 
+  @JsonValue('eu_ecolabel')
+  euEcolabel,
+
   @JsonValue('tco')
   tco,
 }
 
 extension BadgeNameExtension on BadgeName {
   String get name {
-    return ["bcorp", "tco"][index];
+    return ["bcorp", "euEcolabel", "tco"][index];
   }
 
   LibraryTopic toLibraryTopic() {
     switch (this) {
       case BadgeName.bcorp:
         return LibraryTopic.bcorp;
+      case BadgeName.euEcolabel:
+        return LibraryTopic.euEcolabel;
       case BadgeName.tco:
         return LibraryTopic.tco;
     }
@@ -46,20 +51,44 @@ extension ScorerNameExtension on ScorerName {
 
 enum LibraryTopic {
   main,
+  forProducers,
   bcorp,
+  euEcolabel,
   tco,
   fti,
 }
 
 extension LibraryTopicExtension on LibraryTopic {
   String get name {
-    return ["info:main", "cert:bcorp", "cert:tco", "cert:fti"][index];
+    return [
+      "info:main",
+      "info:for_producers",
+      "cert:bcorp",
+      "cert:eu_ecolabel",
+      "cert:tco",
+      "cert:fti"
+    ][index];
   }
 
   static LibraryTopic fromString(String string) {
     return LibraryTopic.values
         .firstWhere((t) => t.name == string, orElse: () => LibraryTopic.main);
   }
+}
+
+@JsonSerializable()
+class CategoryAlternatives {
+  @JsonKey(name: 'category')
+  String category;
+
+  @JsonKey(name: 'alternatives')
+  List<ProductShort> alternatives;
+
+  CategoryAlternatives({required this.category, required this.alternatives});
+
+  factory CategoryAlternatives.fromJson(Map<String, dynamic> json) =>
+      _$CategoryAlternativesFromJson(json);
+  Map<String, dynamic> toJson() => _$CategoryAlternativesToJson(this);
 }
 
 enum Source {
@@ -192,7 +221,7 @@ class ProductFull {
   final List<Organisation>? manufacturers;
 
   @JsonKey(name: 'alternatives')
-  final List<ProductShort>? alternatives;
+  final List<CategoryAlternatives> alternatives;
 
   ProductFull({
     required this.productId,
@@ -200,8 +229,8 @@ class ProductFull {
     required this.description,
     required this.images,
     required this.manufacturerIds,
-    this.manufacturers,
-    this.alternatives,
+    required this.manufacturers,
+    required this.alternatives,
   });
 
   factory ProductFull.fromJson(Map<String, dynamic> json) =>

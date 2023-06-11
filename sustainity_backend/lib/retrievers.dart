@@ -3,21 +3,24 @@ import 'package:sustainity_api/sustainity_api.dart' as api;
 import 'db_client.dart' as db_client;
 import 'db_data.dart' as db;
 
-Future<List<api.ProductShort>> retrieveAlternatives(
+Future<List<api.CategoryAlternatives>> retrieveAlternatives(
   db_client.DbClient client,
   db.Product product,
 ) async {
-  List<api.ProductShort> alternatives = [];
-  final String? category = product.getCategory();
-  if (category == null) {
-    return alternatives;
-  }
-  for (final dbProduct
-      in await client.findAlternatives(product.productId, category)) {
-    alternatives.add(dbProduct.toApiShort());
+  List<api.CategoryAlternatives> result = [];
+  for (final String category in product.getCategories()) {
+    List<api.ProductShort> alternatives = [];
+    for (final dbProduct
+        in await client.findAlternatives(product.productId, category)) {
+      alternatives.add(dbProduct.toApiShort());
+    }
+    result.add(api.CategoryAlternatives(
+      category: category,
+      alternatives: alternatives,
+    ));
   }
 
-  return alternatives;
+  return result;
 }
 
 Future<List<api.SearchResult>> retrieveSearchResults(
@@ -54,7 +57,7 @@ Future<List<api.SearchResult>> retrieveSearchResults(
     addResults(ids, result, dbItems, api.SearchResultVariant.organisation);
   }
 
-  if (query.length > 5) {
+  if (query.length > 4) {
     if (result.length < 20) {
       final dbItems = await client.searchProductsFuzzyByName(query);
       addResults(ids, result, dbItems, api.SearchResultVariant.product);
