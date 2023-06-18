@@ -141,7 +141,7 @@ class Organisation {
   final String name;
 
   @JsonKey(name: 'description')
-  final String description;
+  final String? description;
 
   @JsonKey(name: 'images')
   final List<Image> images;
@@ -179,7 +179,7 @@ class ProductShort {
   final String name;
 
   @JsonKey(name: 'description')
-  final String description;
+  final String? description;
 
   @JsonKey(name: 'badges')
   final List<BadgeName> badges;
@@ -205,11 +205,14 @@ class ProductFull {
   @JsonKey(name: 'product_id')
   final String productId;
 
+  @JsonKey(name: 'gtins')
+  final List<String> gtins;
+
   @JsonKey(name: 'name')
   final String name;
 
   @JsonKey(name: 'description')
-  final String description;
+  final String? description;
 
   @JsonKey(name: 'images')
   final List<Image> images;
@@ -225,6 +228,7 @@ class ProductFull {
 
   ProductFull({
     required this.productId,
+    required this.gtins,
     required this.name,
     required this.description,
     required this.images,

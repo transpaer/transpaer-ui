@@ -162,11 +162,12 @@ class Certifications {
   @JsonKey(name: 'fti')
   final int? fti;
 
-  Certifications(
-      {required this.bcorp,
-      required this.euEcolabel,
-      required this.tco,
-      required this.fti});
+  Certifications({
+    required this.bcorp,
+    required this.euEcolabel,
+    required this.tco,
+    required this.fti,
+  });
 
   List<api.BadgeName> toBadges() {
     var badges = <api.BadgeName>[];
@@ -200,11 +201,14 @@ class Product {
   @JsonKey(name: 'id')
   final String productId;
 
+  @JsonKey(name: 'gtins')
+  final List<String> gtins;
+
   @JsonKey(name: 'name')
   final String name;
 
   @JsonKey(name: 'description')
-  final String description;
+  final String? description;
 
   @JsonKey(name: 'categories')
   final Categories categories;
@@ -226,6 +230,7 @@ class Product {
 
   Product({
     required this.productId,
+    required this.gtins,
     required this.name,
     required this.description,
     required this.categories,
@@ -252,6 +257,7 @@ class Product {
   }) {
     return api.ProductFull(
       productId: productId,
+      gtins: gtins,
       name: name,
       description: description,
       images: images != null
@@ -338,11 +344,14 @@ class Organisation {
   @JsonKey(name: 'id')
   final String organisationId;
 
+  @JsonKey(name: 'vat_numbers')
+  final List<String>? vatNumbers;
+
   @JsonKey(name: 'name')
   final String name;
 
   @JsonKey(name: 'description')
-  final String description;
+  final String? description;
 
   @JsonKey(name: 'images')
   final List<Image>? images;
@@ -355,6 +364,7 @@ class Organisation {
 
   Organisation({
     required this.organisationId,
+    required this.vatNumbers,
     required this.name,
     required this.description,
     required this.images,
