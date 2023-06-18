@@ -452,7 +452,10 @@ class ProductTileWidget extends StatelessWidget {
                 children: [
                   Text(product.name, style: titleStyle),
                   const Space(),
-                  Text(product.description, style: textStyle),
+                  Text(
+                    product.description != null ? product.description! : "",
+                    style: textStyle,
+                  ),
                   const Space(),
                   RibbonRow(
                     badges: product.badges,
@@ -749,7 +752,11 @@ class OrganisationWidget extends StatelessWidget {
                 children: [
                   Text(organisation.name, style: titleStyle),
                   const Space(),
-                  Text(organisation.description, style: textStyle),
+                  Text(
+                      organisation.description != null
+                          ? organisation.description!
+                          : "",
+                      style: textStyle),
                   const Space(),
                   Text("Source: $source", style: sourceStyle),
                 ],
@@ -792,10 +799,12 @@ class OrganisationView extends StatelessWidget {
             child: ListView(
               children: [
                 const Section(text: 'Descriptions:'),
-                Description(
-                  text: organisation.description,
-                  source: "wikidata",
-                ),
+                organisation.description != null
+                    ? Description(
+                        text: organisation.description!,
+                        source: "wikidata",
+                      )
+                    : const Center(child: Text("No description...")),
                 const Section(text: 'Certifications'),
                 RibbonRow(
                   badges: organisation.badges,
@@ -851,10 +860,16 @@ class ProductView extends StatelessWidget {
             child: ListView(
               children: [
                 const Section(text: 'Descriptions:'),
-                Description(
-                  text: product.description,
-                  source: "wikidata",
-                ),
+                product.description != null
+                    ? Description(
+                        text: product.description!,
+                        source: "wikidata",
+                      )
+                    : const Center(child: Text("No description...")),
+                const Section(text: 'GTINs'),
+                product.gtins.isNotEmpty
+                    ? Description(text: product.gtins.join(", "))
+                    : const Center(child: Text("No GTINs...")),
                 const Section(text: 'Producers:'),
                 if (product.manufacturers != null) ...[
                   for (final manufacturer in product.manufacturers!)

@@ -61,6 +61,21 @@ class DbClient {
     return dbOrganisations.map((p) => db.SearchResult.fromJson(p)).toList();
   }
 
+  Future<List<db.SearchResult>> searchOrganisationsSubstringByVatNumber(
+      String match) async {
+    final dbOrganisations = await _client
+        .newQuery()
+        .addLine('FOR o IN organisations')
+        .addLine('  FILTER o.vat_numbers[? 1')
+        .addLine('      FILTER CONTAINS(LOWER(CURRENT), LOWER(@match))')
+        .addLine('    ]')
+        .addLine('  RETURN { id: o.id, name: o.name }')
+        .addBindVar('match', match)
+        .runAndReturnFutureList();
+
+    return dbOrganisations.map((p) => db.SearchResult.fromJson(p)).toList();
+  }
+
   Future<List<db.SearchResult>> searchProductsExactByName(String match) async {
     final dbProducts = await _client
         .newQuery()
@@ -80,6 +95,21 @@ class DbClient {
         .addLine('  SEARCH p.name IN TOKENS(@tokens, "text_en")')
         .addLine('  RETURN { id: p.id, name: p.name }')
         .addBindVar('tokens', tokens)
+        .runAndReturnFutureList();
+
+    return dbProducts.map((p) => db.SearchResult.fromJson(p)).toList();
+  }
+
+  Future<List<db.SearchResult>> searchProductsSubstringByGtin(
+      String match) async {
+    final dbProducts = await _client
+        .newQuery()
+        .addLine('FOR p IN products')
+        .addLine('  FILTER p.gtins[? 1')
+        .addLine('      FILTER CONTAINS(LOWER(CURRENT), LOWER(@match))')
+        .addLine('    ]')
+        .addLine('  RETURN { id: p.id, name: p.name }')
+        .addBindVar('match', match)
         .runAndReturnFutureList();
 
     return dbProducts.map((p) => db.SearchResult.fromJson(p)).toList();

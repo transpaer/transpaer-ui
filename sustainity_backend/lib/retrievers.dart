@@ -45,6 +45,14 @@ Future<List<api.SearchResult>> retrieveSearchResults(
   }
 
   {
+    final dbItems = await client.searchOrganisationsSubstringByVatNumber(query);
+    addResults(ids, result, dbItems, api.SearchResultVariant.organisation);
+  }
+  {
+    final dbItems = await client.searchProductsSubstringByGtin(query);
+    addResults(ids, result, dbItems, api.SearchResultVariant.product);
+  }
+  {
     final dbItems = await client.searchOrganisationsSubstringByWebsite(query);
     addResults(ids, result, dbItems, api.SearchResultVariant.organisation);
   }
