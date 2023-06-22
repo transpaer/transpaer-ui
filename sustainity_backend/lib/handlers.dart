@@ -63,7 +63,7 @@ class OrganisationHandler {
   Future<shelf.Response> call(shelf.Request req, String id) async {
     final dbOrganisation = await client.getOrganisation(id);
     if (dbOrganisation != null) {
-      final apiOrganisation = dbOrganisation.toApi();
+      final apiOrganisation = dbOrganisation.toApiFull();
       return shelf.Response.ok(encoder.convert(apiOrganisation),
           headers: corsHeaders);
     } else {
@@ -81,14 +81,11 @@ class ProductHandler {
   Future<shelf.Response> call(shelf.Request req, String id) async {
     final dbProduct = await client.getProduct(id);
     if (dbProduct != null) {
-      List<api.Organisation>? apiManufacturers;
-      if (dbProduct.manufacturerIds != null) {
-        apiManufacturers = [];
-        for (final manufacturerId in dbProduct.manufacturerIds!) {
-          final dbManufacturer = await client.getOrganisation(manufacturerId);
-          if (dbManufacturer != null) {
-            apiManufacturers.add(dbManufacturer.toApi());
-          }
+      List<api.OrganisationShort> apiManufacturers = [];
+      for (final manufacturerId in dbProduct.manufacturerIds) {
+        final dbManufacturer = await client.getOrganisation(manufacturerId);
+        if (dbManufacturer != null) {
+          apiManufacturers.add(dbManufacturer.toApiShort());
         }
       }
 

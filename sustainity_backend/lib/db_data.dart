@@ -5,8 +5,14 @@ import 'package:sustainity_api/sustainity_api.dart' as api;
 part 'db_data.g.dart';
 
 enum Source {
-  @JsonValue('wikidata')
+  @JsonValue('wiki')
   wikidata,
+
+  @JsonValue('off')
+  openFoodFacts,
+
+  @JsonValue('eu')
+  euEcolabel,
 }
 
 extension SourceExtension on Source {
@@ -14,8 +20,30 @@ extension SourceExtension on Source {
     switch (this) {
       case Source.wikidata:
         return api.Source.wikidata;
+      case Source.openFoodFacts:
+        return api.Source.openFoodFacts;
+      case Source.euEcolabel:
+        return api.Source.euEcolabel;
     }
   }
+}
+
+@JsonSerializable()
+class Text {
+  @JsonKey(name: 'text')
+  final String text;
+
+  @JsonKey(name: 'source')
+  final Source source;
+
+  Text({required this.text, required this.source});
+
+  api.Text toApi() {
+    return api.Text(text: text, source: source.toApi());
+  }
+
+  factory Text.fromJson(Map<String, dynamic> json) => _$TextFromJson(json);
+  Map<String, dynamic> toJson() => _$TextToJson(this);
 }
 
 @JsonSerializable()
@@ -204,26 +232,26 @@ class Product {
   @JsonKey(name: 'gtins')
   final List<String> gtins;
 
-  @JsonKey(name: 'name')
-  final String name;
+  @JsonKey(name: 'names')
+  final List<Text> names;
 
-  @JsonKey(name: 'description')
-  final String? description;
+  @JsonKey(name: 'descriptions')
+  final List<Text> descriptions;
 
   @JsonKey(name: 'categories')
   final Categories categories;
 
   @JsonKey(name: 'images')
-  final List<Image>? images;
+  final List<Image> images;
 
   @JsonKey(name: 'manufacturer_ids')
-  final List<String>? manufacturerIds;
+  final List<String> manufacturerIds;
 
   @JsonKey(name: 'follows')
-  final List<String>? follows;
+  final List<String> follows;
 
   @JsonKey(name: 'followed_by')
-  final List<String>? followedBy;
+  final List<String> followedBy;
 
   @JsonKey(name: 'certifications')
   final Certifications certifications;
@@ -231,8 +259,8 @@ class Product {
   Product({
     required this.productId,
     required this.gtins,
-    required this.name,
-    required this.description,
+    required this.names,
+    required this.descriptions,
     required this.categories,
     required this.images,
     required this.manufacturerIds,
@@ -244,25 +272,25 @@ class Product {
   api.ProductShort toApiShort() {
     return api.ProductShort(
       productId: productId,
-      name: name,
-      description: description,
+      name: names.isNotEmpty ? names[0].text : "",
+      description: descriptions.isNotEmpty ? descriptions[0].text : null,
       badges: certifications.toBadges(),
       scores: certifications.toScores(),
     );
   }
 
   api.ProductFull toApiFull({
-    required List<api.Organisation>? manufacturers,
+    required List<api.OrganisationShort>? manufacturers,
     required List<api.CategoryAlternatives> alternatives,
   }) {
     return api.ProductFull(
       productId: productId,
       gtins: gtins,
-      name: name,
-      description: description,
-      images: images != null
-          ? images!.map((i) => i.toApi()).toList()
-          : <api.Image>[],
+      names: names.map((n) => n.toApi()).toList(),
+      descriptions: descriptions.map((d) => d.toApi()).toList(),
+      badges: certifications.toBadges(),
+      scores: certifications.toScores(),
+      images: images.map((i) => i.toApi()).toList(),
       manufacturerIds: manufacturerIds,
       manufacturers: manufacturers,
       alternatives: alternatives,
@@ -347,17 +375,17 @@ class Organisation {
   @JsonKey(name: 'vat_numbers')
   final List<String>? vatNumbers;
 
-  @JsonKey(name: 'name')
-  final String name;
+  @JsonKey(name: 'names')
+  final List<Text> names;
 
-  @JsonKey(name: 'description')
-  final String? description;
+  @JsonKey(name: 'descriptions')
+  final List<Text> descriptions;
 
   @JsonKey(name: 'images')
-  final List<Image>? images;
+  final List<Image> images;
 
   @JsonKey(name: 'websites')
-  final List<String>? websites;
+  final List<String> websites;
 
   @JsonKey(name: 'certifications')
   final Certifications certifications;
@@ -365,24 +393,33 @@ class Organisation {
   Organisation({
     required this.organisationId,
     required this.vatNumbers,
-    required this.name,
-    required this.description,
+    required this.names,
+    required this.descriptions,
     required this.images,
     required this.websites,
     required this.certifications,
   });
 
-  api.Organisation toApi() {
-    return api.Organisation(
-        organisationId: organisationId,
-        name: name,
-        description: description,
-        images: images != null
-            ? images!.map((i) => i.toApi()).toList()
-            : <api.Image>[],
-        websites: websites != null ? websites! : <String>[],
-        badges: certifications.toBadges(),
-        scores: certifications.toScores());
+  api.OrganisationShort toApiShort() {
+    return api.OrganisationShort(
+      organisationId: organisationId,
+      name: names.isNotEmpty ? names[0].text : "",
+      description: descriptions.isNotEmpty ? descriptions[0].text : null,
+      badges: certifications.toBadges(),
+      scores: certifications.toScores(),
+    );
+  }
+
+  api.OrganisationFull toApiFull() {
+    return api.OrganisationFull(
+      organisationId: organisationId,
+      names: names.map((n) => n.toApi()).toList(),
+      descriptions: descriptions.map((d) => d.toApi()).toList(),
+      images: images.map((i) => i.toApi()).toList(),
+      websites: websites,
+      badges: certifications.toBadges(),
+      scores: certifications.toScores(),
+    );
   }
 
   factory Organisation.fromJson(Map<String, dynamic> json) =>
@@ -395,18 +432,18 @@ class SearchResult {
   @JsonKey(name: 'id')
   final String id;
 
-  @JsonKey(name: 'name')
-  final String name;
+  @JsonKey(name: 'names')
+  final List<Text> names;
 
   SearchResult({
     required this.id,
-    required this.name,
+    required this.names,
   });
 
   api.SearchResult toApi(api.SearchResultVariant variant) {
     return api.SearchResult(
       id: id,
-      label: name,
+      label: names.isNotEmpty ? names[0].text : "",
       variant: variant,
     );
   }

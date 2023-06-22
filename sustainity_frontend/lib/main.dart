@@ -101,7 +101,7 @@ class Section extends StatelessWidget {
 
 class Description extends StatelessWidget {
   final String text;
-  final String? source;
+  final api.Source? source;
 
   const Description({
     super.key,
@@ -118,6 +118,21 @@ class Description extends StatelessWidget {
           color: Colors.grey,
         );
 
+    Widget? sourceWidget;
+    switch (source) {
+      case api.Source.wikidata:
+        sourceWidget = Text("Source: Wikidata", style: sourceStyle);
+        break;
+      case api.Source.openFoodFacts:
+        sourceWidget = Text("Source: Open Food Facts", style: sourceStyle);
+        break;
+      case api.Source.euEcolabel:
+        sourceWidget = Text("Source: Eu Ecolabel", style: sourceStyle);
+        break;
+      case null:
+        break;
+    }
+
     return Container(
       decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
@@ -129,9 +144,9 @@ class Description extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(text, style: textStyle),
-            if (source != null) ...[
+            if (sourceWidget != null) ...[
               const Space(),
-              Text("Source: ${source!}", style: sourceStyle),
+              sourceWidget,
             ]
           ],
         ),
@@ -172,6 +187,11 @@ class Article extends StatelessWidget {
                 ),
               ),
             ),
+            onTapLink: (text, url, title) async {
+              if (url != null) {
+                await url_launcher.launchUrl(Uri.parse(url));
+              }
+            },
           ),
         ),
       ),
@@ -231,7 +251,17 @@ class SourcedImage extends StatelessWidget {
       case api.Source.wikidata:
         link = "$url1/${image.image}";
         url = "$link?width=200";
-        source = "wikidata";
+        source = "Wikidata";
+        break;
+      case api.Source.openFoodFacts:
+        link = image.image;
+        url = image.image;
+        source = "Open Food Facts";
+        break;
+      case api.Source.euEcolabel:
+        link = image.image;
+        url = image.image;
+        source = "Eu Ecolabel";
         break;
     }
 
@@ -711,7 +741,7 @@ class CategoryAlternativesWidget extends StatelessWidget {
 }
 
 class OrganisationWidget extends StatelessWidget {
-  final api.Organisation organisation;
+  final api.OrganisationShort organisation;
   final String source;
   final Function(api.BadgeName) onBadgeTap;
   final Function(api.ScorerName) onScorerTap;
@@ -776,7 +806,7 @@ class OrganisationWidget extends StatelessWidget {
 }
 
 class OrganisationView extends StatelessWidget {
-  final api.Organisation organisation;
+  final api.OrganisationFull organisation;
   final String source;
   final Navigation navigation;
 
@@ -793,18 +823,21 @@ class OrganisationView extends StatelessWidget {
       padding: const EdgeInsets.all(defaultPadding),
       child: Column(
         children: [
-          Title(text: organisation.name),
+          Title(text: organisation.names[0].text),
           const Space(),
           Expanded(
             child: ListView(
               children: [
                 const Section(text: 'Descriptions:'),
-                organisation.description != null
-                    ? Description(
-                        text: organisation.description!,
-                        source: "wikidata",
-                      )
-                    : const Center(child: Text("No description...")),
+                if (organisation.descriptions.isNotEmpty) ...[
+                  for (final description in organisation.descriptions)
+                    Description(
+                      text: description.text,
+                      source: description.source,
+                    )
+                ] else ...[
+                  const Center(child: Text("No description..."))
+                ],
                 const Section(text: 'Certifications'),
                 RibbonRow(
                   badges: organisation.badges,
@@ -813,18 +846,20 @@ class OrganisationView extends StatelessWidget {
                   onScorerTap: navigation.onScorerTap,
                 ),
                 const Section(text: 'Images'),
-                organisation.images.isNotEmpty
-                    ? SizedBox(
-                        height: tileHeight,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          children: [
-                            for (final image in organisation.images)
-                              SourcedImage(image)
-                          ],
-                        ),
-                      )
-                    : const Center(child: Text("No images...")),
+                if (organisation.images.isNotEmpty) ...[
+                  SizedBox(
+                    height: tileHeight,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        for (final image in organisation.images)
+                          SourcedImage(image)
+                      ],
+                    ),
+                  )
+                ] else ...[
+                  const Center(child: Text("No images..."))
+                ],
                 OperationsMenu(
                   variant: PreviewVariant.organisation,
                   navigation: navigation,
@@ -854,18 +889,28 @@ class ProductView extends StatelessWidget {
       padding: const EdgeInsets.all(defaultPadding),
       child: Column(
         children: [
-          Title(text: product.name),
+          Title(text: product.names.map((n) => n.text).join("\n")),
           const Space(),
           Expanded(
             child: ListView(
               children: [
                 const Section(text: 'Descriptions:'),
-                product.description != null
-                    ? Description(
-                        text: product.description!,
-                        source: "wikidata",
-                      )
-                    : const Center(child: Text("No description...")),
+                if (product.descriptions.isNotEmpty) ...[
+                  for (final description in product.descriptions)
+                    Description(
+                      text: description.text,
+                      source: description.source,
+                    )
+                ] else ...[
+                  const Center(child: Text("No description..."))
+                ],
+                const Section(text: 'Certifications'),
+                RibbonRow(
+                  badges: product.badges,
+                  scores: product.scores,
+                  onBadgeTap: navigation.onBadgeTap,
+                  onScorerTap: navigation.onScorerTap,
+                ),
                 const Section(text: 'GTINs'),
                 product.gtins.isNotEmpty
                     ? Description(text: product.gtins.join(", "))
@@ -881,18 +926,19 @@ class ProductView extends StatelessWidget {
                     )
                 ],
                 const Section(text: 'Images'),
-                product.images.isNotEmpty
-                    ? SizedBox(
-                        height: tileHeight,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          children: [
-                            for (final image in product.images)
-                              SourcedImage(image)
-                          ],
-                        ),
-                      )
-                    : const Center(child: Text("No images...")),
+                if (product.images.isNotEmpty) ...[
+                  SizedBox(
+                    height: tileHeight,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: [
+                        for (final image in product.images) SourcedImage(image)
+                      ],
+                    ),
+                  )
+                ] else ...[
+                  const Center(child: Text("No images..."))
+                ],
                 for (final a in product.alternatives)
                   CategoryAlternativesWidget(ca: a, navigation: navigation),
                 OperationsMenu(
@@ -926,7 +972,7 @@ class OrganisationPage extends StatefulWidget {
 
 class _OrganisationPageState extends State<OrganisationPage>
     with AutomaticKeepAliveClientMixin {
-  late Future<api.Organisation> _futureOrganisation;
+  late Future<api.OrganisationFull> _futureOrganisation;
 
   @override
   void initState() {
@@ -949,7 +995,7 @@ class _OrganisationPageState extends State<OrganisationPage>
   Widget build(BuildContext context) {
     super.build(context);
     return Center(
-      child: FutureBuilder<api.Organisation>(
+      child: FutureBuilder<api.OrganisationFull>(
         future: _futureOrganisation,
         builder: (context, snapshot) {
           if (snapshot.hasData) {

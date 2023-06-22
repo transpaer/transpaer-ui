@@ -92,8 +92,41 @@ class CategoryAlternatives {
 }
 
 enum Source {
-  @JsonValue('wikidata')
+  @JsonValue('wiki')
   wikidata,
+
+  @JsonValue('off')
+  openFoodFacts,
+
+  @JsonValue('eu')
+  euEcolabel,
+}
+
+@JsonSerializable()
+class Text {
+  @JsonKey(name: 'text')
+  final String text;
+
+  @JsonKey(name: 'source')
+  final Source source;
+
+  Text({required this.text, required this.source});
+
+  @override
+  bool operator ==(Object other) {
+    return (other is Text) && (other.text == text) && (other.source == source);
+  }
+
+  @override
+  int get hashCode {
+    var result = 17;
+    result = 37 * result + text.hashCode;
+    result = 37 * result + source.hashCode;
+    return result;
+  }
+
+  factory Text.fromJson(Map<String, dynamic> json) => _$TextFromJson(json);
+  Map<String, dynamic> toJson() => _$TextToJson(this);
 }
 
 @JsonSerializable()
@@ -105,6 +138,21 @@ class Image {
   final Source source;
 
   Image({required this.image, required this.source});
+
+  @override
+  bool operator ==(Object other) {
+    return (other is Image) &&
+        (other.image == image) &&
+        (other.source == source);
+  }
+
+  @override
+  int get hashCode {
+    var result = 17;
+    result = 37 * result + image.hashCode;
+    result = 37 * result + source.hashCode;
+    return result;
+  }
 
   factory Image.fromJson(Map<String, dynamic> json) => _$ImageFromJson(json);
   Map<String, dynamic> toJson() => _$ImageToJson(this);
@@ -133,7 +181,7 @@ class LibraryInfo {
 }
 
 @JsonSerializable()
-class Organisation {
+class OrganisationShort {
   @JsonKey(name: 'organisation_id')
   final String organisationId;
 
@@ -142,6 +190,36 @@ class Organisation {
 
   @JsonKey(name: 'description')
   final String? description;
+
+  @JsonKey(name: 'badges')
+  final List<BadgeName> badges;
+
+  @JsonKey(name: 'scores')
+  final Map<ScorerName, int> scores;
+
+  OrganisationShort({
+    required this.organisationId,
+    required this.name,
+    required this.description,
+    required this.badges,
+    required this.scores,
+  });
+
+  factory OrganisationShort.fromJson(Map<String, dynamic> json) =>
+      _$OrganisationShortFromJson(json);
+  Map<String, dynamic> toJson() => _$OrganisationShortToJson(this);
+}
+
+@JsonSerializable()
+class OrganisationFull {
+  @JsonKey(name: 'organisation_id')
+  final String organisationId;
+
+  @JsonKey(name: 'names')
+  final List<Text> names;
+
+  @JsonKey(name: 'descriptions')
+  final List<Text> descriptions;
 
   @JsonKey(name: 'images')
   final List<Image> images;
@@ -155,19 +233,19 @@ class Organisation {
   @JsonKey(name: 'scores')
   final Map<ScorerName, int> scores;
 
-  Organisation({
+  OrganisationFull({
     required this.organisationId,
-    required this.name,
-    required this.description,
+    required this.names,
+    required this.descriptions,
     required this.images,
     required this.websites,
     required this.badges,
     required this.scores,
   });
 
-  factory Organisation.fromJson(Map<String, dynamic> json) =>
-      _$OrganisationFromJson(json);
-  Map<String, dynamic> toJson() => _$OrganisationToJson(this);
+  factory OrganisationFull.fromJson(Map<String, dynamic> json) =>
+      _$OrganisationFullFromJson(json);
+  Map<String, dynamic> toJson() => _$OrganisationFullToJson(this);
 }
 
 @JsonSerializable()
@@ -208,11 +286,17 @@ class ProductFull {
   @JsonKey(name: 'gtins')
   final List<String> gtins;
 
-  @JsonKey(name: 'name')
-  final String name;
+  @JsonKey(name: 'names')
+  final List<Text> names;
 
-  @JsonKey(name: 'description')
-  final String? description;
+  @JsonKey(name: 'descriptions')
+  final List<Text> descriptions;
+
+  @JsonKey(name: 'badges')
+  final List<BadgeName> badges;
+
+  @JsonKey(name: 'scores')
+  final Map<ScorerName, int> scores;
 
   @JsonKey(name: 'images')
   final List<Image> images;
@@ -221,7 +305,7 @@ class ProductFull {
   final List<String>? manufacturerIds;
 
   @JsonKey(name: 'manufacturers')
-  final List<Organisation>? manufacturers;
+  final List<OrganisationShort>? manufacturers;
 
   @JsonKey(name: 'alternatives')
   final List<CategoryAlternatives> alternatives;
@@ -229,8 +313,10 @@ class ProductFull {
   ProductFull({
     required this.productId,
     required this.gtins,
-    required this.name,
-    required this.description,
+    required this.names,
+    required this.descriptions,
+    required this.badges,
+    required this.scores,
     required this.images,
     required this.manufacturerIds,
     required this.manufacturers,
