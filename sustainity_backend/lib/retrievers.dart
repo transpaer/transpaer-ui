@@ -29,6 +29,8 @@ Future<List<api.SearchResult>> retrieveSearchResults(
 ) async {
   var ids = <String>{};
   var result = <api.SearchResult>[];
+  var matches = query.split(" ");
+  matches.retainWhere((match) => match != "");
 
   void addResults(
     Set<String> ids,
@@ -44,37 +46,36 @@ Future<List<api.SearchResult>> retrieveSearchResults(
     }
   }
 
-  {
-    final dbItems = await client.searchOrganisationsSubstringByVatNumber(query);
-    addResults(ids, result, dbItems, api.SearchResultVariant.organisation);
-  }
-  {
-    final dbItems = await client.searchProductsSubstringByGtin(query);
-    addResults(ids, result, dbItems, api.SearchResultVariant.product);
-  }
-  {
-    final dbItems = await client.searchOrganisationsSubstringByWebsite(query);
-    addResults(ids, result, dbItems, api.SearchResultVariant.organisation);
-  }
-  {
-    final dbItems = await client.searchProductsExactByName(query);
-    addResults(ids, result, dbItems, api.SearchResultVariant.product);
-  }
-  {
-    final dbItems = await client.searchOrganisationsExactByName(query);
-    addResults(ids, result, dbItems, api.SearchResultVariant.organisation);
-  }
-
-  if (query.length > 4) {
-    if (result.length < 20) {
-      final dbItems = await client.searchProductsFuzzyByName(query);
-      addResults(ids, result, dbItems, api.SearchResultVariant.product);
-    }
-
-    if (result.length < 20) {
-      final dbItems = await client.searchOrganisationsFuzzyByName(query);
+  if (matches.length == 1) {
+    final lowerCaseMatch = matches[0].toLowerCase();
+    final upperCaseMatch = matches[0].toUpperCase();
+    {
+      final dbItems =
+          await client.searchOrganisationsSubstringByVatNumber(upperCaseMatch);
       addResults(ids, result, dbItems, api.SearchResultVariant.organisation);
     }
+    {
+      final dbItems =
+          await client.searchProductsSubstringByGtin(lowerCaseMatch);
+      addResults(ids, result, dbItems, api.SearchResultVariant.product);
+    }
+    {
+      final dbItems =
+          await client.searchOrganisationsSubstringByWebsite(lowerCaseMatch);
+      addResults(ids, result, dbItems, api.SearchResultVariant.organisation);
+    }
+  }
+
+  final lowercaseMatches = matches.map((match) => match.toLowerCase()).toList();
+  {
+    final dbItems =
+        await client.searchProductsExactByKeywords(lowercaseMatches);
+    addResults(ids, result, dbItems, api.SearchResultVariant.product);
+  }
+  {
+    final dbItems =
+        await client.searchOrganisationsExactByKeywords(lowercaseMatches);
+    addResults(ids, result, dbItems, api.SearchResultVariant.organisation);
   }
 
   return result;

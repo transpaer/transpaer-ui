@@ -28,7 +28,7 @@ class Fetcher {
     }
   }
 
-  Future<Organisation> fetchOrganisation(String id) async {
+  Future<OrganisationFull> fetchOrganisation(String id) async {
     final uri = Uri(
       scheme: scheme,
       host: host,
@@ -38,7 +38,7 @@ class Fetcher {
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {
-      return Organisation.fromJson(jsonDecode(response.body));
+      return OrganisationFull.fromJson(jsonDecode(response.body));
     } else {
       throw Exception('Failed to load organisation: ${response.statusCode}');
     }

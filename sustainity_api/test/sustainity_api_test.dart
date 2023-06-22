@@ -35,24 +35,28 @@ void main() {
 
   test('Serde Organisation', () {
     final originalString =
-        '{"organisation_id":"O","name":"N","description":"D","images":[{"image":"I","source":"wikidata"}],"websites":["www.example.com"],"badges":["bcorp","tco"],"scores":{"fti":25}}';
-    final originalItem = Organisation(
+        '{"organisation_id":"O","names":[{"text":"N","source":"wiki"}],"descriptions":[{"text":"D","source":"off"}],"images":[{"image":"I","source":"eu"}],"websites":["www.example.com"],"badges":["bcorp","tco"],"scores":{"fti":25}}';
+    final originalItem = OrganisationFull(
       organisationId: "O",
-      name: "N",
-      description: "D",
-      images: [Image(image: "I", source: Source.wikidata)],
+      names: [Text(text: "N", source: Source.wikidata)],
+      descriptions: [Text(text: "D", source: Source.openFoodFacts)],
+      images: [Image(image: "I", source: Source.euEcolabel)],
       websites: ["www.example.com"],
       badges: [BadgeName.bcorp, BadgeName.tco],
       scores: {ScorerName.fti: 25},
     );
 
     final resultString = jsonEncode(originalItem);
-    final resultItem = Organisation.fromJson(jsonDecode(originalString));
+    final resultItem = OrganisationFull.fromJson(jsonDecode(originalString));
 
     expect(resultString, originalString);
     expect(resultItem.organisationId, originalItem.organisationId);
-    expect(resultItem.name, originalItem.name);
-    expect(resultItem.description, originalItem.description);
+    expect(resultItem.names.length, originalItem.names.length);
+    expect(resultItem.names[0], originalItem.names[0]);
+    expect(resultItem.names, originalItem.names);
+    expect(resultItem.descriptions, originalItem.descriptions);
+    expect(resultItem.images, originalItem.images);
+    expect(resultItem.websites, originalItem.websites);
     expect(resultItem.badges, originalItem.badges);
     expect(resultItem.scores, originalItem.scores);
   });
