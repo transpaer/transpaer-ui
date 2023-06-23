@@ -165,34 +165,32 @@ class Article extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius:
-                const BorderRadius.all(Radius.circular(defaultPadding))),
-        child: Padding(
-          padding: const EdgeInsets.all(defaultPadding),
-          child: Markdown(
-            data: markdown,
-            selectable: true,
-            styleSheet: MarkdownStyleSheet(
-              blockquoteDecoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                border: Border(
-                  left: BorderSide(
-                    width: 3,
-                    color: Theme.of(context).dividerColor,
-                  ),
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: const BorderRadius.all(Radius.circular(defaultPadding)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(defaultPadding),
+        child: MarkdownBody(
+          data: markdown,
+          selectable: true,
+          styleSheet: MarkdownStyleSheet(
+            blockquoteDecoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              border: Border(
+                left: BorderSide(
+                  width: 3,
+                  color: Theme.of(context).dividerColor,
                 ),
               ),
             ),
-            onTapLink: (text, url, title) async {
-              if (url != null) {
-                await url_launcher.launchUrl(Uri.parse(url));
-              }
-            },
           ),
+          onTapLink: (text, url, title) async {
+            if (url != null) {
+              await url_launcher.launchUrl(Uri.parse(url));
+            }
+          },
         ),
       ),
     );
@@ -212,12 +210,58 @@ extension LibraryTopicGuiExtension on api.LibraryTopic {
   }
 }
 
+class FashionTransparencyIndexWidget extends StatelessWidget {
+  final api.Presentation presentation;
+  final Navigation navigation;
+
+  FashionTransparencyIndexWidget({
+    super.key,
+    required this.presentation,
+    required this.navigation,
+  }) {
+    presentation.data.sort((a, b) => b.score.compareTo(a.score));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(defaultPadding),
+      child: Column(
+        children: [
+          for (final entry in presentation.data)
+            ListTile(
+              onTap: () => navigation.goToOrganisation(entry.id),
+              mouseCursor: SystemMouseCursors.click,
+              leading: Container(
+                decoration: BoxDecoration(
+                  color: ScoreData(
+                    scorer: api.ScorerName.fti,
+                    score: entry.score,
+                  ).color,
+                  borderRadius:
+                      const BorderRadius.all(Radius.circular(defaultPadding)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(defaultPadding),
+                  child: Text("${entry.score}%"),
+                ),
+              ),
+              title: Text(entry.name),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class InfoWidget extends StatelessWidget {
   final api.LibraryInfo info;
+  final Navigation navigation;
 
   const InfoWidget({
     super.key,
     required this.info,
+    required this.navigation,
   });
 
   @override
@@ -228,7 +272,23 @@ class InfoWidget extends StatelessWidget {
         children: [
           Title(text: info.title),
           const Space(),
-          Article(markdown: info.article),
+          Expanded(
+            child: ListView(
+              scrollDirection: Axis.vertical,
+              children: [
+                Article(markdown: info.article),
+                if (info.presentation != null) ...[
+                  const Space(),
+                  if (info.id == api.LibraryTopic.fti.name) ...[
+                    FashionTransparencyIndexWidget(
+                      presentation: info.presentation!,
+                      navigation: navigation,
+                    )
+                  ]
+                ]
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -284,8 +344,14 @@ class SourcedImage extends StatelessWidget {
 class LibraryView extends StatefulWidget {
   final api.LibraryTopic topic;
   final api.Fetcher fetcher;
+  final Navigation navigation;
 
-  const LibraryView({super.key, required this.topic, required this.fetcher});
+  const LibraryView({
+    super.key,
+    required this.topic,
+    required this.fetcher,
+    required this.navigation,
+  });
 
   @override
   State<LibraryView> createState() => _LibraryViewState();
@@ -314,6 +380,7 @@ class _LibraryViewState extends State<LibraryView>
           if (snapshot.hasData) {
             return InfoWidget(
               info: snapshot.data!,
+              navigation: widget.navigation,
             );
           } else if (snapshot.hasError) {
             return Text('Error while fetching data: ${snapshot.error}');
@@ -329,8 +396,14 @@ class _LibraryViewState extends State<LibraryView>
 class LibraryPage extends StatefulWidget {
   final api.LibraryTopic topic;
   final api.Fetcher fetcher;
+  final Navigation navigation;
 
-  const LibraryPage({super.key, required this.topic, required this.fetcher});
+  const LibraryPage({
+    super.key,
+    required this.topic,
+    required this.fetcher,
+    required this.navigation,
+  });
 
   @override
   State<LibraryPage> createState() => _LibraryPageState();
@@ -385,7 +458,11 @@ class _LibraryPageState extends State<LibraryPage>
             controller: _tabController,
             children: <Widget>[
               for (final value in api.LibraryTopic.values)
-                LibraryView(topic: value, fetcher: widget.fetcher),
+                LibraryView(
+                  topic: value,
+                  fetcher: widget.fetcher,
+                  navigation: widget.navigation,
+                ),
             ],
           ),
         ),
@@ -533,7 +610,7 @@ class Score extends StatelessWidget {
   static const double badgeSize = 32;
 
   final ScoreData score;
-  final Function(api.ScorerName) onTap;
+  final Function(api.ScorerName)? onTap;
 
   const Score({
     super.key,
@@ -547,13 +624,16 @@ class Score extends StatelessWidget {
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: () {
-          onTap(score.scorer);
+          if (onTap != null) {
+            onTap!(score.scorer);
+          }
         },
         child: Container(
           decoration: BoxDecoration(
-              color: score.color,
-              borderRadius:
-                  const BorderRadius.all(Radius.circular(defaultPadding))),
+            color: score.color,
+            borderRadius:
+                const BorderRadius.all(Radius.circular(defaultPadding)),
+          ),
           child: Padding(
             padding: const EdgeInsets.all(defaultPadding),
             child: Row(
@@ -605,8 +685,9 @@ class RibbonFlex extends StatelessWidget {
         if (scores != null) ...[
           for (final entry in scores!.entries)
             Score(
-                score: ScoreData(scorer: entry.key, score: entry.value),
-                onTap: onScorerTap)
+              score: ScoreData(scorer: entry.key, score: entry.value),
+              onTap: onScorerTap,
+            )
         ],
       ],
     );
@@ -700,6 +781,42 @@ class OperationsMenu extends StatelessWidget {
   }
 }
 
+class ProductListWidget extends StatelessWidget {
+  final List<api.ProductShort> products;
+  final String emptyText;
+  final Navigation navigation;
+
+  const ProductListWidget({
+    super.key,
+    required this.products,
+    required this.emptyText,
+    required this.navigation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (products.isNotEmpty) {
+      return SizedBox(
+        height: tileHeight,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          children: [
+            for (final product in products)
+              ProductTileWidget(
+                product: product,
+                onSelected: navigation.goToProduct,
+                onBadgeTap: navigation.onBadgeTap,
+                onScorerTap: navigation.onScorerTap,
+              ),
+          ],
+        ),
+      );
+    } else {
+      return Center(child: Text(emptyText));
+    }
+  }
+}
+
 class CategoryAlternativesWidget extends StatelessWidget {
   final api.CategoryAlternatives ca;
   final Navigation navigation;
@@ -716,25 +833,12 @@ class CategoryAlternativesWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Section(text: 'Alternatives (category: "${ca.category}")'),
-        ca.alternatives.isNotEmpty
-            ? SizedBox(
-                height: tileHeight,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    for (final alternative in ca.alternatives)
-                      ProductTileWidget(
-                        product: alternative,
-                        onSelected: navigation.goToProduct,
-                        onBadgeTap: navigation.onBadgeTap,
-                        onScorerTap: navigation.onScorerTap,
-                      ),
-                  ],
-                ),
-              )
-            : const Center(
-                child: Text(
-                    "No alternatives?... That might be some problem in our data...")),
+        ProductListWidget(
+          products: ca.alternatives,
+          emptyText:
+              "No alternatives?... That might be some problem in our data...",
+          navigation: navigation,
+        ),
       ],
     );
   }
@@ -860,6 +964,12 @@ class OrganisationView extends StatelessWidget {
                 ] else ...[
                   const Center(child: Text("No images..."))
                 ],
+                const Section(text: 'Example products'),
+                ProductListWidget(
+                  products: organisation.products,
+                  emptyText: "Seems like this organisation has no products...",
+                  navigation: navigation,
+                ),
                 OperationsMenu(
                   variant: PreviewVariant.organisation,
                   navigation: navigation,
@@ -1251,6 +1361,7 @@ class LibraryScreen extends StatelessWidget {
       body: LibraryView(
         topic: topic,
         fetcher: fetcher,
+        navigation: navigation,
       ),
     );
   }
@@ -1312,6 +1423,7 @@ class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
           LibraryPage(
             topic: api.LibraryTopic.main,
             fetcher: widget.fetcher,
+            navigation: widget.navigation,
           ),
           TextSearchPage(
             fetcher: widget.fetcher,

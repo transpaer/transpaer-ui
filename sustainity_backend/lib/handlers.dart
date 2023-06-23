@@ -30,7 +30,9 @@ class LibraryHandler {
   Future<shelf.Response> call(shelf.Request req, String id) async {
     final dbInfo = await client.getLibraryInfo(id);
     if (dbInfo != null) {
-      final apiInfo = dbInfo.toApi();
+      final dbPresentation = await client.getPresentation(id);
+      final apiPresentation = dbPresentation?.toApi();
+      final apiInfo = dbInfo.toApi(apiPresentation);
       return shelf.Response.ok(encoder.convert(apiInfo), headers: corsHeaders);
     } else {
       return shelf.Response.notFound(null, headers: corsHeaders);
@@ -63,7 +65,10 @@ class OrganisationHandler {
   Future<shelf.Response> call(shelf.Request req, String id) async {
     final dbOrganisation = await client.getOrganisation(id);
     if (dbOrganisation != null) {
-      final apiOrganisation = dbOrganisation.toApiFull();
+      final dbProducts = await client.findOrganisationProducts(id);
+      List<api.ProductShort> apiProducts =
+          dbProducts.map((p) => p.toApiShort()).toList();
+      final apiOrganisation = dbOrganisation.toApiFull(products: apiProducts);
       return shelf.Response.ok(encoder.convert(apiOrganisation),
           headers: corsHeaders);
     } else {

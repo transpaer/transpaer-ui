@@ -107,6 +107,22 @@ class DbClient {
     }
   }
 
+  Future<db.Presentation?> getPresentation(String id) async {
+    final presentations = await _client
+        .newQuery()
+        .addLine('FOR p IN presentations')
+        .addLine('  FILTER p.id == @id')
+        .addLine('  RETURN p')
+        .addBindVar('id', id)
+        .runAndReturnFutureList();
+
+    if (presentations.length == 1) {
+      return db.Presentation.fromJson(presentations[0]);
+    } else {
+      return null;
+    }
+  }
+
   Future<db.Organisation?> getOrganisation(String id) async {
     final organisations = await _client
         .newQuery()
@@ -137,6 +153,21 @@ class DbClient {
     } else {
       return null;
     }
+  }
+
+  Future<List<db.Product>> findOrganisationProducts(String id) async {
+    final List<dynamic> dbProducts = await _client
+        .newQuery()
+        .addLine('FOR p IN products')
+        .addLine('  FILTER @id IN p.manufacturer_ids')
+        .addLine('  LET randomized_score = RAND()')
+        .addLine('  SORT randomized_score DESC')
+        .addLine('  LIMIT 10')
+        .addLine('  RETURN p')
+        .addBindVar('id', id)
+        .runAndReturnFutureList();
+
+    return dbProducts.map((p) => db.Product.fromJson(p)).toList();
   }
 
   Future<List<db.Product>> findAlternatives(String id, String category) async {
