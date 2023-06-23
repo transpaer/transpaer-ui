@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:collection/collection.dart';
 
 part 'data.g.dart';
 
@@ -6,7 +7,7 @@ enum BadgeName {
   @JsonValue('bcorp')
   bcorp,
 
-  @JsonValue('eu_ecolabel')
+  @JsonValue('eu')
   euEcolabel,
 
   @JsonValue('tco')
@@ -86,6 +87,22 @@ class CategoryAlternatives {
 
   CategoryAlternatives({required this.category, required this.alternatives});
 
+  @override
+  bool operator ==(Object other) {
+    final Function deepEq = const DeepCollectionEquality().equals;
+    return (other is CategoryAlternatives) &&
+        (other.category == category) &&
+        deepEq(other.alternatives, alternatives);
+  }
+
+  @override
+  int get hashCode {
+    var result = 17;
+    result = 37 * result + category.hashCode;
+    result = 37 * result + alternatives.hashCode;
+    return result;
+  }
+
   factory CategoryAlternatives.fromJson(Map<String, dynamic> json) =>
       _$CategoryAlternativesFromJson(json);
   Map<String, dynamic> toJson() => _$CategoryAlternativesToJson(this);
@@ -159,6 +176,40 @@ class Image {
 }
 
 @JsonSerializable()
+class PresentationEntry {
+  @JsonKey(name: 'id')
+  String id;
+
+  @JsonKey(name: 'name')
+  String name;
+
+  @JsonKey(name: 'score')
+  int score;
+
+  PresentationEntry({
+    required this.id,
+    required this.name,
+    required this.score,
+  });
+
+  factory PresentationEntry.fromJson(Map<String, dynamic> json) =>
+      _$PresentationEntryFromJson(json);
+  Map<String, dynamic> toJson() => _$PresentationEntryToJson(this);
+}
+
+@JsonSerializable()
+class Presentation {
+  @JsonKey(name: 'data')
+  List<PresentationEntry> data;
+
+  Presentation({required this.data});
+
+  factory Presentation.fromJson(Map<String, dynamic> json) =>
+      _$PresentationFromJson(json);
+  Map<String, dynamic> toJson() => _$PresentationToJson(this);
+}
+
+@JsonSerializable()
 class LibraryInfo {
   @JsonKey(name: 'id')
   final String id;
@@ -169,10 +220,14 @@ class LibraryInfo {
   @JsonKey(name: 'article')
   final String article;
 
+  @JsonKey(name: 'presentation')
+  final Presentation? presentation;
+
   LibraryInfo({
     required this.id,
     required this.title,
     required this.article,
+    required this.presentation,
   });
 
   factory LibraryInfo.fromJson(Map<String, dynamic> json) =>
@@ -227,6 +282,9 @@ class OrganisationFull {
   @JsonKey(name: 'websites')
   final List<String> websites;
 
+  @JsonKey(name: 'products')
+  final List<ProductShort> products;
+
   @JsonKey(name: 'badges')
   final List<BadgeName> badges;
 
@@ -239,6 +297,7 @@ class OrganisationFull {
     required this.descriptions,
     required this.images,
     required this.websites,
+    required this.products,
     required this.badges,
     required this.scores,
   });
@@ -273,6 +332,28 @@ class ProductShort {
     required this.scores,
   });
 
+  @override
+  bool operator ==(Object other) {
+    final Function deepEq = const DeepCollectionEquality().equals;
+    return (other is ProductShort) &&
+        (other.productId == productId) &&
+        (other.name == name) &&
+        (other.description == description) &&
+        deepEq(other.badges, badges) &&
+        deepEq(other.scores, scores);
+  }
+
+  @override
+  int get hashCode {
+    var result = 17;
+    result = 37 * result + productId.hashCode;
+    result = 37 * result + name.hashCode;
+    result = 37 * result + description.hashCode;
+    result = 37 * result + badges.hashCode;
+    result = 37 * result + scores.hashCode;
+    return result;
+  }
+
   factory ProductShort.fromJson(Map<String, dynamic> json) =>
       _$ProductShortFromJson(json);
   Map<String, dynamic> toJson() => _$ProductShortToJson(this);
@@ -292,23 +373,20 @@ class ProductFull {
   @JsonKey(name: 'descriptions')
   final List<Text> descriptions;
 
-  @JsonKey(name: 'badges')
-  final List<BadgeName> badges;
-
-  @JsonKey(name: 'scores')
-  final Map<ScorerName, int> scores;
-
   @JsonKey(name: 'images')
   final List<Image> images;
-
-  @JsonKey(name: 'manufacturer_ids')
-  final List<String>? manufacturerIds;
 
   @JsonKey(name: 'manufacturers')
   final List<OrganisationShort>? manufacturers;
 
   @JsonKey(name: 'alternatives')
   final List<CategoryAlternatives> alternatives;
+
+  @JsonKey(name: 'badges')
+  final List<BadgeName> badges;
+
+  @JsonKey(name: 'scores')
+  final Map<ScorerName, int> scores;
 
   ProductFull({
     required this.productId,
@@ -318,7 +396,6 @@ class ProductFull {
     required this.badges,
     required this.scores,
     required this.images,
-    required this.manufacturerIds,
     required this.manufacturers,
     required this.alternatives,
   });

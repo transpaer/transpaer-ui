@@ -65,6 +65,51 @@ class Image {
 }
 
 @JsonSerializable()
+class PresentationEntry {
+  @JsonKey(name: 'id')
+  final String id;
+
+  @JsonKey(name: 'name')
+  final String name;
+
+  @JsonKey(name: 'score')
+  final int score;
+
+  PresentationEntry({
+    required this.id,
+    required this.name,
+    required this.score,
+  });
+
+  api.PresentationEntry toApi() {
+    return api.PresentationEntry(id: id, name: name, score: score);
+  }
+
+  factory PresentationEntry.fromJson(Map<String, dynamic> json) =>
+      _$PresentationEntryFromJson(json);
+  Map<String, dynamic> toJson() => _$PresentationEntryToJson(this);
+}
+
+@JsonSerializable()
+class Presentation {
+  @JsonKey(name: 'id')
+  final String id;
+
+  @JsonKey(name: 'data')
+  final List<PresentationEntry> data;
+
+  Presentation({required this.id, required this.data});
+
+  api.Presentation toApi() {
+    return api.Presentation(data: data.map((e) => e.toApi()).toList());
+  }
+
+  factory Presentation.fromJson(Map<String, dynamic> json) =>
+      _$PresentationFromJson(json);
+  Map<String, dynamic> toJson() => _$PresentationToJson(this);
+}
+
+@JsonSerializable()
 class LibraryInfo {
   @JsonKey(name: 'id')
   final String id;
@@ -77,8 +122,13 @@ class LibraryInfo {
 
   LibraryInfo({required this.id, required this.title, required this.article});
 
-  api.LibraryInfo toApi() {
-    return api.LibraryInfo(id: id, title: title, article: article);
+  api.LibraryInfo toApi(api.Presentation? presentation) {
+    return api.LibraryInfo(
+      id: id,
+      title: title,
+      article: article,
+      presentation: presentation,
+    );
   }
 
   factory LibraryInfo.fromJson(Map<String, dynamic> json) =>
@@ -291,7 +341,6 @@ class Product {
       badges: certifications.toBadges(),
       scores: certifications.toScores(),
       images: images.map((i) => i.toApi()).toList(),
-      manufacturerIds: manufacturerIds,
       manufacturers: manufacturers,
       alternatives: alternatives,
     );
@@ -410,13 +459,16 @@ class Organisation {
     );
   }
 
-  api.OrganisationFull toApiFull() {
+  api.OrganisationFull toApiFull({
+    required List<api.ProductShort> products,
+  }) {
     return api.OrganisationFull(
       organisationId: organisationId,
       names: names.map((n) => n.toApi()).toList(),
       descriptions: descriptions.map((d) => d.toApi()).toList(),
       images: images.map((i) => i.toApi()).toList(),
       websites: websites,
+      products: products,
       badges: certifications.toBadges(),
       scores: certifications.toScores(),
     );

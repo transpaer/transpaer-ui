@@ -69,13 +69,13 @@ Future<List<api.SearchResult>> retrieveSearchResults(
   final lowercaseMatches = matches.map((match) => match.toLowerCase()).toList();
   {
     final dbItems =
-        await client.searchProductsExactByKeywords(lowercaseMatches);
-    addResults(ids, result, dbItems, api.SearchResultVariant.product);
+        await client.searchOrganisationsExactByKeywords(lowercaseMatches);
+    addResults(ids, result, dbItems, api.SearchResultVariant.organisation);
   }
   {
     final dbItems =
-        await client.searchOrganisationsExactByKeywords(lowercaseMatches);
-    addResults(ids, result, dbItems, api.SearchResultVariant.organisation);
+        await client.searchProductsExactByKeywords(lowercaseMatches);
+    addResults(ids, result, dbItems, api.SearchResultVariant.product);
   }
 
   return result;
