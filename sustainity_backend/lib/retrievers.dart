@@ -50,32 +50,44 @@ Future<List<api.SearchResult>> retrieveSearchResults(
     final lowerCaseMatch = matches[0].toLowerCase();
     final upperCaseMatch = matches[0].toUpperCase();
     {
+      Stopwatch stopwatch = new Stopwatch()..start();
       final dbItems =
           await client.searchOrganisationsSubstringByVatNumber(upperCaseMatch);
       addResults(ids, result, dbItems, api.SearchResultVariant.organisation);
+      print('XXX org vat ${stopwatch.elapsed}');
     }
-    {
-      final dbItems =
-          await client.searchProductsSubstringByGtin(lowerCaseMatch);
+    if (lowerCaseMatch.length < 15) {
+      final match = lowerCaseMatch.padLeft(14, '0');
+      Stopwatch stopwatch = new Stopwatch()..start();
+      final dbItems = await client.searchProductsSubstringByGtin(match);
       addResults(ids, result, dbItems, api.SearchResultVariant.product);
+      print('XXX pro tin ${stopwatch.elapsed}');
     }
     {
+      Stopwatch stopwatch = new Stopwatch()..start();
       final dbItems =
           await client.searchOrganisationsSubstringByWebsite(lowerCaseMatch);
       addResults(ids, result, dbItems, api.SearchResultVariant.organisation);
+      print('XXX org web ${stopwatch.elapsed}');
     }
   }
 
   final lowercaseMatches = matches.map((match) => match.toLowerCase()).toList();
   {
-    final dbItems =
-        await client.searchOrganisationsExactByKeywords(lowercaseMatches);
-    addResults(ids, result, dbItems, api.SearchResultVariant.organisation);
+    Stopwatch stopwatch = new Stopwatch()..start();
+    for (final match in lowercaseMatches) {
+      final dbItems = await client.searchOrganisationsExactByKeyword(match);
+      addResults(ids, result, dbItems, api.SearchResultVariant.organisation);
+    }
+    print('XXX org key ${stopwatch.elapsed}');
   }
   {
-    final dbItems =
-        await client.searchProductsExactByKeywords(lowercaseMatches);
-    addResults(ids, result, dbItems, api.SearchResultVariant.product);
+    Stopwatch stopwatch = new Stopwatch()..start();
+    for (final match in lowercaseMatches) {
+      final dbItems = await client.searchProductsExactByKeyword(match);
+      addResults(ids, result, dbItems, api.SearchResultVariant.product);
+    }
+    print('XXX pro key ${stopwatch.elapsed}');
   }
 
   return result;

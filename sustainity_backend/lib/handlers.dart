@@ -84,20 +84,19 @@ class ProductHandler {
   ProductHandler(this.client, this.encoder);
 
   Future<shelf.Response> call(shelf.Request req, String id) async {
+    Stopwatch stopwatch = new Stopwatch()..start();
     final dbProduct = await client.getProduct(id);
     if (dbProduct != null) {
-      List<api.OrganisationShort> apiManufacturers = [];
-      for (final manufacturerId in dbProduct.manufacturerIds) {
-        final dbManufacturer = await client.getOrganisation(manufacturerId);
-        if (dbManufacturer != null) {
-          apiManufacturers.add(dbManufacturer.toApiShort());
-        }
-      }
+      final dbManufacturers = await client.findProductManufacturers(id);
+      List<api.OrganisationShort> apiManufacturers =
+          dbManufacturers.map((p) => p.toApiShort()).toList();
 
       final List<api.CategoryAlternatives> alternatives =
           await retrievers.retrieveAlternatives(client, dbProduct);
       final apiProduct = dbProduct.toApiFull(
-          manufacturers: apiManufacturers, alternatives: alternatives);
+        manufacturers: apiManufacturers,
+        alternatives: alternatives,
+      );
 
       return shelf.Response.ok(encoder.convert(apiProduct),
           headers: corsHeaders);

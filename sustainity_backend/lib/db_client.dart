@@ -20,21 +20,26 @@ class DbClient {
     );
   }
 
-  Future<List<db.SearchResult>> searchOrganisationsExactByKeywords(
-      List<String> matches) async {
+  Future<List<db.SearchResult>> searchOrganisationsExactByKeyword(
+    String match,
+  ) async {
     final dbOrganisations = await _client
         .newQuery()
-        .addLine('FOR o IN organisations')
-        .addLine('  FILTER @matches ANY IN o.keywords')
-        .addLine('  RETURN { id: o.id, names: o.names }')
-        .addBindVar('matches', matches)
+        .addLine(
+            'WITH organisations, organisation_keywords, organisation_keyword_edges')
+        .addLine('FOR k IN organisation_keywords')
+        .addLine('  FILTER k.keyword == @match')
+        .addLine('  FOR o IN 1..1 OUTBOUND k organisation_keyword_edges')
+        .addLine('    RETURN o')
+        .addBindVar('match', match)
         .runAndReturnFutureList();
 
     return dbOrganisations.map((p) => db.SearchResult.fromJson(p)).toList();
   }
 
   Future<List<db.SearchResult>> searchOrganisationsSubstringByWebsite(
-      String match) async {
+    String match,
+  ) async {
     final dbOrganisations = await _client
         .newQuery()
         .addLine('FOR o IN organisations')
@@ -49,7 +54,8 @@ class DbClient {
   }
 
   Future<List<db.SearchResult>> searchOrganisationsSubstringByVatNumber(
-      String match) async {
+    String match,
+  ) async {
     final dbOrganisations = await _client
         .newQuery()
         .addLine('FOR o IN organisations')
@@ -63,28 +69,32 @@ class DbClient {
     return dbOrganisations.map((p) => db.SearchResult.fromJson(p)).toList();
   }
 
-  Future<List<db.SearchResult>> searchProductsExactByKeywords(
-      List<String> matches) async {
+  Future<List<db.SearchResult>> searchProductsExactByKeyword(
+    String match,
+  ) async {
     final dbProducts = await _client
         .newQuery()
-        .addLine('FOR p IN products')
-        .addLine('  FILTER @matches ANY IN p.keywords')
-        .addLine('  RETURN { id: p.id, names: p.names }')
-        .addBindVar('matches', matches)
+        .addLine('WITH products, product_keywords, product_keyword_edges')
+        .addLine('FOR k IN product_keywords')
+        .addLine('  FILTER k.keyword == @match')
+        .addLine('  FOR p IN 1..1 OUTBOUND k product_keyword_edges')
+        .addLine('    RETURN p')
+        .addBindVar('match', match)
         .runAndReturnFutureList();
 
     return dbProducts.map((p) => db.SearchResult.fromJson(p)).toList();
   }
 
   Future<List<db.SearchResult>> searchProductsSubstringByGtin(
-      String match) async {
+    String match,
+  ) async {
     final dbProducts = await _client
         .newQuery()
-        .addLine('FOR p IN products')
-        .addLine('  FILTER p.gtins[? 1')
-        .addLine('      FILTER CONTAINS(CURRENT, @match)')
-        .addLine('    ]')
-        .addLine('  RETURN { id: p.id, names: p.names }')
+        .addLine('WITH products, gtins, gtin_edges')
+        .addLine('FOR g IN gtins')
+        .addLine('  FILTER g._key == @match')
+        .addLine('  FOR p IN 1..1 OUTBOUND g gtin_edges')
+        .addLine('    RETURN p')
         .addBindVar('match', match)
         .runAndReturnFutureList();
 
@@ -156,18 +166,34 @@ class DbClient {
   }
 
   Future<List<db.Product>> findOrganisationProducts(String id) async {
+    Stopwatch stopwatch = new Stopwatch()..start();
     final List<dynamic> dbProducts = await _client
         .newQuery()
-        .addLine('FOR p IN products')
-        .addLine('  FILTER @id IN p.manufacturer_ids')
-        .addLine('  LET randomized_score = RAND()')
-        .addLine('  SORT randomized_score DESC')
-        .addLine('  LIMIT 10')
-        .addLine('  RETURN p')
+        .addLine('WITH organisations, products, manufacturing_edges')
+        .addLine('FOR o IN organisations')
+        .addLine('  FILTER o.id == @id')
+        .addLine('  FOR p IN 1..1 OUTBOUND o manufacturing_edges')
+        .addLine('    RETURN p')
         .addBindVar('id', id)
         .runAndReturnFutureList();
-
+    print('org pro ${stopwatch.elapsed}');
     return dbProducts.map((p) => db.Product.fromJson(p)).toList();
+  }
+
+  Future<List<db.Organisation>> findProductManufacturers(String id) async {
+    Stopwatch stopwatch = Stopwatch()..start();
+    final List<dynamic> dbOrganisations = await _client
+        .newQuery()
+        .addLine('WITH organisations, products, manufacturing_edges')
+        .addLine('FOR p IN products')
+        .addLine('  FILTER p.id == @id')
+        .addLine('  FOR o IN 1..1 INBOUND p manufacturing_edges')
+        .addLine('    RETURN o')
+        .addBindVar('id', id)
+        .runAndReturnFutureList();
+    print('org pro ${stopwatch.elapsed}');
+
+    return dbOrganisations.map((p) => db.Organisation.fromJson(p)).toList();
   }
 
   Future<List<db.Product>> findAlternatives(String id, String category) async {
