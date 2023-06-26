@@ -294,9 +294,6 @@ class Product {
   @JsonKey(name: 'images')
   final List<Image> images;
 
-  @JsonKey(name: 'manufacturer_ids')
-  final List<String> manufacturerIds;
-
   @JsonKey(name: 'follows')
   final List<String> follows;
 
@@ -313,7 +310,6 @@ class Product {
     required this.descriptions,
     required this.categories,
     required this.images,
-    required this.manufacturerIds,
     required this.follows,
     required this.followedBy,
     required this.certifications,
