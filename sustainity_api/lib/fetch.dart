@@ -12,7 +12,25 @@ class Fetcher {
 
   Fetcher({required this.scheme, required this.host, required this.port});
 
-  Future<LibraryInfo> fetchLibraryInfo(LibraryTopic topic) async {
+  Future<LibraryContentsResponse> fetchLibraryContents() async {
+    final uri = Uri(
+      scheme: scheme,
+      host: host,
+      port: port,
+      path: "/library",
+    );
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      return LibraryContentsResponse.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception(
+        'Failed to load library contents: ${response.statusCode}',
+      );
+    }
+  }
+
+  Future<LibraryInfoFull> fetchLibraryInfo(LibraryTopic topic) async {
     final uri = Uri(
       scheme: scheme,
       host: host,
@@ -22,9 +40,9 @@ class Fetcher {
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {
-      return LibraryInfo.fromJson(jsonDecode(response.body));
+      return LibraryInfoFull.fromJson(jsonDecode(response.body));
     } else {
-      throw Exception('Failed to load info: ${response.statusCode}');
+      throw Exception('Failed to load library item: ${response.statusCode}');
     }
   }
 

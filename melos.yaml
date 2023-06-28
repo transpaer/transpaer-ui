@@ -33,7 +33,7 @@ scripts:
     run: cd sustainity_frontend && flutter run
   
   test:
-    run: melos exec --ignore "*_frontend" -- dart test
+    run: melos exec --ignore "*_frontend" -- dart test && cd sustainity_frontend && flutter test
     description: Run unit tests
 
   format_check:
