@@ -53,27 +53,35 @@ extension ScorerNameExtension on ScorerName {
 enum LibraryTopic {
   main,
   forProducers,
+  faq,
   bcorp,
   euEcolabel,
   tco,
   fti,
+  notFound,
 }
+
+const libraryTopicNames = [
+  "info:main",
+  "info:for_producers",
+  "info:faq",
+  "cert:bcorp",
+  "cert:eu_ecolabel",
+  "cert:tco",
+  "cert:fti",
+  "other:not_found",
+];
 
 extension LibraryTopicExtension on LibraryTopic {
   String get name {
-    return [
-      "info:main",
-      "info:for_producers",
-      "cert:bcorp",
-      "cert:eu_ecolabel",
-      "cert:tco",
-      "cert:fti"
-    ][index];
+    return libraryTopicNames[index];
   }
 
   static LibraryTopic fromString(String string) {
-    return LibraryTopic.values
-        .firstWhere((t) => t.name == string, orElse: () => LibraryTopic.main);
+    return LibraryTopic.values.firstWhere(
+      (t) => t.name == string,
+      orElse: () => LibraryTopic.notFound,
+    );
   }
 }
 
@@ -210,12 +218,37 @@ class Presentation {
 }
 
 @JsonSerializable()
-class LibraryInfo {
+class LibraryInfoShort {
   @JsonKey(name: 'id')
   final String id;
 
   @JsonKey(name: 'title')
   final String title;
+
+  @JsonKey(name: 'summary')
+  final String summary;
+
+  LibraryInfoShort({
+    required this.id,
+    required this.title,
+    required this.summary,
+  });
+
+  factory LibraryInfoShort.fromJson(Map<String, dynamic> json) =>
+      _$LibraryInfoShortFromJson(json);
+  Map<String, dynamic> toJson() => _$LibraryInfoShortToJson(this);
+}
+
+@JsonSerializable()
+class LibraryInfoFull {
+  @JsonKey(name: 'id')
+  final String id;
+
+  @JsonKey(name: 'title')
+  final String title;
+
+  @JsonKey(name: 'summary')
+  final String summary;
 
   @JsonKey(name: 'article')
   final String article;
@@ -223,16 +256,17 @@ class LibraryInfo {
   @JsonKey(name: 'presentation')
   final Presentation? presentation;
 
-  LibraryInfo({
+  LibraryInfoFull({
     required this.id,
     required this.title,
+    required this.summary,
     required this.article,
     required this.presentation,
   });
 
-  factory LibraryInfo.fromJson(Map<String, dynamic> json) =>
-      _$LibraryInfoFromJson(json);
-  Map<String, dynamic> toJson() => _$LibraryInfoToJson(this);
+  factory LibraryInfoFull.fromJson(Map<String, dynamic> json) =>
+      _$LibraryInfoFullFromJson(json);
+  Map<String, dynamic> toJson() => _$LibraryInfoFullToJson(this);
 }
 
 @JsonSerializable()

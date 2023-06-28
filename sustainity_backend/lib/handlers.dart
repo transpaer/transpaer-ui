@@ -21,18 +21,36 @@ class HealthCheckHandler {
   }
 }
 
-class LibraryHandler {
+class LibraryContentsHandler {
   db_client.DbClient client;
   JsonEncoder encoder;
 
-  LibraryHandler(this.client, this.encoder);
+  LibraryContentsHandler(this.client, this.encoder);
+
+  Future<shelf.Response> call(shelf.Request req) async {
+    final dbItems = await client.getLibraryContents();
+    if (dbItems != null) {
+      final apiItems = dbItems.map((i) => i.toApiShort()).toList();
+      final response = api.LibraryContentsResponse(items: apiItems);
+      return shelf.Response.ok(encoder.convert(response), headers: corsHeaders);
+    } else {
+      return shelf.Response.notFound(null, headers: corsHeaders);
+    }
+  }
+}
+
+class LibraryItemHandler {
+  db_client.DbClient client;
+  JsonEncoder encoder;
+
+  LibraryItemHandler(this.client, this.encoder);
 
   Future<shelf.Response> call(shelf.Request req, String id) async {
     final dbInfo = await client.getLibraryInfo(id);
     if (dbInfo != null) {
       final dbPresentation = await client.getPresentation(id);
       final apiPresentation = dbPresentation?.toApi();
-      final apiInfo = dbInfo.toApi(apiPresentation);
+      final apiInfo = dbInfo.toApiFull(apiPresentation);
       return shelf.Response.ok(encoder.convert(apiInfo), headers: corsHeaders);
     } else {
       return shelf.Response.notFound(null, headers: corsHeaders);

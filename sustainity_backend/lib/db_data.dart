@@ -117,15 +117,32 @@ class LibraryInfo {
   @JsonKey(name: 'title')
   final String title;
 
+  @JsonKey(name: 'summary')
+  final String summary;
+
   @JsonKey(name: 'article')
   final String article;
 
-  LibraryInfo({required this.id, required this.title, required this.article});
+  LibraryInfo({
+    required this.id,
+    required this.title,
+    required this.summary,
+    required this.article,
+  });
 
-  api.LibraryInfo toApi(api.Presentation? presentation) {
-    return api.LibraryInfo(
+  api.LibraryInfoShort toApiShort() {
+    return api.LibraryInfoShort(
       id: id,
       title: title,
+      summary: summary,
+    );
+  }
+
+  api.LibraryInfoFull toApiFull(api.Presentation? presentation) {
+    return api.LibraryInfoFull(
+      id: id,
+      title: title,
+      summary: summary,
       article: article,
       presentation: presentation,
     );
@@ -288,9 +305,6 @@ class Product {
   @JsonKey(name: 'descriptions')
   final List<Text> descriptions;
 
-  @JsonKey(name: 'categories')
-  final Categories categories;
-
   @JsonKey(name: 'images')
   final List<Image> images;
 
@@ -308,7 +322,6 @@ class Product {
     required this.gtins,
     required this.names,
     required this.descriptions,
-    required this.categories,
     required this.images,
     required this.follows,
     required this.followedBy,
@@ -340,71 +353,6 @@ class Product {
       manufacturers: manufacturers,
       alternatives: alternatives,
     );
-  }
-
-  List<String> getCategories() {
-    var result = <String>[];
-    if (categories.smartphone) {
-      result.add('smartphone');
-    }
-    if (categories.smartwatch) {
-      result.add('smartwatch');
-    }
-    if (categories.tablet) {
-      result.add('tablet');
-    }
-    if (categories.laptop) {
-      result.add('laptop');
-    }
-    if (categories.computer) {
-      result.add('computer');
-    }
-    if (categories.gameConsole) {
-      result.add('game_console');
-    }
-    if (categories.gameController) {
-      result.add('game_controller');
-    }
-    if (categories.camera) {
-      result.add('camera');
-    }
-    if (categories.cameraLens) {
-      result.add('camera_lens');
-    }
-    if (categories.microprocessor) {
-      result.add('microprocessor');
-    }
-    if (categories.calculator) {
-      result.add('calculator');
-    }
-    if (categories.musicalInstrument) {
-      result.add('musical_instrument');
-    }
-    if (categories.washingMachine) {
-      result.add('washing_machine');
-    }
-    if (categories.car) {
-      result.add('car');
-    }
-    if (categories.motorcycle) {
-      result.add('motorcycle');
-    }
-    if (categories.boat) {
-      result.add('boat');
-    }
-    if (categories.drone) {
-      result.add('drone');
-    }
-    if (categories.drink) {
-      result.add('drink');
-    }
-    if (categories.food) {
-      result.add('food');
-    }
-    if (categories.toy) {
-      result.add('toy');
-    }
-    return result;
   }
 
   factory Product.fromJson(Map<String, dynamic> json) =>

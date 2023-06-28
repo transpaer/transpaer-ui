@@ -26,3 +26,14 @@ class TextSearchResponse {
       _$TextSearchResponseFromJson(json);
   Map<String, dynamic> toJson() => _$TextSearchResponseToJson(this);
 }
+
+@JsonSerializable()
+class LibraryContentsResponse {
+  final List<LibraryInfoShort> items;
+
+  LibraryContentsResponse({required this.items});
+
+  factory LibraryContentsResponse.fromJson(Map<String, dynamic> json) =>
+      _$LibraryContentsResponseFromJson(json);
+  Map<String, dynamic> toJson() => _$LibraryContentsResponseToJson(this);
+}

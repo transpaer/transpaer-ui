@@ -117,6 +117,16 @@ class DbClient {
     }
   }
 
+  Future<List<db.LibraryInfo>> getLibraryContents() async {
+    final items = await _client
+        .newQuery()
+        .addLine('FOR i IN library')
+        .addLine('  RETURN i')
+        .runAndReturnFutureList();
+
+    return items.map((i) => db.LibraryInfo.fromJson(i)).toList();
+  }
+
   Future<db.Presentation?> getPresentation(String id) async {
     final presentations = await _client
         .newQuery()
@@ -196,21 +206,38 @@ class DbClient {
     return dbOrganisations.map((p) => db.Organisation.fromJson(p)).toList();
   }
 
+  Future<List<String>> findCategories(String id) async {
+    final List<dynamic> dbCategories = await _client
+        .newQuery()
+        .addLine('WITH categories, products, category_edges')
+        .addLine('FOR p IN products')
+        .addLine('  FILTER p.id == @id')
+        .addLine('  FOR c IN 1..1 INBOUND p category_edges')
+        .addLine('    RETURN c')
+        .addBindVar('id', id)
+        .runAndReturnFutureList();
+
+    return dbCategories.map((c) => c['_key'] as String).toList();
+  }
+
   Future<List<db.Product>> findAlternatives(String id, String category) async {
     final List<dynamic> dbProducts = await _client
         .newQuery()
-        .addLine('FOR p IN products')
-        .addLine('  FILTER VALUE(p, ["categories", @category]) AND p.id != @id')
-        .addLine('  LET score')
-        .addLine('    = (@id IN p.follows)')
-        .addLine('    + 0.90 * p.certifications.bcorp')
-        .addLine('    + 0.90 * p.certifications.eu_ecolabel')
-        .addLine('    + 0.60 * 0.01 * p.certifications.fti')
-        .addLine('    + 0.30 * p.certifications.tco')
-        .addLine('  LET randomized_score = score + 0.01 * RAND()')
-        .addLine('  SORT randomized_score DESC')
-        .addLine('  LIMIT 10')
-        .addLine('  RETURN p')
+        .addLine('WITH categories, products, category_edges')
+        .addLine('FOR c IN categories')
+        .addLine('  FILTER c._key == @category')
+        .addLine('  FOR p IN 1..1 OUTBOUND c category_edges')
+        .addLine('    FILTER p.id != @id')
+        .addLine('    LET score')
+        .addLine('      = (@id IN p.follows)')
+        .addLine('      + 0.90 * p.certifications.bcorp')
+        .addLine('      + 0.90 * p.certifications.eu_ecolabel')
+        .addLine('      + 0.60 * 0.01 * p.certifications.fti')
+        .addLine('      + 0.30 * p.certifications.tco')
+        .addLine('    LET randomized_score = score + 0.01 * RAND()')
+        .addLine('    SORT randomized_score DESC')
+        .addLine('    LIMIT 10')
+        .addLine('    RETURN p')
         .addBindVar('id', id)
         .addBindVar('category', category)
         .runAndReturnFutureList();

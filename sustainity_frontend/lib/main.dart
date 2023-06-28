@@ -197,16 +197,20 @@ class Article extends StatelessWidget {
   }
 }
 
+const libraryTopicIconNames = [
+  "main",
+  "main",
+  "main",
+  "bcorp",
+  "eu_ecolabel",
+  "tco",
+  "fti",
+  "main",
+];
+
 extension LibraryTopicGuiExtension on api.LibraryTopic {
   String get icon {
-    return [
-      "main",
-      "main",
-      "bcorp",
-      "eu_ecolabel",
-      "tco",
-      "fti",
-    ][index];
+    return libraryTopicIconNames[index];
   }
 }
 
@@ -255,7 +259,7 @@ class FashionTransparencyIndexWidget extends StatelessWidget {
 }
 
 class InfoWidget extends StatelessWidget {
-  final api.LibraryInfo info;
+  final api.LibraryInfoFull info;
   final Navigation navigation;
 
   const InfoWidget({
@@ -341,12 +345,60 @@ class SourcedImage extends StatelessWidget {
   }
 }
 
-class LibraryView extends StatefulWidget {
+class LibraryContentsView extends StatelessWidget {
+  static const double iconSize = 32;
+
+  final api.LibraryContentsResponse contents;
+  final Navigation navigation;
+
+  const LibraryContentsView(
+      {super.key, required this.contents, required this.navigation});
+
+  @override
+  Widget build(BuildContext context) {
+    final aboutUs = contents.items.where((i) => i.id.startsWith("info:"));
+    final aboutCertifications =
+        contents.items.where((i) => i.id.startsWith("cert:"));
+
+    return ListView(
+      scrollDirection: Axis.vertical,
+      children: [
+        const Center(child: Section(text: "About us")),
+        ...aboutUs.map((item) {
+          return ListTile(
+            leading: const Icon(Icons.question_answer_outlined),
+            title: Text(item.title),
+            subtitle: Text(item.summary),
+            onTap: () => navigation.goToLibrary(
+              api.LibraryTopicExtension.fromString(item.id),
+            ),
+          );
+        }),
+        const Center(child: Section(text: "About certifications")),
+        ...aboutCertifications.map((item) {
+          final topic = api.LibraryTopicExtension.fromString(item.id);
+          return ListTile(
+            leading: Image(
+              image: AssetImage('images/${topic.icon}.png'),
+              height: iconSize,
+              width: iconSize,
+            ),
+            title: Text(item.title),
+            subtitle: Text(item.summary),
+            onTap: () => navigation.goToLibrary(topic),
+          );
+        }),
+      ],
+    );
+  }
+}
+
+class LibraryItemView extends StatefulWidget {
   final api.LibraryTopic topic;
   final api.Fetcher fetcher;
   final Navigation navigation;
 
-  const LibraryView({
+  const LibraryItemView({
     super.key,
     required this.topic,
     required this.fetcher,
@@ -354,12 +406,12 @@ class LibraryView extends StatefulWidget {
   });
 
   @override
-  State<LibraryView> createState() => _LibraryViewState();
+  State<LibraryItemView> createState() => _LibraryItemViewState();
 }
 
-class _LibraryViewState extends State<LibraryView>
+class _LibraryItemViewState extends State<LibraryItemView>
     with AutomaticKeepAliveClientMixin {
-  late Future<api.LibraryInfo> _futureInfo;
+  late Future<api.LibraryInfoFull> _futureInfo;
 
   @override
   void initState() {
@@ -374,7 +426,7 @@ class _LibraryViewState extends State<LibraryView>
   Widget build(BuildContext context) {
     super.build(context);
     return Center(
-      child: FutureBuilder<api.LibraryInfo>(
+      child: FutureBuilder<api.LibraryInfoFull>(
         future: _futureInfo,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
@@ -394,13 +446,11 @@ class _LibraryViewState extends State<LibraryView>
 }
 
 class LibraryPage extends StatefulWidget {
-  final api.LibraryTopic topic;
   final api.Fetcher fetcher;
   final Navigation navigation;
 
   const LibraryPage({
     super.key,
-    required this.topic,
     required this.fetcher,
     required this.navigation,
   });
@@ -411,22 +461,12 @@ class LibraryPage extends StatefulWidget {
 
 class _LibraryPageState extends State<LibraryPage>
     with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
-  static const double tabIconSize = 32;
-
-  late TabController _tabController;
+  late Future<api.LibraryContentsResponse> _futureLibraryContents;
 
   @override
   void initState() {
     super.initState();
-    _tabController =
-        TabController(length: api.LibraryTopic.values.length, vsync: this);
-    _tabController.animateTo(api.LibraryTopic.main.index);
-  }
-
-  @override
-  void didUpdateWidget(LibraryPage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    _tabController.animateTo(widget.topic.index);
+    _futureLibraryContents = widget.fetcher.fetchLibraryContents();
   }
 
   @override
@@ -435,38 +475,22 @@ class _LibraryPageState extends State<LibraryPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    return Column(
-      children: [
-        TabBar(
-          controller: _tabController,
-          labelColor: Colors.green[800],
-          indicatorColor: Colors.green[800],
-          indicatorWeight: 7,
-          tabs: <Widget>[
-            for (final value in api.LibraryTopic.values)
-              Tab(
-                icon: Image(
-                  image: AssetImage('images/${value.icon}.png'),
-                  height: tabIconSize,
-                  width: tabIconSize,
-                ),
-              ),
-          ],
-        ),
-        Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            children: <Widget>[
-              for (final value in api.LibraryTopic.values)
-                LibraryView(
-                  topic: value,
-                  fetcher: widget.fetcher,
-                  navigation: widget.navigation,
-                ),
-            ],
-          ),
-        ),
-      ],
+    return Center(
+      child: FutureBuilder<api.LibraryContentsResponse>(
+        future: _futureLibraryContents,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return LibraryContentsView(
+              contents: snapshot.data!,
+              navigation: widget.navigation,
+            );
+          } else if (snapshot.hasError) {
+            return Text('Error while fetching data: ${snapshot.error}');
+          } else {
+            return const CircularProgressIndicator();
+          }
+        },
+      ),
     );
   }
 }
@@ -1358,7 +1382,7 @@ class LibraryScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text("Library"),
       ),
-      body: LibraryView(
+      body: LibraryItemView(
         topic: topic,
         fetcher: fetcher,
         navigation: navigation,
@@ -1382,7 +1406,7 @@ class RootScreen extends StatefulWidget {
 }
 
 class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
-  static const int _tabNum = 4;
+  static const int _tabNum = 5;
 
   late TabController _tabController;
 
@@ -1403,6 +1427,9 @@ class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
           indicatorWeight: 7,
           tabs: const <Widget>[
             Tab(
+              icon: Icon(Icons.home_outlined),
+            ),
+            Tab(
               icon: Icon(Icons.menu_book_outlined),
             ),
             Tab(
@@ -1420,8 +1447,12 @@ class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
       body: TabBarView(
         controller: _tabController,
         children: <Widget>[
-          LibraryPage(
+          LibraryItemView(
             topic: api.LibraryTopic.main,
+            fetcher: widget.fetcher,
+            navigation: widget.navigation,
+          ),
+          LibraryPage(
             fetcher: widget.fetcher,
             navigation: widget.navigation,
           ),

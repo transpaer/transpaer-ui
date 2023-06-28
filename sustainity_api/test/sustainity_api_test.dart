@@ -5,11 +5,29 @@ import 'package:test/test.dart';
 
 void main() {
   test('Serde Topic', () {
-    expect(LibraryTopic.main, LibraryTopicExtension.fromString('cert:main'));
+    expect(libraryTopicNames.length, LibraryTopic.values.length);
+
+    expect(LibraryTopic.main.name, 'info:main');
+    expect(LibraryTopic.forProducers.name, 'info:for_producers');
+    expect(LibraryTopic.faq.name, 'info:faq');
+    expect(LibraryTopic.bcorp.name, 'cert:bcorp');
+    expect(LibraryTopic.euEcolabel.name, 'cert:eu_ecolabel');
+    expect(LibraryTopic.tco.name, 'cert:tco');
+    expect(LibraryTopic.fti.name, 'cert:fti');
+    expect(LibraryTopic.notFound.name, 'other:not_found');
+
+    expect(LibraryTopic.main, LibraryTopicExtension.fromString('info:main'));
+    expect(LibraryTopic.forProducers,
+        LibraryTopicExtension.fromString('info:for_producers'));
+    expect(LibraryTopic.faq, LibraryTopicExtension.fromString('info:faq'));
     expect(LibraryTopic.bcorp, LibraryTopicExtension.fromString('cert:bcorp'));
+    expect(LibraryTopic.euEcolabel,
+        LibraryTopicExtension.fromString('cert:eu_ecolabel'));
     expect(LibraryTopic.tco, LibraryTopicExtension.fromString('cert:tco'));
     expect(LibraryTopic.fti, LibraryTopicExtension.fromString('cert:fti'));
-    expect(LibraryTopic.main, LibraryTopicExtension.fromString('wrong value'));
+
+    expect(
+        LibraryTopic.notFound, LibraryTopicExtension.fromString('wrong value'));
   });
 
   test('Serde Product', () {
