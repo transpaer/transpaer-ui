@@ -143,7 +143,7 @@ class Description extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(text, style: textStyle),
+            SelectableText(text, style: textStyle),
             if (sourceWidget != null) ...[
               const Space(),
               sourceWidget,
@@ -198,6 +198,8 @@ class Article extends StatelessWidget {
 }
 
 const libraryTopicIconNames = [
+  "main",
+  "main",
   "main",
   "main",
   "main",
@@ -357,8 +359,8 @@ class LibraryContentsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final aboutUs = contents.items.where((i) => i.id.startsWith("info:"));
-    final aboutCertifications =
-        contents.items.where((i) => i.id.startsWith("cert:"));
+    final aboutData = contents.items
+        .where((i) => i.id.startsWith("cert:") || i.id.startsWith("data:"));
 
     return ListView(
       scrollDirection: Axis.vertical,
@@ -374,8 +376,9 @@ class LibraryContentsView extends StatelessWidget {
             ),
           );
         }),
-        const Center(child: Section(text: "About certifications")),
-        ...aboutCertifications.map((item) {
+        const Center(
+            child: Section(text: "About certifications and data sources")),
+        ...aboutData.map((item) {
           final topic = api.LibraryTopicExtension.fromString(item.id);
           return ListTile(
             leading: Image(
