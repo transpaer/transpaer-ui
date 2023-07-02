@@ -38,9 +38,6 @@ class ResultCollector {
   List<api.SearchResult> gatherResults() {
     List<ScoredResult> result = results.values.toList();
     result.sort((a, b) => b.score.compareTo(a.score));
-    if (result.length > 20) {
-      result = result.sublist(0, 20);
-    }
     return result.map((r) => r.result).toList();
   }
 }
