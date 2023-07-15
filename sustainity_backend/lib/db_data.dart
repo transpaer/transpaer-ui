@@ -244,18 +244,66 @@ class Categories {
 }
 
 @JsonSerializable()
+class BCorpCert {
+  @JsonKey(name: 'id')
+  final String id;
+
+  BCorpCert({required this.id});
+
+  factory BCorpCert.fromJson(Map<String, dynamic> json) =>
+      _$BCorpCertFromJson(json);
+  Map<String, dynamic> toJson() => _$BCorpCertToJson(this);
+}
+
+@JsonSerializable()
+class EuEcolabelCert {
+  @JsonKey(name: 'match_accuracy')
+  final double matchAccuracy;
+
+  EuEcolabelCert({required this.matchAccuracy});
+
+  factory EuEcolabelCert.fromJson(Map<String, dynamic> json) =>
+      _$EuEcolabelCertFromJson(json);
+  Map<String, dynamic> toJson() => _$EuEcolabelCertToJson(this);
+}
+
+@JsonSerializable()
+class FtiCert {
+  @JsonKey(name: 'score')
+  final int score;
+
+  FtiCert({required this.score});
+
+  factory FtiCert.fromJson(Map<String, dynamic> json) =>
+      _$FtiCertFromJson(json);
+  Map<String, dynamic> toJson() => _$FtiCertToJson(this);
+}
+
+@JsonSerializable()
+class TcoCert {
+  @JsonKey(name: 'brand_name')
+  final String brandName;
+
+  TcoCert({required this.brandName});
+
+  factory TcoCert.fromJson(Map<String, dynamic> json) =>
+      _$TcoCertFromJson(json);
+  Map<String, dynamic> toJson() => _$TcoCertToJson(this);
+}
+
+@JsonSerializable()
 class Certifications {
   @JsonKey(name: 'bcorp')
-  final bool bcorp;
+  final BCorpCert? bcorp;
 
   @JsonKey(name: 'eu_ecolabel')
-  final bool euEcolabel;
+  final EuEcolabelCert? euEcolabel;
 
   @JsonKey(name: 'tco')
-  final bool tco;
+  final TcoCert? tco;
 
   @JsonKey(name: 'fti')
-  final int? fti;
+  final FtiCert? fti;
 
   Certifications({
     required this.bcorp,
@@ -266,13 +314,13 @@ class Certifications {
 
   List<api.BadgeName> toBadges() {
     var badges = <api.BadgeName>[];
-    if (bcorp) {
+    if (bcorp != null) {
       badges.add(api.BadgeName.bcorp);
     }
-    if (euEcolabel) {
+    if (euEcolabel != null) {
       badges.add(api.BadgeName.euEcolabel);
     }
-    if (tco) {
+    if (tco != null) {
       badges.add(api.BadgeName.tco);
     }
     return badges;
@@ -281,9 +329,27 @@ class Certifications {
   Map<api.ScorerName, int> toScores() {
     var scores = <api.ScorerName, int>{};
     if (fti != null) {
-      scores[api.ScorerName.fti] = fti!;
+      scores[api.ScorerName.fti] = fti!.score;
     }
     return scores;
+  }
+
+  List<api.Medallion> toMedallions() {
+    var medallions = <api.Medallion>[];
+    if (bcorp != null) {
+      medallions.add(api.BCorpMedallion(id: bcorp!.id));
+    }
+    if (euEcolabel != null) {
+      medallions.add(
+          api.EuEcolabelMedallion(matchAccuracy: euEcolabel!.matchAccuracy));
+    }
+    if (tco != null) {
+      medallions.add(api.TcoMedallion(brandName: tco!.brandName));
+    }
+    if (fti != null) {
+      medallions.add(api.FtiMedallion(score: fti!.score));
+    }
+    return medallions;
   }
 
   factory Certifications.fromJson(Map<String, dynamic> json) =>
@@ -347,8 +413,7 @@ class Product {
       gtins: gtins,
       names: names.map((n) => n.toApi()).toList(),
       descriptions: descriptions.map((d) => d.toApi()).toList(),
-      badges: certifications.toBadges(),
-      scores: certifications.toScores(),
+      medallions: certifications.toMedallions(),
       images: images.map((i) => i.toApi()).toList(),
       manufacturers: manufacturers,
       alternatives: alternatives,
@@ -413,8 +478,7 @@ class Organisation {
       images: images.map((i) => i.toApi()).toList(),
       websites: websites,
       products: products,
-      badges: certifications.toBadges(),
-      scores: certifications.toScores(),
+      medallions: certifications.toMedallions(),
     );
   }
 

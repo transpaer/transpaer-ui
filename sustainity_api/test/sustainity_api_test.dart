@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:collection/collection.dart';
 import 'package:sustainity_api/sustainity_api.dart';
 import 'package:test/test.dart';
 
@@ -30,8 +29,25 @@ void main() {
         LibraryTopic.notFound, LibraryTopicExtension.fromString('wrong value'));
   });
 
+  test('Serde Medallion', () {
+    expect(medallionNames.length, MedallionName.values.length);
+
+    expect(MedallionName.bcorp.name, 'bcorp');
+    expect(MedallionName.euEcolabel.name, 'eu');
+    expect(MedallionName.tco.name, 'tco');
+    expect(MedallionName.fti.name, 'fti');
+    expect(MedallionName.notFound.name, '');
+
+    expect(MedallionName.bcorp, MedallionNameExtension.fromString('bcorp'));
+    expect(MedallionName.euEcolabel, MedallionNameExtension.fromString('eu'));
+    expect(MedallionName.tco, MedallionNameExtension.fromString('tco'));
+    expect(MedallionName.fti, MedallionNameExtension.fromString('fti'));
+
+    expect(MedallionName.notFound,
+        MedallionNameExtension.fromString('wrong value'));
+  });
+
   test('Serde Product', () {
-    final Function deepEq = const DeepCollectionEquality().equals;
     final originalString = '{'
         '"product_id":"P",'
         '"gtins":["12345","67890"],'
@@ -47,8 +63,7 @@ void main() {
         '{"product_id":"P","name":"N","description":"D","badges":["eu","tco"],"scores":{"fti":25}}'
         ']'
         '}],'
-        '"badges":["bcorp","tco"],'
-        '"scores":{"fti":25}'
+        '"medallions":[{"name":"bcorp","id":"ID"},{"name":"tco","brand_name":"BRAND"},{"name":"fti","score":26}]'
         '}';
     final originalItem = ProductFull(
       productId: "P",
@@ -85,8 +100,11 @@ void main() {
           ],
         )
       ],
-      badges: <BadgeName>[BadgeName.bcorp, BadgeName.tco],
-      scores: {ScorerName.fti: 25},
+      medallions: [
+        BCorpMedallion(id: "ID"),
+        TcoMedallion(brandName: "BRAND"),
+        FtiMedallion(score: 26),
+      ],
     );
 
     final resultString = jsonEncode(originalItem);
@@ -94,11 +112,13 @@ void main() {
 
     expect(resultString, originalString);
     expect(resultItem.productId, originalItem.productId);
+    expect(resultItem.gtins, originalItem.gtins);
     expect(resultItem.names, originalItem.names);
     expect(resultItem.descriptions, originalItem.descriptions);
-    expect(deepEq(resultItem.alternatives, originalItem.alternatives), true);
-    expect(resultItem.badges, originalItem.badges);
-    expect(resultItem.scores, originalItem.scores);
+    expect(resultItem.images, originalItem.images);
+    expect(resultItem.manufacturers, originalItem.manufacturers);
+    expect(resultItem.alternatives, originalItem.alternatives);
+    expect(resultItem.medallions, originalItem.medallions);
   });
 
   test('Serde Organisation', () {
@@ -111,8 +131,7 @@ void main() {
         '"products":['
         '{"product_id":"P","name":"N","description":"D","badges":["eu","tco"],"scores":{"fti":25}}'
         '],'
-        '"badges":["bcorp","tco"],'
-        '"scores":{"fti":25}'
+        '"medallions":[{"name":"bcorp","id":"ID"},{"name":"tco","brand_name":"BRAND"},{"name":"fti","score":25}]'
         '}';
     final originalItem = OrganisationFull(
       organisationId: "O",
@@ -132,8 +151,11 @@ void main() {
           scores: {ScorerName.fti: 25},
         )
       ],
-      badges: [BadgeName.bcorp, BadgeName.tco],
-      scores: {ScorerName.fti: 25},
+      medallions: [
+        BCorpMedallion(id: "ID"),
+        TcoMedallion(brandName: "BRAND"),
+        FtiMedallion(score: 25),
+      ],
     );
 
     final resultString = jsonEncode(originalItem);
@@ -141,13 +163,11 @@ void main() {
 
     expect(resultString, originalString);
     expect(resultItem.organisationId, originalItem.organisationId);
-    expect(resultItem.names.length, originalItem.names.length);
-    expect(resultItem.names[0], originalItem.names[0]);
     expect(resultItem.names, originalItem.names);
     expect(resultItem.descriptions, originalItem.descriptions);
     expect(resultItem.images, originalItem.images);
     expect(resultItem.websites, originalItem.websites);
-    expect(resultItem.badges, originalItem.badges);
-    expect(resultItem.scores, originalItem.scores);
+    expect(resultItem.products, originalItem.products);
+    expect(resultItem.medallions, originalItem.medallions);
   });
 }

@@ -11,6 +11,9 @@ const double defaultPadding = 10.0;
 const double tileWidth = 180;
 const double tileHeight = 240;
 const double imageSize = 220;
+const double medallionWidth = 240;
+const double medallionHeight = 180;
+const double badgeSize = 32;
 
 void main() async {
   final config = Config.load();
@@ -194,6 +197,24 @@ class Article extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+extension BCorpMedallionExtension on api.BCorpMedallion {
+  String get icon {
+    return "bcorp";
+  }
+}
+
+extension EuEcolabelMedallionExtension on api.EuEcolabelMedallion {
+  String get icon {
+    return "eu_ecolabel";
+  }
+}
+
+extension TcoMedallionExtension on api.TcoMedallion {
+  String get icon {
+    return "tco";
   }
 }
 
@@ -608,8 +629,6 @@ class ProductTileWidget extends StatelessWidget {
 }
 
 class Badge extends StatelessWidget {
-  static const double badgeSize = 32;
-
   final api.BadgeName badge;
   final Function(api.BadgeName) onTap;
 
@@ -634,8 +653,6 @@ class Badge extends StatelessWidget {
 }
 
 class Score extends StatelessWidget {
-  static const double badgeSize = 32;
-
   final ScoreData score;
   final Function(api.ScorerName)? onTap;
 
@@ -683,8 +700,6 @@ class Score extends StatelessWidget {
 }
 
 class RibbonFlex extends StatelessWidget {
-  static const double badgeSize = 32;
-
   final List<api.BadgeName>? badges;
   final Map<api.ScorerName, int>? scores;
   final Axis axis;
@@ -750,6 +765,538 @@ class RibbonRow extends RibbonFlex {
             axis: Axis.horizontal,
             onBadgeTap: onBadgeTap,
             onScorerTap: onScorerTap);
+}
+
+class MedallionFrame extends StatelessWidget {
+  final Widget child;
+  final Color color;
+
+  const MedallionFrame({super.key, required this.child, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(defaultPadding),
+      child: Container(
+        height: medallionHeight,
+        width: medallionWidth,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: const BorderRadius.all(Radius.circular(defaultPadding)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(defaultPadding),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+class BCorpMedallion extends StatelessWidget {
+  final api.BCorpMedallion medallion;
+  final Function(api.LibraryTopic) onTopic;
+
+  const BCorpMedallion({
+    super.key,
+    required this.medallion,
+    required this.onTopic,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final mainStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
+          color: Colors.black,
+        );
+    final commentStyle = Theme.of(context).textTheme.bodyMedium;
+
+    return MedallionFrame(
+      color: Colors.green.shade200,
+      child: Column(
+        children: [
+          Text("Certified by:", style: commentStyle),
+          const Spacer(),
+          Center(
+            child: Row(
+              children: [
+                const Spacer(),
+                Image(
+                  image: AssetImage('images/${medallion.icon}.png'),
+                  height: badgeSize,
+                  width: badgeSize,
+                ),
+                const Space(),
+                Text(
+                  "BCorporations",
+                  style: mainStyle,
+                  textAlign: TextAlign.center,
+                ),
+                const Spacer(),
+              ],
+            ),
+          ),
+          const Spacer(),
+          Row(children: [
+            const Spacer(),
+            IconButton(
+              icon: const Icon(Icons.bug_report_outlined),
+              onPressed: () async {
+                final url = Uri.parse(
+                    'https://github.com/sustainity-dev/issues/issues/new');
+                await url_launcher.launchUrl(url);
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.info_outlined),
+              onPressed: () => onTopic(api.LibraryTopic.bcorp),
+            ),
+            IconButton(
+              icon: const Icon(Icons.arrow_outward_outlined),
+              onPressed: () async {
+                final url = Uri.parse(
+                    'https://www.bcorporation.net/en-us/find-a-b-corp/company/${medallion.id}/');
+                await url_launcher.launchUrl(url);
+              },
+            ),
+          ])
+        ],
+      ),
+    );
+  }
+}
+
+class EuEcolabelMedallion extends StatelessWidget {
+  final api.EuEcolabelMedallion medallion;
+  final Function(api.LibraryTopic) onTopic;
+
+  const EuEcolabelMedallion({
+    super.key,
+    required this.medallion,
+    required this.onTopic,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final mainStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
+          color: Colors.black,
+        );
+    final commentStyle = Theme.of(context).textTheme.bodyMedium;
+
+    return MedallionFrame(
+      color: Colors.green.shade200,
+      child: Column(
+        children: [
+          Text("Certified by:", style: commentStyle),
+          const Spacer(),
+          Center(
+            child: Row(
+              children: [
+                const Spacer(),
+                Image(
+                  image: AssetImage('images/${medallion.icon}.png'),
+                  height: badgeSize,
+                  width: badgeSize,
+                ),
+                const Space(),
+                Text(
+                  "EU Ecolabel",
+                  style: mainStyle,
+                  textAlign: TextAlign.center,
+                ),
+                const Spacer(),
+              ],
+            ),
+          ),
+          const Spacer(),
+          Row(children: [
+            const Spacer(),
+            IconButton(
+              icon: const Icon(Icons.bug_report_outlined),
+              onPressed: () async {
+                final url = Uri.parse(
+                  'https://github.com/sustainity-dev/issues/issues/new',
+                );
+                await url_launcher.launchUrl(url);
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.info_outlined),
+              onPressed: () => onTopic(api.LibraryTopic.euEcolabel),
+            ),
+            IconButton(
+              icon: const Icon(Icons.arrow_outward_outlined),
+              onPressed: () async {
+                final url = Uri.parse(
+                  'https://environment.ec.europa.eu/topics/circular-economy/eu-ecolabel-home_en',
+                );
+                await url_launcher.launchUrl(url);
+              },
+            ),
+          ])
+        ],
+      ),
+    );
+  }
+}
+
+class FtiMedallion extends StatelessWidget {
+  final api.FtiMedallion medallion;
+  final Function(api.LibraryTopic) onTopic;
+
+  const FtiMedallion({
+    super.key,
+    required this.medallion,
+    required this.onTopic,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final mainStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
+          color: Colors.black,
+        );
+    final commentStyle = Theme.of(context).textTheme.bodyMedium;
+
+    final score = ScoreData(
+      scorer: api.ScorerName.fti,
+      score: medallion.score,
+    );
+
+    return MedallionFrame(
+      color: score.color,
+      child: Column(children: [
+        Text(
+          "Fashion Transparency Index",
+          style: mainStyle,
+          textAlign: TextAlign.center,
+        ),
+        const Spacer(),
+        Row(
+          children: [
+            const Spacer(),
+            Text("Score:", style: commentStyle),
+            const Spacer(),
+            Text("${medallion.score}%", style: mainStyle),
+            const Spacer(),
+          ],
+        ),
+        const Spacer(),
+        Row(children: [
+          const Spacer(),
+          IconButton(
+            icon: const Icon(Icons.bug_report_outlined),
+            onPressed: () async {
+              final url = Uri.parse(
+                  'https://github.com/sustainity-dev/issues/issues/new');
+              await url_launcher.launchUrl(url);
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.info_outlined),
+            onPressed: () => onTopic(api.LibraryTopic.fti),
+          ),
+          IconButton(
+            icon: const Icon(Icons.arrow_outward_outlined),
+            onPressed: () async {
+              final url = Uri.parse(
+                  'https://www.fashionrevolution.org/about/transparency/');
+              await url_launcher.launchUrl(url);
+            },
+          ),
+        ])
+      ]),
+    );
+  }
+}
+
+class TcoMedallion extends StatelessWidget {
+  final api.TcoMedallion medallion;
+  final Function(api.LibraryTopic) onTopic;
+
+  const TcoMedallion({
+    super.key,
+    required this.medallion,
+    required this.onTopic,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final mainStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
+          color: Colors.black,
+        );
+    final commentStyle = Theme.of(context).textTheme.bodyMedium;
+
+    return MedallionFrame(
+      color: Colors.green.shade200,
+      child: Column(
+        children: [
+          Text("Certified by:", style: commentStyle),
+          const Spacer(),
+          Center(
+            child: Row(
+              children: [
+                const Spacer(),
+                Image(
+                  image: AssetImage('images/${medallion.icon}.png'),
+                  height: badgeSize,
+                  width: badgeSize,
+                ),
+                const Space(),
+                Text(
+                  "TCO",
+                  style: mainStyle,
+                  textAlign: TextAlign.center,
+                ),
+                const Spacer(),
+              ],
+            ),
+          ),
+          const Spacer(),
+          Row(children: [
+            const Spacer(),
+            IconButton(
+              icon: const Icon(Icons.bug_report_outlined),
+              onPressed: () async {
+                final url = Uri.parse(
+                    'https://github.com/sustainity-dev/issues/issues/new');
+                await url_launcher.launchUrl(url);
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.info_outlined),
+              onPressed: () => onTopic(api.LibraryTopic.tco),
+            ),
+            IconButton(
+              icon: const Icon(Icons.arrow_outward_outlined),
+              onPressed: () async {
+                final url = Uri.parse(
+                    'https://tcocertified.com/product-finder/index?brand=${medallion.brandName}');
+                await url_launcher.launchUrl(url);
+              },
+            ),
+          ])
+        ],
+      ),
+    );
+  }
+}
+
+class MedallionSwitcher extends StatelessWidget {
+  final api.Medallion medallion;
+  final Function(api.LibraryTopic) onTopic;
+
+  const MedallionSwitcher({
+    super.key,
+    required this.medallion,
+    required this.onTopic,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    switch (medallion.runtimeType) {
+      case api.BCorpMedallion:
+        return BCorpMedallion(
+          medallion: medallion as api.BCorpMedallion,
+          onTopic: onTopic,
+        );
+      case api.EuEcolabelMedallion:
+        return EuEcolabelMedallion(
+          medallion: medallion as api.EuEcolabelMedallion,
+          onTopic: onTopic,
+        );
+      case api.FtiMedallion:
+        return FtiMedallion(
+          medallion: medallion as api.FtiMedallion,
+          onTopic: onTopic,
+        );
+      case api.TcoMedallion:
+        return TcoMedallion(
+          medallion: medallion as api.TcoMedallion,
+          onTopic: onTopic,
+        );
+    }
+    return const Spacer();
+  }
+}
+
+class SustainityMedallion extends StatelessWidget {
+  const SustainityMedallion({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final mainStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
+          color: Colors.black,
+        );
+    final commentStyle = Theme.of(context).textTheme.bodyMedium;
+
+    return MedallionFrame(
+      color: Colors.yellow.shade200,
+      child: Column(
+        children: [
+          Text(
+            "Sustainity score",
+            style: mainStyle,
+            textAlign: TextAlign.center,
+          ),
+          const Spacer(),
+          Row(children: [
+            const Spacer(),
+            Text("? / 10", style: mainStyle),
+            const Spacer(),
+            Text("(Not available yet)", style: commentStyle),
+            const Spacer(),
+          ]),
+          const Spacer(),
+          Text(
+            "We are working on it!",
+            style: commentStyle,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class GhgMedallion extends StatelessWidget {
+  const GhgMedallion({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final mainStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
+          color: Colors.black,
+        );
+    final commentStyle = Theme.of(context).textTheme.bodyMedium;
+
+    return MedallionFrame(
+      color: Colors.grey.shade400,
+      child: Column(
+        children: [
+          Text(
+            "CO2 emissions",
+            style: mainStyle,
+            textAlign: TextAlign.center,
+          ),
+          const Spacer(),
+          Row(children: [
+            const Spacer(),
+            Text("During production:", style: commentStyle),
+            const Spacer(),
+            Text("?", style: mainStyle),
+            const Spacer(),
+          ]),
+          const Spacer(),
+          Row(children: [
+            const Spacer(),
+            Text("During exploitation", style: commentStyle),
+            const Spacer(),
+            Text("?", style: mainStyle),
+            const Spacer(),
+          ]),
+          const Spacer(),
+          Text(
+            "More data needed.\nWe are working on it!",
+            style: commentStyle,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class DisposalMedallion extends StatelessWidget {
+  const DisposalMedallion({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final mainStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
+          color: Colors.black,
+        );
+    final commentStyle = Theme.of(context).textTheme.bodyMedium;
+
+    return MedallionFrame(
+      color: Colors.grey.shade400,
+      child: Column(
+        children: [
+          Text(
+            "Disposal",
+            style: mainStyle,
+            textAlign: TextAlign.center,
+          ),
+          const Spacer(),
+          Row(children: [
+            const Spacer(),
+            Text("Product:", style: commentStyle),
+            const Spacer(),
+            Text("?", style: mainStyle),
+            const Spacer(),
+          ]),
+          const Spacer(),
+          Row(children: [
+            const Spacer(),
+            Text("Packaging:", style: commentStyle),
+            const Spacer(),
+            Text("?", style: mainStyle),
+            const Spacer(),
+          ]),
+          const Spacer(),
+          Text(
+            "More data needed.\nWe are working on it!",
+            style: commentStyle,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class OrganisationMedallions extends StatelessWidget {
+  final List<api.Medallion> medallions;
+  final Function(api.LibraryTopic) onTopic;
+
+  const OrganisationMedallions({
+    super.key,
+    required this.medallions,
+    required this.onTopic,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      direction: Axis.horizontal,
+      children: [
+        const SustainityMedallion(),
+        for (final medallion in medallions)
+          MedallionSwitcher(medallion: medallion, onTopic: onTopic),
+      ],
+    );
+  }
+}
+
+class ProductMedallions extends StatelessWidget {
+  final List<api.Medallion> medallions;
+  final Function(api.LibraryTopic) onTopic;
+
+  const ProductMedallions({
+    super.key,
+    required this.medallions,
+    required this.onTopic,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      direction: Axis.horizontal,
+      children: [
+        const SustainityMedallion(),
+        for (final medallion in medallions)
+          MedallionSwitcher(medallion: medallion, onTopic: onTopic),
+        const GhgMedallion(),
+        const DisposalMedallion(),
+      ],
+    );
+  }
 }
 
 class OperationsMenu extends StatelessWidget {
@@ -969,12 +1516,9 @@ class OrganisationView extends StatelessWidget {
                 ] else ...[
                   const Center(child: Text("No description..."))
                 ],
-                const Section(text: 'Certifications'),
-                RibbonRow(
-                  badges: organisation.badges,
-                  scores: organisation.scores,
-                  onBadgeTap: navigation.onBadgeTap,
-                  onScorerTap: navigation.onScorerTap,
+                OrganisationMedallions(
+                  medallions: organisation.medallions,
+                  onTopic: navigation.goToLibrary,
                 ),
                 const Section(text: 'Images'),
                 if (organisation.images.isNotEmpty) ...[
@@ -1041,17 +1585,10 @@ class ProductView extends StatelessWidget {
                 ] else ...[
                   const Center(child: Text("No description..."))
                 ],
-                const Section(text: 'Certifications'),
-                RibbonRow(
-                  badges: product.badges,
-                  scores: product.scores,
-                  onBadgeTap: navigation.onBadgeTap,
-                  onScorerTap: navigation.onScorerTap,
+                ProductMedallions(
+                  medallions: product.medallions,
+                  onTopic: navigation.goToLibrary,
                 ),
-                const Section(text: 'GTINs'),
-                product.gtins.isNotEmpty
-                    ? Description(text: product.gtins.join(", "))
-                    : const Center(child: Text("No GTINs...")),
                 const Section(text: 'Producers:'),
                 if (product.manufacturers != null) ...[
                   for (final manufacturer in product.manufacturers!)
@@ -1078,6 +1615,10 @@ class ProductView extends StatelessWidget {
                 ],
                 for (final a in product.alternatives)
                   CategoryAlternativesWidget(ca: a, navigation: navigation),
+                const Section(text: 'Barcodes'),
+                product.gtins.isNotEmpty
+                    ? Description(text: product.gtins.join(", "))
+                    : const Center(child: Text("No barcodes...")),
                 OperationsMenu(
                   variant: PreviewVariant.product,
                   navigation: navigation,
