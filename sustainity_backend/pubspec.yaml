@@ -3,7 +3,7 @@ description: sustainity.dev backend serving Sustainity REST API.
 version: 1.0.0
 
 environment:
-  sdk: '>=2.19.2 <3.0.0'
+  sdk: '>=3.0.2 <4.0.0'
 
 dependencies:
   arango_driver: ^3.6.1

@@ -1,5 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:collection/collection.dart';
+import 'package:equatable/equatable.dart';
 
 part 'data.g.dart';
 
@@ -50,6 +51,129 @@ extension ScorerNameExtension on ScorerName {
   }
 }
 
+enum MedallionName {
+  @JsonValue('bcorp')
+  bcorp,
+
+  @JsonValue('eu')
+  euEcolabel,
+
+  @JsonValue('fti')
+  fti,
+
+  @JsonValue('tco')
+  tco,
+
+  @JsonValue('not_found')
+  notFound,
+}
+
+const medallionNames = ["bcorp", "eu", "fti", "tco", ""];
+
+extension MedallionNameExtension on MedallionName {
+  String get name {
+    return medallionNames[index];
+  }
+
+  static MedallionName fromString(String string) {
+    return MedallionName.values.firstWhere(
+      (n) => n.name == string,
+      orElse: () => MedallionName.notFound,
+    );
+  }
+}
+
+@JsonSerializable()
+class Medallion with EquatableMixin {
+  MedallionName name;
+
+  Medallion(this.name);
+
+  @override
+  List<Object> get props => [name];
+
+  factory Medallion.fromJson(Map<String, dynamic> json) {
+    switch (MedallionNameExtension.fromString(json["name"])) {
+      case MedallionName.bcorp:
+        return BCorpMedallion.fromJson(json);
+      case MedallionName.fti:
+        return FtiMedallion.fromJson(json);
+      case MedallionName.euEcolabel:
+        return EuEcolabelMedallion.fromJson(json);
+      case MedallionName.tco:
+        return TcoMedallion.fromJson(json);
+      case MedallionName.notFound:
+        return Medallion(MedallionName.notFound);
+    }
+  }
+  Map<String, dynamic> toJson() => _$MedallionToJson(this);
+}
+
+@JsonSerializable()
+class BCorpMedallion extends Medallion {
+  @JsonKey(name: 'id')
+  final String id;
+
+  BCorpMedallion({required this.id}) : super(MedallionName.bcorp);
+
+  @override
+  List<Object> get props => [name, id];
+
+  factory BCorpMedallion.fromJson(Map<String, dynamic> json) =>
+      _$BCorpMedallionFromJson(json);
+  @override
+  Map<String, dynamic> toJson() => _$BCorpMedallionToJson(this);
+}
+
+@JsonSerializable()
+class EuEcolabelMedallion extends Medallion {
+  @JsonKey(name: 'match_accuracy')
+  final double matchAccuracy;
+
+  EuEcolabelMedallion({required this.matchAccuracy})
+      : super(MedallionName.euEcolabel);
+
+  @override
+  List<Object> get props => [name, matchAccuracy];
+
+  factory EuEcolabelMedallion.fromJson(Map<String, dynamic> json) =>
+      _$EuEcolabelMedallionFromJson(json);
+  @override
+  Map<String, dynamic> toJson() => _$EuEcolabelMedallionToJson(this);
+}
+
+@JsonSerializable()
+class FtiMedallion extends Medallion {
+  @JsonKey(name: 'score')
+  int score;
+
+  FtiMedallion({required this.score}) : super(MedallionName.fti);
+
+  @override
+  List<Object> get props => [name, score];
+
+  factory FtiMedallion.fromJson(Map<String, dynamic> json) =>
+      _$FtiMedallionFromJson(json);
+  @override
+  Map<String, dynamic> toJson() => _$FtiMedallionToJson(this);
+}
+
+@JsonSerializable()
+class TcoMedallion extends Medallion {
+  @JsonKey(name: 'brand_name')
+  final String brandName;
+
+  TcoMedallion({required this.brandName}) : super(MedallionName.tco);
+
+  @override
+  List<Object> get props => [name, brandName];
+
+  factory TcoMedallion.fromJson(Map<String, dynamic> json) =>
+      _$TcoMedallionFromJson(json);
+  @override
+  Map<String, dynamic> toJson() => _$TcoMedallionToJson(this);
+}
+
 enum LibraryTopic {
   main,
   forProducers,
@@ -90,7 +214,7 @@ extension LibraryTopicExtension on LibraryTopic {
 }
 
 @JsonSerializable()
-class CategoryAlternatives {
+class CategoryAlternatives with EquatableMixin {
   @JsonKey(name: 'category')
   String category;
 
@@ -100,20 +224,7 @@ class CategoryAlternatives {
   CategoryAlternatives({required this.category, required this.alternatives});
 
   @override
-  bool operator ==(Object other) {
-    final Function deepEq = const DeepCollectionEquality().equals;
-    return (other is CategoryAlternatives) &&
-        (other.category == category) &&
-        deepEq(other.alternatives, alternatives);
-  }
-
-  @override
-  int get hashCode {
-    var result = 17;
-    result = 37 * result + category.hashCode;
-    result = 37 * result + alternatives.hashCode;
-    return result;
-  }
+  List<Object> get props => [category, alternatives];
 
   factory CategoryAlternatives.fromJson(Map<String, dynamic> json) =>
       _$CategoryAlternativesFromJson(json);
@@ -132,7 +243,7 @@ enum Source {
 }
 
 @JsonSerializable()
-class Text {
+class Text with EquatableMixin {
   @JsonKey(name: 'text')
   final String text;
 
@@ -142,24 +253,14 @@ class Text {
   Text({required this.text, required this.source});
 
   @override
-  bool operator ==(Object other) {
-    return (other is Text) && (other.text == text) && (other.source == source);
-  }
-
-  @override
-  int get hashCode {
-    var result = 17;
-    result = 37 * result + text.hashCode;
-    result = 37 * result + source.hashCode;
-    return result;
-  }
+  List<Object> get props => [text, source];
 
   factory Text.fromJson(Map<String, dynamic> json) => _$TextFromJson(json);
   Map<String, dynamic> toJson() => _$TextToJson(this);
 }
 
 @JsonSerializable()
-class Image {
+class Image with EquatableMixin {
   @JsonKey(name: 'image')
   final String image;
 
@@ -169,19 +270,7 @@ class Image {
   Image({required this.image, required this.source});
 
   @override
-  bool operator ==(Object other) {
-    return (other is Image) &&
-        (other.image == image) &&
-        (other.source == source);
-  }
-
-  @override
-  int get hashCode {
-    var result = 17;
-    result = 37 * result + image.hashCode;
-    result = 37 * result + source.hashCode;
-    return result;
-  }
+  List<Object> get props => [image, source];
 
   factory Image.fromJson(Map<String, dynamic> json) => _$ImageFromJson(json);
   Map<String, dynamic> toJson() => _$ImageToJson(this);
@@ -274,7 +363,7 @@ class LibraryInfoFull {
 }
 
 @JsonSerializable()
-class OrganisationShort {
+class OrganisationShort with EquatableMixin {
   @JsonKey(name: 'organisation_id')
   final String organisationId;
 
@@ -297,6 +386,15 @@ class OrganisationShort {
     required this.badges,
     required this.scores,
   });
+
+  @override
+  List<Object?> get props => [
+        organisationId,
+        name,
+        description,
+        badges,
+        scores,
+      ];
 
   factory OrganisationShort.fromJson(Map<String, dynamic> json) =>
       _$OrganisationShortFromJson(json);
@@ -323,11 +421,8 @@ class OrganisationFull {
   @JsonKey(name: 'products')
   final List<ProductShort> products;
 
-  @JsonKey(name: 'badges')
-  final List<BadgeName> badges;
-
-  @JsonKey(name: 'scores')
-  final Map<ScorerName, int> scores;
+  @JsonKey(name: 'medallions')
+  final List<Medallion> medallions;
 
   OrganisationFull({
     required this.organisationId,
@@ -336,8 +431,7 @@ class OrganisationFull {
     required this.images,
     required this.websites,
     required this.products,
-    required this.badges,
-    required this.scores,
+    required this.medallions,
   });
 
   factory OrganisationFull.fromJson(Map<String, dynamic> json) =>
@@ -346,7 +440,7 @@ class OrganisationFull {
 }
 
 @JsonSerializable()
-class ProductShort {
+class ProductShort with EquatableMixin {
   @JsonKey(name: 'product_id')
   final String productId;
 
@@ -371,26 +465,7 @@ class ProductShort {
   });
 
   @override
-  bool operator ==(Object other) {
-    final Function deepEq = const DeepCollectionEquality().equals;
-    return (other is ProductShort) &&
-        (other.productId == productId) &&
-        (other.name == name) &&
-        (other.description == description) &&
-        deepEq(other.badges, badges) &&
-        deepEq(other.scores, scores);
-  }
-
-  @override
-  int get hashCode {
-    var result = 17;
-    result = 37 * result + productId.hashCode;
-    result = 37 * result + name.hashCode;
-    result = 37 * result + description.hashCode;
-    result = 37 * result + badges.hashCode;
-    result = 37 * result + scores.hashCode;
-    return result;
-  }
+  List<Object?> get props => [productId, name, description, badges, scores];
 
   factory ProductShort.fromJson(Map<String, dynamic> json) =>
       _$ProductShortFromJson(json);
@@ -420,19 +495,15 @@ class ProductFull {
   @JsonKey(name: 'alternatives')
   final List<CategoryAlternatives> alternatives;
 
-  @JsonKey(name: 'badges')
-  final List<BadgeName> badges;
-
-  @JsonKey(name: 'scores')
-  final Map<ScorerName, int> scores;
+  @JsonKey(name: 'medallions')
+  final List<Medallion> medallions;
 
   ProductFull({
     required this.productId,
     required this.gtins,
     required this.names,
     required this.descriptions,
-    required this.badges,
-    required this.scores,
+    required this.medallions,
     required this.images,
     required this.manufacturers,
     required this.alternatives,

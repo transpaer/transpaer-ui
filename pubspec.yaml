@@ -1,7 +1,7 @@
 name: sustainity_ui_workspace
 
 environment:
-  sdk: '>=2.19.2 <3.0.0'
+  sdk: '>=3.0.2 <4.0.0'
 
 dev_dependencies:
   melos: ^3.0.0
