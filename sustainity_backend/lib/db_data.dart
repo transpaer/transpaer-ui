@@ -357,6 +357,83 @@ class Certifications {
   Map<String, dynamic> toJson() => _$CertificationsToJson(this);
 }
 
+const symbolToDescription = {
+  '💁':
+      "Data availability\n\nThe more we know about this product the more information we can infer about it.",
+  '🏭':
+      "Do we know who produced this product?\n\nIf so, we can include the producers score in products score.",
+  '📥':
+      "Is this product assigned to any category?\n\nIf so, we can compare it to other products and find alternatives.",
+  '🌐':
+      "Do we know the place of production?\n\nIf so, we can infer CO2 emissions to deliver it to you or your shop.",
+  '👈':
+      "Has any identification number?\n\nIf so, we can easily find it various data sources to learn more about it.",
+  '📂': "Various scores unique to product category.",
+  '👮':
+      "Length of warranty.\n\nWe can use it as a proxy of durability. More durable products need to be replaced less frequenty.",
+  '📜': "Does this product (or its producer) have any certifications?",
+  '🙋': "At least one certification.",
+  '🙌': "At least two certifications.",
+};
+
+@JsonSerializable()
+class SustainityScoreBranch {
+  @JsonKey(name: 'symbol')
+  final String symbol;
+
+  @JsonKey(name: 'weight')
+  final int weight;
+
+  @JsonKey(name: 'score')
+  final double score;
+
+  @JsonKey(name: 'branches')
+  final List<SustainityScoreBranch> branches;
+
+  SustainityScoreBranch({
+    required this.symbol,
+    required this.weight,
+    required this.score,
+    required this.branches,
+  });
+
+  api.SustainityScoreBranch toApi() {
+    return api.SustainityScoreBranch(
+      symbol: symbol,
+      description: symbolToDescription[symbol] ?? "",
+      weight: weight,
+      score: score,
+      branches: branches.map((branch) => branch.toApi()).toList(),
+    );
+  }
+
+  factory SustainityScoreBranch.fromJson(Map<String, dynamic> json) =>
+      _$SustainityScoreBranchFromJson(json);
+  Map<String, dynamic> toJson() => _$SustainityScoreBranchToJson(this);
+}
+
+@JsonSerializable()
+class SustainityScore {
+  @JsonKey(name: 'tree')
+  final List<SustainityScoreBranch> tree;
+
+  @JsonKey(name: 'total')
+  final double total;
+
+  SustainityScore({required this.tree, required this.total});
+
+  api.SustainityScore toApi() {
+    return api.SustainityScore(
+      total: total,
+      tree: tree.map((branch) => branch.toApi()).toList(),
+    );
+  }
+
+  factory SustainityScore.fromJson(Map<String, dynamic> json) =>
+      _$SustainityScoreFromJson(json);
+  Map<String, dynamic> toJson() => _$SustainityScoreToJson(this);
+}
+
 @JsonSerializable()
 class Product {
   @JsonKey(name: 'id')
@@ -383,6 +460,9 @@ class Product {
   @JsonKey(name: 'certifications')
   final Certifications certifications;
 
+  @JsonKey(name: 'sustainity_score')
+  final SustainityScore sustainityScore;
+
   Product({
     required this.productId,
     required this.gtins,
@@ -392,6 +472,7 @@ class Product {
     required this.follows,
     required this.followedBy,
     required this.certifications,
+    required this.sustainityScore,
   });
 
   api.ProductShort toApiShort() {
@@ -408,12 +489,15 @@ class Product {
     required List<api.OrganisationShort>? manufacturers,
     required List<api.CategoryAlternatives> alternatives,
   }) {
+    var medallions = certifications.toMedallions();
+    medallions.add(api.SustainityMedallion(score: sustainityScore.toApi()));
+
     return api.ProductFull(
       productId: productId,
       gtins: gtins,
       names: names.map((n) => n.toApi()).toList(),
       descriptions: descriptions.map((d) => d.toApi()).toList(),
-      medallions: certifications.toMedallions(),
+      medallions: medallions,
       images: images.map((i) => i.toApi()).toList(),
       manufacturers: manufacturers,
       alternatives: alternatives,
