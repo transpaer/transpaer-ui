@@ -1,5 +1,4 @@
 import 'package:json_annotation/json_annotation.dart';
-import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 
 part 'data.g.dart';
@@ -61,6 +60,9 @@ enum MedallionName {
   @JsonValue('fti')
   fti,
 
+  @JsonValue('sustainity')
+  sustainity,
+
   @JsonValue('tco')
   tco,
 
@@ -68,7 +70,7 @@ enum MedallionName {
   notFound,
 }
 
-const medallionNames = ["bcorp", "eu", "fti", "tco", ""];
+const medallionNames = ["bcorp", "eu", "fti", "sustainity", "tco", ""];
 
 extension MedallionNameExtension on MedallionName {
   String get name {
@@ -100,6 +102,8 @@ class Medallion with EquatableMixin {
         return FtiMedallion.fromJson(json);
       case MedallionName.euEcolabel:
         return EuEcolabelMedallion.fromJson(json);
+      case MedallionName.sustainity:
+        return SustainityMedallion.fromJson(json);
       case MedallionName.tco:
         return TcoMedallion.fromJson(json);
       case MedallionName.notFound:
@@ -156,6 +160,22 @@ class FtiMedallion extends Medallion {
       _$FtiMedallionFromJson(json);
   @override
   Map<String, dynamic> toJson() => _$FtiMedallionToJson(this);
+}
+
+@JsonSerializable()
+class SustainityMedallion extends Medallion {
+  @JsonKey(name: 'score')
+  final SustainityScore score;
+
+  SustainityMedallion({required this.score}) : super(MedallionName.sustainity);
+
+  @override
+  List<Object> get props => [name, score];
+
+  factory SustainityMedallion.fromJson(Map<String, dynamic> json) =>
+      _$SustainityMedallionFromJson(json);
+  @override
+  Map<String, dynamic> toJson() => _$SustainityMedallionToJson(this);
 }
 
 @JsonSerializable()
@@ -360,6 +380,51 @@ class LibraryInfoFull {
   factory LibraryInfoFull.fromJson(Map<String, dynamic> json) =>
       _$LibraryInfoFullFromJson(json);
   Map<String, dynamic> toJson() => _$LibraryInfoFullToJson(this);
+}
+
+@JsonSerializable()
+class SustainityScoreBranch {
+  @JsonKey(name: 'symbol')
+  final String symbol;
+
+  @JsonKey(name: 'description')
+  final String description;
+
+  @JsonKey(name: 'weight')
+  final int weight;
+
+  @JsonKey(name: 'score')
+  final double score;
+
+  @JsonKey(name: 'branches')
+  final List<SustainityScoreBranch> branches;
+
+  SustainityScoreBranch({
+    required this.symbol,
+    required this.description,
+    required this.weight,
+    required this.score,
+    required this.branches,
+  });
+
+  factory SustainityScoreBranch.fromJson(Map<String, dynamic> json) =>
+      _$SustainityScoreBranchFromJson(json);
+  Map<String, dynamic> toJson() => _$SustainityScoreBranchToJson(this);
+}
+
+@JsonSerializable()
+class SustainityScore {
+  @JsonKey(name: 'tree')
+  final List<SustainityScoreBranch> tree;
+
+  @JsonKey(name: 'total')
+  final double total;
+
+  SustainityScore({required this.tree, required this.total});
+
+  factory SustainityScore.fromJson(Map<String, dynamic> json) =>
+      _$SustainityScoreFromJson(json);
+  Map<String, dynamic> toJson() => _$SustainityScoreToJson(this);
 }
 
 @JsonSerializable()

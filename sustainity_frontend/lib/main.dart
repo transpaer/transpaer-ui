@@ -1108,18 +1108,24 @@ class MedallionSwitcher extends StatelessWidget {
           medallion: medallion as api.FtiMedallion,
           onTopic: onTopic,
         );
+      case api.SustainityMedallion:
+        return SustainityMedallion(
+          medallion: medallion as api.SustainityMedallion,
+        );
       case api.TcoMedallion:
         return TcoMedallion(
           medallion: medallion as api.TcoMedallion,
           onTopic: onTopic,
         );
     }
-    return const Spacer();
+    return const Space();
   }
 }
 
 class SustainityMedallion extends StatelessWidget {
-  const SustainityMedallion({super.key});
+  final api.SustainityMedallion medallion;
+
+  const SustainityMedallion({super.key, required this.medallion});
 
   @override
   Widget build(BuildContext context) {
@@ -1138,18 +1144,43 @@ class SustainityMedallion extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const Spacer(),
-          Row(children: [
-            const Spacer(),
-            Text("? / 10", style: mainStyle),
-            const Spacer(),
-            Text("(Not available yet)", style: commentStyle),
-            const Spacer(),
-          ]),
+          Text(
+            "${(10 * medallion.score.total).toStringAsFixed(2)} / 10",
+            style: mainStyle,
+            textAlign: TextAlign.center,
+          ),
           const Spacer(),
           Text(
-            "We are working on it!",
+            "This is still work in progress!",
             style: commentStyle,
             textAlign: TextAlign.center,
+          ),
+          const Spacer(),
+          Row(
+            children: [
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.bug_report_outlined),
+                onPressed: () async {
+                  final url = Uri.parse(
+                      'https://github.com/sustainity-dev/issues/issues/new');
+                  await url_launcher.launchUrl(url);
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.more_outlined),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return SustainityScoreDetailsPopup(
+                        score: medallion.score,
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
           ),
         ],
       ),
@@ -1187,7 +1218,7 @@ class GhgMedallion extends StatelessWidget {
           const Spacer(),
           Row(children: [
             const Spacer(),
-            Text("During exploitation", style: commentStyle),
+            Text("During exploitation:", style: commentStyle),
             const Spacer(),
             Text("?", style: mainStyle),
             const Spacer(),
@@ -1266,7 +1297,6 @@ class OrganisationMedallions extends StatelessWidget {
     return Wrap(
       direction: Axis.horizontal,
       children: [
-        const SustainityMedallion(),
         for (final medallion in medallions)
           MedallionSwitcher(medallion: medallion, onTopic: onTopic),
       ],
@@ -1289,7 +1319,6 @@ class ProductMedallions extends StatelessWidget {
     return Wrap(
       direction: Axis.horizontal,
       children: [
-        const SustainityMedallion(),
         for (final medallion in medallions)
           MedallionSwitcher(medallion: medallion, onTopic: onTopic),
         const GhgMedallion(),
@@ -1418,6 +1447,165 @@ class CategoryAlternativesWidget extends StatelessWidget {
   }
 }
 
+class SustainityScoreBranchesWidget extends StatelessWidget {
+  static const double textPadding = 10.0;
+  static const double tablePadding = 8.0;
+
+  final List<api.SustainityScoreBranch> branches;
+
+  const SustainityScoreBranchesWidget({
+    super.key,
+    required this.branches,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final symbolStyle = Theme.of(context).textTheme.headlineSmall;
+
+    return Table(
+      border: const TableBorder(
+        horizontalInside: BorderSide(width: 1.0, color: Colors.black),
+        verticalInside: BorderSide(width: 1.0, color: Colors.black),
+      ),
+      columnWidths: const <int, TableColumnWidth>{
+        0: IntrinsicColumnWidth(),
+        1: IntrinsicColumnWidth(),
+        2: IntrinsicColumnWidth(),
+        3: IntrinsicColumnWidth(),
+      },
+      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+      children: [
+        for (final branch in branches)
+          TableRow(
+            children: [
+              Tooltip(
+                message: branch.description,
+                child: Padding(
+                  padding: const EdgeInsets.all(textPadding),
+                  child: Text(branch.symbol, style: symbolStyle),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(textPadding),
+                child: Text("${branch.weight}"),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(textPadding),
+                child: Text("${branch.score.toStringAsFixed(2)}"),
+              ),
+              branch.branches.isNotEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.all(tablePadding),
+                      child: SustainityScoreBranchesWidget(
+                        branches: branch.branches,
+                      ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.all(tablePadding),
+                      child: Text(
+                        (branch.score > 0.5) ? '✔' : '✖',
+                        style: symbolStyle,
+                      ),
+                    ),
+            ],
+          ),
+      ],
+    );
+  }
+}
+
+class SustainityScoreDetailsWidget extends StatelessWidget {
+  final api.SustainityScore score;
+
+  const SustainityScoreDetailsWidget({
+    super.key,
+    required this.score,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final mainStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
+          color: Colors.black,
+        );
+
+    return Flexible(
+      child: Padding(
+        padding: const EdgeInsets.all(defaultPadding),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.vertical,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SustainityScoreBranchesWidget(branches: score.tree),
+                Text(
+                  "Total: ${score.total.toStringAsFixed(3)}",
+                  style: mainStyle,
+                  textAlign: TextAlign.right,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class SustainityScoreDetailsPopup extends StatelessWidget {
+  final api.SustainityScore score;
+
+  const SustainityScoreDetailsPopup({super.key, required this.score});
+
+  @override
+  Widget build(BuildContext context) {
+    final headerStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
+          color: Colors.black,
+        );
+
+    return Dialog(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(defaultPadding)),
+      ),
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+            color: Theme.of(context).cardColor,
+            borderRadius:
+                const BorderRadius.all(Radius.circular(defaultPadding))),
+        child: Padding(
+          padding: const EdgeInsets.all(defaultPadding),
+          child: Column(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      "Sustainity score details",
+                      style: headerStyle,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              ),
+              SustainityScoreDetailsWidget(score: score),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class OrganisationWidget extends StatelessWidget {
   final api.OrganisationShort organisation;
   final String source;
@@ -1476,6 +1664,52 @@ class OrganisationWidget extends StatelessWidget {
               onBadgeTap: onBadgeTap,
               onScorerTap: onScorerTap,
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ExampleSearchBox extends StatelessWidget {
+  final String query;
+  final String tip;
+  final Function(String) onSubmitted;
+
+  const ExampleSearchBox({
+    super.key,
+    required this.query,
+    required this.tip,
+    required this.onSubmitted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final queryStyle = Theme.of(context).textTheme.headlineSmall;
+    final tipStyle = Theme.of(context).textTheme.bodyLarge;
+
+    return Container(
+      decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius:
+              const BorderRadius.all(Radius.circular(defaultPadding))),
+      child: Padding(
+        padding: const EdgeInsets.all(defaultPadding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                SelectableText('"$query"', style: queryStyle),
+                const Spacer(),
+                FilledButton(
+                  onPressed: () => onSubmitted(query),
+                  child: const Text('Search'),
+                ),
+              ],
+            ),
+            const Space(),
+            Text(tip, style: tipStyle),
           ],
         ),
       ),
@@ -1778,6 +2012,9 @@ class _TextSearchPageState extends State<TextSearchPage>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    final largeStyle = Theme.of(context).textTheme.headlineSmall;
+
     return Padding(
       padding: const EdgeInsets.all(defaultPadding),
       child: Column(
@@ -1796,34 +2033,76 @@ class _TextSearchPageState extends State<TextSearchPage>
               ),
               const Space(),
               FilledButton(
-                onPressed: _searching
-                    ? null
-                    : () => _onSubmitted(_searchFieldController.text),
+                onPressed: () => _onSubmitted(_searchFieldController.text),
                 child: const Text('Search'),
               ),
             ],
           ),
           const Space(),
-          _searching
-              ? const CircularProgressIndicator()
-              : Flexible(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(defaultPadding),
-                    itemCount: _entries.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return SearchEntryWidget(
-                        entry: _entries[index],
-                        navigation: widget.navigation,
-                      );
-                    },
-                  ),
+          if (_searching) ...[
+            const CircularProgressIndicator()
+          ] else if (_searchFieldController.text.isEmpty) ...[
+            Flexible(
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: ListView(
+                  scrollDirection: Axis.vertical,
+                  children: [
+                    const SizedBox(width: 500, height: 50),
+                    Text(
+                      "Looking around? Try these example queries:",
+                      style: largeStyle,
+                    ),
+                    const Space(),
+                    ExampleSearchBox(
+                      query: "fairphone",
+                      tip:
+                          "Fairphone is a Dutch electronics manufacturer and social enterprise that designs and produces smartphones with the goal of having a lower environmental footprint and better social impact than is common in the industry.",
+                      onSubmitted: _onExampleSubmitted,
+                    ),
+                    const Space(),
+                    ExampleSearchBox(
+                      query: "8717677339556",
+                      tip:
+                          "Did you find a barcode on a product and want to learn more? Just type it in the search box! (This one belongs to Tony's Chocolonely.)",
+                      onSubmitted: _onExampleSubmitted,
+                    ),
+                    const Space(),
+                    ExampleSearchBox(
+                      query: "shein.com",
+                      tip:
+                          "Want to buy clothes online? Just enter the website address to learn if an ethical consumer should buy from there. (Spoiler: you shouldn't buy from SHEIN, but check it yourself!)",
+                      onSubmitted: _onExampleSubmitted,
+                    ),
+                  ],
                 ),
+              ),
+            ),
+          ] else if (_entries.isNotEmpty) ...[
+            Flexible(
+              child: ListView(
+                scrollDirection: Axis.vertical,
+                children: [
+                  for (final entry in _entries)
+                    SearchEntryWidget(
+                      entry: entry,
+                      navigation: widget.navigation,
+                    ),
+                ],
+              ),
+            ),
+          ] else ...[
+            Center(child: Text("No results found", style: largeStyle)),
+          ],
         ],
       ),
     );
   }
 
   Future<void> _onSubmitted(String text) async {
+    if (_searching) {
+      return;
+    }
     setState(() {
       _searching = true;
       _entries = [];
@@ -1833,6 +2112,11 @@ class _TextSearchPageState extends State<TextSearchPage>
       _searching = false;
       _entries = result.results;
     });
+  }
+
+  Future<void> _onExampleSubmitted(String text) async {
+    _searchFieldController.text = text;
+    await _onSubmitted(text);
   }
 }
 
@@ -2005,10 +2289,10 @@ class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
             navigation: widget.navigation,
           ),
           const Center(
-            child: Text('Map search'),
+            child: Text('There will be map search here.\n\nWork in progress!'),
           ),
           const Center(
-            child: Text('QRC search'),
+            child: Text('There will be QRC search here.\n\nWork in progress!'),
           ),
         ],
       ),
