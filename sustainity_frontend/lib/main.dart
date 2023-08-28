@@ -1609,6 +1609,7 @@ class SustainityScoreDetailsPopup extends StatelessWidget {
 class OrganisationWidget extends StatelessWidget {
   final api.OrganisationShort organisation;
   final String source;
+  final Function(String) onOrganisationTap;
   final Function(api.BadgeName) onBadgeTap;
   final Function(api.ScorerName) onScorerTap;
 
@@ -1616,6 +1617,7 @@ class OrganisationWidget extends StatelessWidget {
     super.key,
     required this.organisation,
     required this.source,
+    required this.onOrganisationTap,
     required this.onBadgeTap,
     required this.onScorerTap,
   });
@@ -1633,38 +1635,46 @@ class OrganisationWidget extends StatelessWidget {
           color: Colors.grey,
         );
 
-    return Container(
-      decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius:
-              const BorderRadius.all(Radius.circular(defaultPadding))),
-      child: Padding(
-        padding: const EdgeInsets.all(defaultPadding),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(organisation.name, style: titleStyle),
-                  const Space(),
-                  Text(
-                      organisation.description != null
-                          ? organisation.description!
-                          : "",
-                      style: textStyle),
-                  const Space(),
-                  Text("Source: $source", style: sourceStyle),
-                ],
-              ),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          onOrganisationTap(organisation.organisationId);
+        },
+        child: Container(
+          decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius:
+                  const BorderRadius.all(Radius.circular(defaultPadding))),
+          child: Padding(
+            padding: const EdgeInsets.all(defaultPadding),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(organisation.name, style: titleStyle),
+                      const Space(),
+                      Text(
+                          organisation.description != null
+                              ? organisation.description!
+                              : "",
+                          style: textStyle),
+                      const Space(),
+                      Text("Source: $source", style: sourceStyle),
+                    ],
+                  ),
+                ),
+                RibbonColumn(
+                  badges: organisation.badges,
+                  scores: organisation.scores,
+                  onBadgeTap: onBadgeTap,
+                  onScorerTap: onScorerTap,
+                ),
+              ],
             ),
-            RibbonColumn(
-              badges: organisation.badges,
-              scores: organisation.scores,
-              onBadgeTap: onBadgeTap,
-              onScorerTap: onScorerTap,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -1829,6 +1839,7 @@ class ProductView extends StatelessWidget {
                     OrganisationWidget(
                       organisation: manufacturer,
                       source: "wikidata",
+                      onOrganisationTap: navigation.goToOrganisation,
                       onBadgeTap: navigation.onBadgeTap,
                       onScorerTap: navigation.onScorerTap,
                     )
