@@ -2,6 +2,12 @@ import 'package:arango_driver/arango_driver.dart' as arango;
 
 import 'db_data.dart' as db;
 
+extension AddLineExt on arango.DbQueryWithClient {
+  arango.DbQueryWithClient addCond(String line, bool cond) {
+    return addLineIfThen(cond, line);
+  }
+}
+
 class DbClient {
   late arango.DbClient _client;
 
@@ -220,7 +226,12 @@ class DbClient {
     return dbCategories.map((c) => c['_key'] as String).toList();
   }
 
-  Future<List<db.Product>> findAlternatives(String id, String category) async {
+  Future<List<db.Product>> findAlternatives(
+    String id,
+    String category,
+    String? regionCode,
+  ) async {
+    final r = regionCode != null;
     final List<dynamic> dbProducts = await _client
         .newQuery()
         .addLine('WITH categories, products, category_edges')
@@ -228,6 +239,8 @@ class DbClient {
         .addLine('  FILTER c._key == @category')
         .addLine('  FOR p IN 1..1 OUTBOUND c category_edges')
         .addLine('    FILTER p.id != @id')
+        .addCond('    FILTER p.regions.variant == "all"', r)
+        .addCond('        OR @region_code IN p.regions.content', r)
         .addLine('    LET score')
         .addLine('      = (@id IN p.follows)')
         .addLine('      + 0.90 * (p.certifications.bcorp != null)')
@@ -240,6 +253,7 @@ class DbClient {
         .addLine('    RETURN p')
         .addBindVar('id', id)
         .addBindVar('category', category)
+        .addBindVarIfThen(r, 'region_code', regionCode)
         .runAndReturnFutureList();
 
     return dbProducts.map((p) => db.Product.fromJson(p)).toList();

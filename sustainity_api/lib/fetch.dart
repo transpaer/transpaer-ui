@@ -62,12 +62,21 @@ class Fetcher {
     }
   }
 
-  Future<ProductFull> fetchProduct(String id) async {
+  Future<ProductFull> fetchProduct(
+    String id,
+    String? regionCode,
+  ) async {
+    var params = <String, String>{};
+    if (regionCode != null) {
+      params["region"] = regionCode;
+    }
+
     final uri = Uri(
       scheme: scheme,
       host: host,
       port: port,
       path: "/product/$id",
+      queryParameters: params,
     );
     final response = await http.get(uri);
 
@@ -80,11 +89,12 @@ class Fetcher {
 
   Future<TextSearchResponse> textSearch(String query) async {
     final uri = Uri(
-        scheme: scheme,
-        host: host,
-        port: port,
-        path: '/search/text',
-        queryParameters: {'query': query});
+      scheme: scheme,
+      host: host,
+      port: port,
+      path: '/search/text',
+      queryParameters: {'query': query},
+    );
     final response = await http.get(uri);
 
     if (response.statusCode == 200) {

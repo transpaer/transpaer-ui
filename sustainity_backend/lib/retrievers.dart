@@ -53,13 +53,14 @@ class ResultCollector {
 Future<List<api.CategoryAlternatives>> retrieveAlternatives(
   db_client.DbClient client,
   db.Product product,
+  String? regionCode,
 ) async {
   List<api.CategoryAlternatives> result = [];
   for (final String category
       in await client.findCategories(product.productId)) {
     List<api.ProductShort> alternatives = [];
-    for (final dbProduct
-        in await client.findAlternatives(product.productId, category)) {
+    for (final dbProduct in await client.findAlternatives(
+        product.productId, category, regionCode)) {
       alternatives.add(dbProduct.toApiShort());
     }
     result.add(api.CategoryAlternatives(

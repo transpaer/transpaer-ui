@@ -29,13 +29,9 @@ class LibraryContentsHandler {
 
   Future<shelf.Response> call(shelf.Request req) async {
     final dbItems = await client.getLibraryContents();
-    if (dbItems != null) {
-      final apiItems = dbItems.map((i) => i.toApiShort()).toList();
-      final response = api.LibraryContentsResponse(items: apiItems);
-      return shelf.Response.ok(encoder.convert(response), headers: corsHeaders);
-    } else {
-      return shelf.Response.notFound(null, headers: corsHeaders);
-    }
+    final apiItems = dbItems.map((i) => i.toApiShort()).toList();
+    final response = api.LibraryContentsResponse(items: apiItems);
+    return shelf.Response.ok(encoder.convert(response), headers: corsHeaders);
   }
 }
 
@@ -102,15 +98,16 @@ class ProductHandler {
   ProductHandler(this.client, this.encoder);
 
   Future<shelf.Response> call(shelf.Request req, String id) async {
-    Stopwatch stopwatch = new Stopwatch()..start();
+    final request =
+        api.ProductFetchRequest.fromJson(req.requestedUri.queryParameters);
     final dbProduct = await client.getProduct(id);
     if (dbProduct != null) {
       final dbManufacturers = await client.findProductManufacturers(id);
       List<api.OrganisationShort> apiManufacturers =
           dbManufacturers.map((p) => p.toApiShort()).toList();
 
-      final List<api.CategoryAlternatives> alternatives =
-          await retrievers.retrieveAlternatives(client, dbProduct);
+      final List<api.CategoryAlternatives> alternatives = await retrievers
+          .retrieveAlternatives(client, dbProduct, request.region);
       final apiProduct = dbProduct.toApiFull(
         manufacturers: apiManufacturers,
         alternatives: alternatives,
@@ -130,11 +127,16 @@ class AlternativesHandler {
 
   AlternativesHandler(this.client, this.encoder);
 
-  Future<shelf.Response> call(shelf.Request req, String id) async {
-    final dbProduct = await client.getProduct(id);
+  Future<shelf.Response> call(
+    shelf.Request req,
+    String productId,
+  ) async {
+    final request =
+        api.AlternativesFetchRequest.fromJson(req.requestedUri.queryParameters);
+    final dbProduct = await client.getProduct(productId);
     if (dbProduct != null) {
-      final List<api.CategoryAlternatives> alternatives =
-          await retrievers.retrieveAlternatives(client, dbProduct);
+      final List<api.CategoryAlternatives> alternatives = await retrievers
+          .retrieveAlternatives(client, dbProduct, request.region);
       return shelf.Response.ok(encoder.convert(alternatives),
           headers: corsHeaders);
     } else {
