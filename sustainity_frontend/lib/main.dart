@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
+import 'package:countries_utils/countries_utils.dart' as countries_utils;
 
 import 'package:sustainity_api/sustainity_api.dart' as api;
 
@@ -1491,7 +1492,7 @@ class SustainityScoreBranchesWidget extends StatelessWidget {
               ),
               Padding(
                 padding: const EdgeInsets.all(textPadding),
-                child: Text("${branch.score.toStringAsFixed(2)}"),
+                child: Text(branch.score.toStringAsFixed(2)),
               ),
               branch.branches.isNotEmpty
                   ? Padding(
@@ -1553,6 +1554,33 @@ class SustainityScoreDetailsWidget extends StatelessWidget {
   }
 }
 
+class SustainityDialog extends Dialog {
+  final Widget content;
+
+  const SustainityDialog({super.key, required this.content});
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(defaultPadding)),
+      ),
+      elevation: 0,
+      backgroundColor: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: const BorderRadius.all(Radius.circular(defaultPadding)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(defaultPadding),
+          child: content,
+        ),
+      ),
+    );
+  }
+}
+
 class SustainityScoreDetailsPopup extends StatelessWidget {
   final api.SustainityScore score;
 
@@ -1564,43 +1592,206 @@ class SustainityScoreDetailsPopup extends StatelessWidget {
           color: Colors.black,
         );
 
-    return Dialog(
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(defaultPadding)),
-      ),
-      elevation: 0,
-      backgroundColor: Colors.transparent,
-      child: Container(
-        decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius:
-                const BorderRadius.all(Radius.circular(defaultPadding))),
-        child: Padding(
-          padding: const EdgeInsets.all(defaultPadding),
-          child: Column(
+    return SustainityDialog(
+      content: Column(
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      "Sustainity score details",
-                      style: headerStyle,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () {
+              Expanded(
+                child: Text(
+                  "Sustainity score details",
+                  style: headerStyle,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          ),
+          SustainityScoreDetailsWidget(score: score),
+        ],
+      ),
+    );
+  }
+}
+
+class CountrySelectionPopup extends StatelessWidget {
+  final Function(String?) onSelected;
+  final Function() onCancelled;
+
+  const CountrySelectionPopup({
+    super.key,
+    required this.onSelected,
+    required this.onCancelled,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SustainityDialog(
+      content: Column(
+        children: [
+          Row(children: [
+            const Section(text: "Select region"),
+            const Spacer(),
+            IconButton(
+              icon: const Icon(Icons.close),
+              onPressed: () {
+                onCancelled();
+                Navigator.of(context).pop();
+              },
+            ),
+          ]),
+          Expanded(
+            child: ListView(
+              scrollDirection: Axis.vertical,
+              children: [
+                ListTile(
+                  title: const Text("world-wide"),
+                  onTap: () {
+                    onSelected(null);
+                    Navigator.of(context).pop();
+                  },
+                ),
+                for (final country in countries_utils.Countries.all())
+                  ListTile(
+                    title: Text(
+                        "${country.flagIcon ?? ""} ${country.name ?? "<unknown>"}"),
+                    onTap: () {
+                      onSelected(country.alpha2Code);
                       Navigator.of(context).pop();
                     },
                   ),
-                ],
-              ),
-              SustainityScoreDetailsWidget(score: score),
-            ],
+              ],
+            ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class Settings {
+  String? regionCode;
+
+  Settings({required this.regionCode});
+}
+
+class SettingsWidget extends StatefulWidget {
+  final Settings settings;
+  final Function() onCancelled;
+  final Function(Settings) onSaved;
+
+  const SettingsWidget({
+    super.key,
+    required this.settings,
+    required this.onCancelled,
+    required this.onSaved,
+  });
+
+  @override
+  State<SettingsWidget> createState() => _SettingsWidgetState();
+}
+
+class _SettingsWidgetState extends State<SettingsWidget> {
+  late String? regionCode;
+
+  @override
+  void initState() {
+    super.initState();
+    regionCode = widget.settings.regionCode;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    var region = 'world-wide';
+    if (regionCode != null) {
+      final country = countries_utils.Countries.byCode(regionCode!);
+      region = "${country.flagIcon ?? ""} ${country.name ?? "<unknown>"}";
+    }
+
+    return Column(
+      children: [
+        const Section(text: 'Settings'),
+        Row(
+          children: [
+            const Text('Region:'),
+            const Space(),
+            ElevatedButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return CountrySelectionPopup(
+                      onSelected: (code) {
+                        setState(() {
+                          regionCode = code;
+                        });
+                      },
+                      onCancelled: () {},
+                    );
+                  },
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(defaultPadding),
+                child: Text(region),
+              ),
+            ),
+          ],
         ),
+        const Spacer(),
+        Row(
+          children: [
+            const Spacer(),
+            ElevatedButton.icon(
+              onPressed: () {
+                widget.onCancelled();
+              },
+              icon: const Icon(Icons.close),
+              label: const Text("Cancel"),
+            ),
+            const Space(),
+            ElevatedButton.icon(
+              onPressed: () {
+                widget.onSaved(Settings(regionCode: regionCode));
+              },
+              icon: const Icon(Icons.check),
+              label: const Text("Save"),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class SettingsPopup extends StatelessWidget {
+  final Settings settings;
+  final Function(Settings) onSaved;
+
+  const SettingsPopup({
+    super.key,
+    required this.settings,
+    required this.onSaved,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SustainityDialog(
+      content: SettingsWidget(
+        settings: settings,
+        onCancelled: () {
+          Navigator.of(context).pop();
+        },
+        onSaved: (settings) {
+          onSaved(settings);
+          Navigator.of(context).pop();
+        },
       ),
     );
   }
@@ -1940,12 +2131,14 @@ class _OrganisationPageState extends State<OrganisationPage>
 
 class ProductPage extends StatefulWidget {
   final String productId;
+  final String? regionCode;
   final Navigation navigation;
   final api.Fetcher fetcher;
 
   const ProductPage({
     super.key,
     required this.productId,
+    required this.regionCode,
     required this.navigation,
     required this.fetcher,
   });
@@ -1961,13 +2154,15 @@ class _ProductPageState extends State<ProductPage>
   @override
   void initState() {
     super.initState();
-    _futureProduct = widget.fetcher.fetchProduct(widget.productId);
+    _futureProduct =
+        widget.fetcher.fetchProduct(widget.productId, widget.regionCode);
   }
 
   @override
   void didUpdateWidget(ProductPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _futureProduct = widget.fetcher.fetchProduct(widget.productId);
+    _futureProduct =
+        widget.fetcher.fetchProduct(widget.productId, widget.regionCode);
   }
 
   @override
@@ -2141,12 +2336,14 @@ class ProductScreen extends StatelessWidget {
   final String? productId;
   final Navigation navigation;
   final api.Fetcher fetcher;
+  final Settings settings;
 
   const ProductScreen({
     super.key,
     required this.productId,
     required this.navigation,
     required this.fetcher,
+    required this.settings,
   });
 
   @override
@@ -2157,6 +2354,7 @@ class ProductScreen extends StatelessWidget {
       ),
       body: ProductPage(
         productId: productId!,
+        regionCode: settings.regionCode,
         navigation: navigation,
         fetcher: fetcher,
       ),
@@ -2233,11 +2431,15 @@ class LibraryScreen extends StatelessWidget {
 class RootScreen extends StatefulWidget {
   final api.Fetcher fetcher;
   final Navigation navigation;
+  final Settings settings;
+  final Function(Settings) onSettingsChanged;
 
   const RootScreen({
     super.key,
     required this.fetcher,
     required this.navigation,
+    required this.settings,
+    required this.onSettingsChanged,
   });
 
   @override
@@ -2247,11 +2449,13 @@ class RootScreen extends StatefulWidget {
 class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
   static const int _tabNum = 5;
 
+  late Settings _settings;
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _settings = widget.settings;
     _tabController = TabController(length: _tabNum, vsync: this);
   }
 
@@ -2260,6 +2464,28 @@ class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Sustainity'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Settings',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return SettingsPopup(
+                    settings: _settings,
+                    onSaved: (settings) {
+                      setState(() {
+                        _settings = settings;
+                        widget.onSettingsChanged(settings);
+                      });
+                    },
+                  );
+                },
+              );
+            },
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.lightGreen[100],
@@ -2388,6 +2614,8 @@ class SustainityFrontend extends StatefulWidget {
 
 class _SustainityFrontendState extends State<SustainityFrontend>
     with TickerProviderStateMixin {
+  Settings _settings = Settings(regionCode: null);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -2420,6 +2648,12 @@ class _SustainityFrontendState extends State<SustainityFrontend>
                   return RootScreen(
                     fetcher: widget.fetcher,
                     navigation: Navigation(context),
+                    settings: _settings,
+                    onSettingsChanged: (settings) {
+                      setState(() {
+                        _settings = settings;
+                      });
+                    },
                   );
                 },
               );
@@ -2432,6 +2666,7 @@ class _SustainityFrontendState extends State<SustainityFrontend>
                     productId: args.id,
                     fetcher: widget.fetcher,
                     navigation: Navigation(context),
+                    settings: _settings,
                   );
                 },
               );
