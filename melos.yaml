@@ -1,41 +1,21 @@
 name: sustainity
 
 packages:
-  - "sustainity_api"
-  - "sustainity_backend"
   - "sustainity_frontend"
 
 scripts:
-  generate_api:
-    run: cd sustainity_api && dart run build_runner build --delete-conflicting-outputs
-  
-  generate_backend:
-    run: cd sustainity_backend && dart run build_runner build --delete-conflicting-outputs
-  
-  generate:
-    run: melos run generate_api && melos run generate_backend
-    description: Auto-generate JSON parsing code
+  check:
+    run: cd sustainity_frontend && flutter analyze
 
-  compile_backend:
-    run: cd sustainity_backend && dart compile exe bin/sustainity_backend.dart -o sustainity_backend
-  
-  compile_frontend:
-    run: cd sustainity_frontend && flutter build web --web-renderer html --no-tree-shake-icons
-  
-  compile:
-    run: melos run compile_backend && melos run compile_frontend
-    description: Compile all libs and apps
+  build:
+    run: cd sustainity_frontend && flutter analyze && flutter build web --web-renderer html --no-tree-shake-icons
 
-  run_backend:
-    run: cd sustainity_backend && dart run
+  test:
+    run: cd sustainity_frontend && flutter test
   
-  run_frontend:
+  run:
     run: cd sustainity_frontend && flutter run
   
-  test:
-    run: melos exec --ignore "*_frontend" -- dart test -j 1 && cd sustainity_frontend && flutter test
-    description: Run unit tests
-
   format_check:
     run: melos exec -- dart format .
     descritption: Check code formating

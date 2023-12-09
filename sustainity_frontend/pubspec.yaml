@@ -16,10 +16,14 @@ dependencies:
   flutter_markdown: ^0.6.14
   json_annotation: ^4.8.0
   json_serializable: ^6.5.4
+  logging: ^1.2.0
   url_launcher: ^6.1.11
 
   sustainity_api:
-    path: ../sustainity_api
+    git:
+      url: https://github.com/sustainity-dev/sustainity-api-dart.git
+      ref: main
+      path: sustainity-api
 
 dev_dependencies:
   flutter_test:
