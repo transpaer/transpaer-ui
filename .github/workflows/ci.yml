@@ -5,21 +5,30 @@ on: [push, pull_request]
 jobs:
 
   ci:
-    name: Build and test the libs
+    name: Build and test
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: Setup Flutter SDK
+        uses: flutter-actions/setup-flutter@v2
+        with:
+          channel: stable
+          version: 3.16.3
+
       - name: Info
-        run: dart info
+        run: dart --version --verbose
 
       - name: Configure
         run: dart pub global activate melos
 
+      - name: Fetch assets
+        run: melos run fetch_assets
+
       - name: Build
-        run: melos run compile
+        run: melos run build
 
       - name: Format
         run: melos run check_format
