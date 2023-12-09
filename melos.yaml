@@ -16,11 +16,11 @@ scripts:
   run:
     run: cd sustainity_frontend && flutter run
   
-  format_check:
+  check_format:
     run: melos exec -- dart format .
     descritption: Check code formating
   
-  format_fix:
+  fix_format:
     run: melos exec -- dart format . --fix
     descritption: Reformat the code
 
