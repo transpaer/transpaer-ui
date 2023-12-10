@@ -3,8 +3,9 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import 'package:countries_utils/countries_utils.dart' as countries_utils;
+import 'package:logging/logging.dart' as logging;
 
-import 'package:sustainity_api/sustainity_api.dart' as api;
+import 'package:sustainity_api/api.dart' as api;
 
 import 'package:sustainity_frontend/configuration.dart';
 
@@ -14,22 +15,191 @@ const double tileHeight = 240;
 const double imageSize = 220;
 const double medallionWidth = 240;
 const double medallionHeight = 180;
-const double badgeSize = 32;
+const double iconSize = 32;
+
+final log = logging.Logger('main');
 
 void main() async {
   final config = Config.load();
-  final fetcher = api.Fetcher(
-    scheme: config.backend_scheme,
-    host: config.backend_host,
-    port: config.backend_port,
+  final fetcher = api.DefaultApi(
+    api.ApiClient(
+      basePath:
+          "${config.backendScheme}://${config.backendHost}:${config.backendPort}",
+    ),
   );
   runApp(SustainityFrontend(fetcher: fetcher));
+}
+
+extension LibraryTopicGuiExtension on api.LibraryTopic {
+  Widget get image {
+    switch (this) {
+      case api.LibraryTopic.infoColonMain:
+        return const Icon(Icons.question_answer_outlined);
+      case api.LibraryTopic.infoColonForProducers:
+        return const Icon(Icons.question_answer_outlined);
+      case api.LibraryTopic.infoColonFaq:
+        return const Icon(Icons.question_answer_outlined);
+
+      case api.LibraryTopic.dataColonWiki:
+        // TODO: Prepare an icon.
+        return const Icon(Icons.question_answer_outlined);
+      case api.LibraryTopic.dataColonOpenFoodFacts:
+        // TODO: Prepare an icon.
+        return const Icon(Icons.question_answer_outlined);
+
+      case api.LibraryTopic.certColonBcorp:
+        return const Image(
+          image: AssetImage("images/bcorp.png"),
+          height: iconSize,
+          width: iconSize,
+        );
+      case api.LibraryTopic.certColonEuEcolabel:
+        return const Image(
+          image: AssetImage("images/eu_ecolabel.png"),
+          height: iconSize,
+          width: iconSize,
+        );
+      case api.LibraryTopic.certColonTco:
+        return const Image(
+          image: AssetImage("images/tco.png"),
+          height: iconSize,
+          width: iconSize,
+        );
+      case api.LibraryTopic.certColonFti:
+        return const Image(
+          image: AssetImage("images/fti.png"),
+          height: iconSize,
+          width: iconSize,
+        );
+
+      case api.LibraryTopic.otherColonNotFound:
+        return const Icon(Icons.question_answer_outlined);
+    }
+
+    return const Icon(Icons.question_answer_outlined);
+  }
+
+  bool get isInfo {
+    return value.startsWith("info:");
+  }
+
+  bool get isCert {
+    return value.startsWith("cert:");
+  }
+
+  bool get isData {
+    return value.startsWith("data:");
+  }
+}
+
+enum DataSourceEnum { wiki, off, eu, unknown }
+
+const dataSourceValues = {
+  api.DataSource.wiki: DataSourceEnum.wiki,
+  api.DataSource.off: DataSourceEnum.off,
+  api.DataSource.eu: DataSourceEnum.eu,
+};
+
+extension DataSourceExtension on api.DataSource {
+  DataSourceEnum toEnum() {
+    return dataSourceValues[this] ?? DataSourceEnum.unknown;
+  }
+}
+
+enum BadgeEnum { bcorp, eu, tco }
+
+const badgeNameValues = {
+  api.BadgeName.bcorp: BadgeEnum.bcorp,
+  api.BadgeName.eu: BadgeEnum.eu,
+  api.BadgeName.tco: BadgeEnum.tco,
+};
+
+extension BadgeNameExtension on api.BadgeName {
+  BadgeEnum? toEnum() {
+    return badgeNameValues[this];
+  }
+}
+
+extension BadgeEnumExtension on BadgeEnum {
+  api.LibraryTopic toLibraryTopic() {
+    switch (this) {
+      case BadgeEnum.bcorp:
+        return api.LibraryTopic.certColonBcorp;
+      case BadgeEnum.eu:
+        return api.LibraryTopic.certColonEuEcolabel;
+      case BadgeEnum.tco:
+        return api.LibraryTopic.certColonTco;
+    }
+  }
+
+  static List<BadgeEnum>? convertList(List<api.BadgeName>? list) {
+    if (list == null) {
+      return null;
+    }
+
+    var badges = <BadgeEnum>[];
+    for (final name in list) {
+      final badge = name.toEnum();
+      if (badge != null) {
+        badges.add(badge);
+      }
+    }
+    return badges;
+  }
+}
+
+enum ScorerEnum { fti }
+
+const scorerNameValues = {
+  api.ScorerName.fti: ScorerEnum.fti,
+};
+
+extension ScorerEnumExtension on ScorerEnum {
+  static ScorerEnum? fromString(String string) {
+    return scorerNameValues[string];
+  }
+
+  static Map<ScorerEnum, int>? convertMap(Map<String, int>? map) {
+    if (map == null) {
+      return null;
+    }
+
+    var scores = <ScorerEnum, int>{};
+    for (final entry in map.entries) {
+      final scorer = ScorerEnumExtension.fromString(entry.key);
+      if (scorer != null) {
+        scores[scorer] = entry.value;
+      }
+    }
+    return scores;
+  }
+
+  api.LibraryTopic toLibraryTopic() {
+    switch (this) {
+      case ScorerEnum.fti:
+        return api.LibraryTopic.certColonFti;
+    }
+  }
+}
+
+enum SearchResultEnum { organisation, product, unknown }
+
+const Map<api.TextSearchResultVariant, SearchResultEnum>
+    searchResultVariantValues = {
+  api.TextSearchResultVariant.organisation: SearchResultEnum.organisation,
+  api.TextSearchResultVariant.product: SearchResultEnum.product,
+};
+
+extension TextSearchResultVariantExtention on api.TextSearchResultVariant {
+  SearchResultEnum toEnum() {
+    return searchResultVariantValues[this] ?? SearchResultEnum.unknown;
+  }
 }
 
 enum PreviewVariant { organisation, product }
 
 class ScoreData {
-  final api.ScorerName scorer;
+  final ScorerEnum scorer;
   final int score;
 
   ScoreData({required this.scorer, required this.score});
@@ -37,7 +207,7 @@ class ScoreData {
   Color get color {
     var value = 0.0;
     switch (scorer) {
-      case api.ScorerName.fti:
+      case ScorerEnum.fti:
         value = score / 100.0;
     }
     return Color.fromRGBO(
@@ -105,7 +275,7 @@ class Section extends StatelessWidget {
 
 class Description extends StatelessWidget {
   final String text;
-  final api.Source? source;
+  final api.DataSource? source;
 
   const Description({
     super.key,
@@ -124,13 +294,13 @@ class Description extends StatelessWidget {
 
     Widget? sourceWidget;
     switch (source) {
-      case api.Source.wikidata:
+      case api.DataSource.wiki:
         sourceWidget = Text("Source: Wikidata", style: sourceStyle);
         break;
-      case api.Source.openFoodFacts:
+      case api.DataSource.off:
         sourceWidget = Text("Source: Open Food Facts", style: sourceStyle);
         break;
-      case api.Source.euEcolabel:
+      case api.DataSource.eu:
         sourceWidget = Text("Source: Eu Ecolabel", style: sourceStyle);
         break;
       case null:
@@ -201,43 +371,6 @@ class Article extends StatelessWidget {
   }
 }
 
-extension BCorpMedallionExtension on api.BCorpMedallion {
-  String get icon {
-    return "bcorp";
-  }
-}
-
-extension EuEcolabelMedallionExtension on api.EuEcolabelMedallion {
-  String get icon {
-    return "eu_ecolabel";
-  }
-}
-
-extension TcoMedallionExtension on api.TcoMedallion {
-  String get icon {
-    return "tco";
-  }
-}
-
-const libraryTopicIconNames = [
-  "main",
-  "main",
-  "main",
-  "main",
-  "main",
-  "bcorp",
-  "eu_ecolabel",
-  "tco",
-  "fti",
-  "main",
-];
-
-extension LibraryTopicGuiExtension on api.LibraryTopic {
-  String get icon {
-    return libraryTopicIconNames[index];
-  }
-}
-
 class FashionTransparencyIndexWidget extends StatelessWidget {
   final api.Presentation presentation;
   final Navigation navigation;
@@ -263,7 +396,7 @@ class FashionTransparencyIndexWidget extends StatelessWidget {
               leading: Container(
                 decoration: BoxDecoration(
                   color: ScoreData(
-                    scorer: api.ScorerName.fti,
+                    scorer: ScorerEnum.fti,
                     score: entry.score,
                   ).color,
                   borderRadius:
@@ -282,13 +415,13 @@ class FashionTransparencyIndexWidget extends StatelessWidget {
   }
 }
 
-class InfoWidget extends StatelessWidget {
-  final api.LibraryInfoFull info;
+class ItemWidget extends StatelessWidget {
+  final api.LibraryItemFull item;
   final Navigation navigation;
 
-  const InfoWidget({
+  const ItemWidget({
     super.key,
-    required this.info,
+    required this.item,
     required this.navigation,
   });
 
@@ -298,18 +431,18 @@ class InfoWidget extends StatelessWidget {
       padding: const EdgeInsets.all(defaultPadding),
       child: Column(
         children: [
-          Title(text: info.title),
+          Title(text: item.title),
           const Space(),
           Expanded(
             child: ListView(
               scrollDirection: Axis.vertical,
               children: [
-                Article(markdown: info.article),
-                if (info.presentation != null) ...[
+                Article(markdown: item.article),
+                if (item.presentation != null) ...[
                   const Space(),
-                  if (info.id == api.LibraryTopic.fti.name) ...[
+                  if (item.id == api.LibraryTopic.certColonFti) ...[
                     FashionTransparencyIndexWidget(
-                      presentation: info.presentation!,
+                      presentation: item.presentation!,
                       navigation: navigation,
                     )
                   ]
@@ -326,30 +459,41 @@ class InfoWidget extends StatelessWidget {
 class SourcedImage extends StatelessWidget {
   static const url1 = "https://commons.wikimedia.org/wiki/Special:FilePath";
 
-  final api.Image image;
+  final String imagePath;
+  final DataSourceEnum imageSource;
 
-  const SourcedImage(this.image, {super.key});
+  const SourcedImage(this.imagePath, this.imageSource, {super.key});
+
+  SourcedImage.fromApi(api.Image image, {super.key})
+      : imagePath = image.image,
+        imageSource = image.source_.toEnum();
 
   @override
   Widget build(BuildContext context) {
     String link;
     String url;
     String source;
-    switch (image.source) {
-      case api.Source.wikidata:
-        link = "$url1/${image.image}";
+    switch (imageSource) {
+      case DataSourceEnum.wiki:
+        link = "$url1/$imagePath";
         url = "$link?width=200";
         source = "Wikidata";
         break;
-      case api.Source.openFoodFacts:
-        link = image.image;
-        url = image.image;
+      case DataSourceEnum.off:
+        link = imagePath;
+        url = imagePath;
         source = "Open Food Facts";
         break;
-      case api.Source.euEcolabel:
-        link = image.image;
-        url = image.image;
+      case DataSourceEnum.eu:
+        link = imagePath;
+        url = imagePath;
         source = "Eu Ecolabel";
+        break;
+      case DataSourceEnum.unknown:
+        log.severe("Unknown data search variant");
+        link = imagePath;
+        url = imagePath;
+        source = "???";
         break;
     }
 
@@ -370,9 +514,7 @@ class SourcedImage extends StatelessWidget {
 }
 
 class LibraryContentsView extends StatelessWidget {
-  static const double iconSize = 32;
-
-  final api.LibraryContentsResponse contents;
+  final api.LibraryContents contents;
   final Navigation navigation;
 
   const LibraryContentsView(
@@ -380,9 +522,8 @@ class LibraryContentsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final aboutUs = contents.items.where((i) => i.id.startsWith("info:"));
-    final aboutData = contents.items
-        .where((i) => i.id.startsWith("cert:") || i.id.startsWith("data:"));
+    final aboutUs = contents.items.where((i) => i.id.isInfo);
+    final aboutData = contents.items.where((i) => i.id.isCert || i.id.isData);
 
     return ListView(
       scrollDirection: Axis.vertical,
@@ -390,27 +531,20 @@ class LibraryContentsView extends StatelessWidget {
         const Center(child: Section(text: "About us")),
         ...aboutUs.map((item) {
           return ListTile(
-            leading: const Icon(Icons.question_answer_outlined),
+            leading: item.id.image,
             title: Text(item.title),
             subtitle: Text(item.summary),
-            onTap: () => navigation.goToLibrary(
-              api.LibraryTopicExtension.fromString(item.id),
-            ),
+            onTap: () => navigation.goToLibrary(item.id),
           );
         }),
         const Center(
             child: Section(text: "About certifications and data sources")),
         ...aboutData.map((item) {
-          final topic = api.LibraryTopicExtension.fromString(item.id);
           return ListTile(
-            leading: Image(
-              image: AssetImage('images/${topic.icon}.png'),
-              height: iconSize,
-              width: iconSize,
-            ),
+            leading: item.id.image,
             title: Text(item.title),
             subtitle: Text(item.summary),
-            onTap: () => navigation.goToLibrary(topic),
+            onTap: () => navigation.goToLibrary(item.id),
           );
         }),
       ],
@@ -420,7 +554,7 @@ class LibraryContentsView extends StatelessWidget {
 
 class LibraryItemView extends StatefulWidget {
   final api.LibraryTopic topic;
-  final api.Fetcher fetcher;
+  final api.DefaultApi fetcher;
   final Navigation navigation;
 
   const LibraryItemView({
@@ -436,12 +570,12 @@ class LibraryItemView extends StatefulWidget {
 
 class _LibraryItemViewState extends State<LibraryItemView>
     with AutomaticKeepAliveClientMixin {
-  late Future<api.LibraryInfoFull> _futureInfo;
+  late Future<api.LibraryItemFull?> _futureItem;
 
   @override
   void initState() {
     super.initState();
-    _futureInfo = widget.fetcher.fetchLibraryInfo(widget.topic);
+    _futureItem = widget.fetcher.getLibraryItem(widget.topic);
   }
 
   @override
@@ -451,12 +585,12 @@ class _LibraryItemViewState extends State<LibraryItemView>
   Widget build(BuildContext context) {
     super.build(context);
     return Center(
-      child: FutureBuilder<api.LibraryInfoFull>(
-        future: _futureInfo,
+      child: FutureBuilder<api.LibraryItemFull?>(
+        future: _futureItem,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            return InfoWidget(
-              info: snapshot.data!,
+            return ItemWidget(
+              item: snapshot.data!,
               navigation: widget.navigation,
             );
           } else if (snapshot.hasError) {
@@ -471,7 +605,7 @@ class _LibraryItemViewState extends State<LibraryItemView>
 }
 
 class LibraryPage extends StatefulWidget {
-  final api.Fetcher fetcher;
+  final api.DefaultApi fetcher;
   final Navigation navigation;
 
   const LibraryPage({
@@ -486,12 +620,12 @@ class LibraryPage extends StatefulWidget {
 
 class _LibraryPageState extends State<LibraryPage>
     with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
-  late Future<api.LibraryContentsResponse> _futureLibraryContents;
+  late Future<api.LibraryContents?> _futureLibraryContents;
 
   @override
   void initState() {
     super.initState();
-    _futureLibraryContents = widget.fetcher.fetchLibraryContents();
+    _futureLibraryContents = widget.fetcher.getLibrary();
   }
 
   @override
@@ -501,7 +635,7 @@ class _LibraryPageState extends State<LibraryPage>
   Widget build(BuildContext context) {
     super.build(context);
     return Center(
-      child: FutureBuilder<api.LibraryContentsResponse>(
+      child: FutureBuilder<api.LibraryContents?>(
         future: _futureLibraryContents,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
@@ -521,33 +655,47 @@ class _LibraryPageState extends State<LibraryPage>
 }
 
 class SearchEntryWidget extends StatelessWidget {
-  final api.SearchResult entry;
+  final api.TextSearchResult entry;
   final Navigation navigation;
+  final SearchResultEnum variant;
 
   const SearchEntryWidget({
     super.key,
     required this.entry,
     required this.navigation,
+    required this.variant,
   });
+
+  SearchEntryWidget.fromApi({
+    super.key,
+    required this.entry,
+    required this.navigation,
+  }) : variant = entry.variant.toEnum();
 
   @override
   Widget build(BuildContext context) {
     Widget icon;
     Function() onTap;
-    switch (entry.variant) {
-      case api.SearchResultVariant.organisation:
+
+    switch (variant) {
+      case SearchResultEnum.organisation:
         icon = const Tooltip(
           message: "manufacturer / organisation / business / shop",
           child: Icon(Icons.business_outlined),
         );
         onTap = () => navigation.goToOrganisation(entry.id);
         break;
-      case api.SearchResultVariant.product:
+      case SearchResultEnum.product:
         icon = const Tooltip(
           message: "product / brand / item category",
           child: Icon(Icons.shopping_basket_outlined),
         );
         onTap = () => navigation.goToProduct(entry.id);
+        break;
+      case SearchResultEnum.unknown:
+        log.severe("Unknown search result variant");
+        icon = const Icon(Icons.pending_outlined);
+        onTap = () => {};
         break;
     }
 
@@ -565,8 +713,8 @@ class SearchEntryWidget extends StatelessWidget {
 class ProductTileWidget extends StatelessWidget {
   final api.ProductShort product;
   final Function(String) onSelected;
-  final Function(api.BadgeName) onBadgeTap;
-  final Function(api.ScorerName) onScorerTap;
+  final Function(BadgeEnum) onBadgeTap;
+  final Function(ScorerEnum) onScorerTap;
 
   const ProductTileWidget({
     super.key,
@@ -614,8 +762,8 @@ class ProductTileWidget extends StatelessWidget {
                   ),
                   const Space(),
                   RibbonRow(
-                    badges: product.badges,
-                    scores: product.scores,
+                    badges: BadgeEnumExtension.convertList(product.badges),
+                    scores: ScorerEnumExtension.convertMap(product.scores),
                     onBadgeTap: onBadgeTap,
                     onScorerTap: onScorerTap,
                   ),
@@ -630,8 +778,8 @@ class ProductTileWidget extends StatelessWidget {
 }
 
 class Badge extends StatelessWidget {
-  final api.BadgeName badge;
-  final Function(api.BadgeName) onTap;
+  final BadgeEnum badge;
+  final Function(BadgeEnum) onTap;
 
   const Badge({super.key, required this.badge, required this.onTap});
 
@@ -643,11 +791,7 @@ class Badge extends StatelessWidget {
         onTap: () {
           onTap(badge);
         },
-        child: Image(
-          image: AssetImage('images/${badge.toLibraryTopic().icon}.png'),
-          height: badgeSize,
-          width: badgeSize,
-        ),
+        child: badge.toLibraryTopic().image,
       ),
     );
   }
@@ -655,7 +799,7 @@ class Badge extends StatelessWidget {
 
 class Score extends StatelessWidget {
   final ScoreData score;
-  final Function(api.ScorerName)? onTap;
+  final Function(ScorerEnum)? onTap;
 
   const Score({
     super.key,
@@ -683,12 +827,7 @@ class Score extends StatelessWidget {
             padding: const EdgeInsets.all(defaultPadding),
             child: Row(
               children: [
-                Image(
-                  image: AssetImage(
-                      'images/${score.scorer.toLibraryTopic().icon}.png'),
-                  height: badgeSize,
-                  width: badgeSize,
-                ),
+                score.scorer.toLibraryTopic().image,
                 const Space(),
                 Text("${score.score}%"),
               ],
@@ -701,11 +840,11 @@ class Score extends StatelessWidget {
 }
 
 class RibbonFlex extends StatelessWidget {
-  final List<api.BadgeName>? badges;
-  final Map<api.ScorerName, int>? scores;
+  final List<BadgeEnum>? badges;
+  final Map<ScorerEnum, int>? scores;
   final Axis axis;
-  final Function(api.BadgeName) onBadgeTap;
-  final Function(api.ScorerName) onScorerTap;
+  final Function(BadgeEnum) onBadgeTap;
+  final Function(ScorerEnum) onScorerTap;
 
   const RibbonFlex({
     super.key,
@@ -740,10 +879,10 @@ class RibbonFlex extends StatelessWidget {
 class RibbonColumn extends RibbonFlex {
   const RibbonColumn({
     super.key,
-    List<api.BadgeName>? badges,
-    Map<api.ScorerName, int>? scores,
-    required Function(api.BadgeName) onBadgeTap,
-    required Function(api.ScorerName) onScorerTap,
+    List<BadgeEnum>? badges,
+    Map<ScorerEnum, int>? scores,
+    required Function(BadgeEnum) onBadgeTap,
+    required Function(ScorerEnum) onScorerTap,
   }) : super(
           badges: badges,
           scores: scores,
@@ -756,16 +895,17 @@ class RibbonColumn extends RibbonFlex {
 class RibbonRow extends RibbonFlex {
   const RibbonRow({
     super.key,
-    List<api.BadgeName>? badges,
-    Map<api.ScorerName, int>? scores,
-    required Function(api.BadgeName) onBadgeTap,
-    required Function(api.ScorerName) onScorerTap,
+    List<BadgeEnum>? badges,
+    Map<ScorerEnum, int>? scores,
+    required Function(BadgeEnum) onBadgeTap,
+    required Function(ScorerEnum) onScorerTap,
   }) : super(
-            badges: badges,
-            scores: scores,
-            axis: Axis.horizontal,
-            onBadgeTap: onBadgeTap,
-            onScorerTap: onScorerTap);
+          badges: badges,
+          scores: scores,
+          axis: Axis.horizontal,
+          onBadgeTap: onBadgeTap,
+          onScorerTap: onScorerTap,
+        );
 }
 
 class MedallionFrame extends StatelessWidget {
@@ -821,11 +961,7 @@ class BCorpMedallion extends StatelessWidget {
             child: Row(
               children: [
                 const Spacer(),
-                Image(
-                  image: AssetImage('images/${medallion.icon}.png'),
-                  height: badgeSize,
-                  width: badgeSize,
-                ),
+                api.LibraryTopic.certColonBcorp.image,
                 const Space(),
                 Text(
                   "BCorporations",
@@ -849,7 +985,7 @@ class BCorpMedallion extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.info_outlined),
-              onPressed: () => onTopic(api.LibraryTopic.bcorp),
+              onPressed: () => onTopic(api.LibraryTopic.certColonBcorp),
             ),
             IconButton(
               icon: const Icon(Icons.arrow_outward_outlined),
@@ -893,11 +1029,7 @@ class EuEcolabelMedallion extends StatelessWidget {
             child: Row(
               children: [
                 const Spacer(),
-                Image(
-                  image: AssetImage('images/${medallion.icon}.png'),
-                  height: badgeSize,
-                  width: badgeSize,
-                ),
+                api.LibraryTopic.certColonEuEcolabel.image,
                 const Space(),
                 Text(
                   "EU Ecolabel",
@@ -922,7 +1054,7 @@ class EuEcolabelMedallion extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.info_outlined),
-              onPressed: () => onTopic(api.LibraryTopic.euEcolabel),
+              onPressed: () => onTopic(api.LibraryTopic.certColonEuEcolabel),
             ),
             IconButton(
               icon: const Icon(Icons.arrow_outward_outlined),
@@ -958,7 +1090,7 @@ class FtiMedallion extends StatelessWidget {
     final commentStyle = Theme.of(context).textTheme.bodyMedium;
 
     final score = ScoreData(
-      scorer: api.ScorerName.fti,
+      scorer: ScorerEnum.fti,
       score: medallion.score,
     );
 
@@ -993,7 +1125,7 @@ class FtiMedallion extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.info_outlined),
-            onPressed: () => onTopic(api.LibraryTopic.fti),
+            onPressed: () => onTopic(api.LibraryTopic.certColonFti),
           ),
           IconButton(
             icon: const Icon(Icons.arrow_outward_outlined),
@@ -1036,11 +1168,7 @@ class TcoMedallion extends StatelessWidget {
             child: Row(
               children: [
                 const Spacer(),
-                Image(
-                  image: AssetImage('images/${medallion.icon}.png'),
-                  height: badgeSize,
-                  width: badgeSize,
-                ),
+                api.LibraryTopic.certColonTco.image,
                 const Space(),
                 Text(
                   "TCO",
@@ -1064,7 +1192,7 @@ class TcoMedallion extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.info_outlined),
-              onPressed: () => onTopic(api.LibraryTopic.tco),
+              onPressed: () => onTopic(api.LibraryTopic.certColonTco),
             ),
             IconButton(
               icon: const Icon(Icons.arrow_outward_outlined),
@@ -1093,29 +1221,29 @@ class MedallionSwitcher extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    switch (medallion.runtimeType) {
-      case api.BCorpMedallion:
+    switch (medallion.variant) {
+      case api.MedallionVariant.bCorp:
         return BCorpMedallion(
-          medallion: medallion as api.BCorpMedallion,
+          medallion: medallion.bcorp!,
           onTopic: onTopic,
         );
-      case api.EuEcolabelMedallion:
+      case api.MedallionVariant.euEcolabel:
         return EuEcolabelMedallion(
-          medallion: medallion as api.EuEcolabelMedallion,
+          medallion: medallion.euEcolabel!,
           onTopic: onTopic,
         );
-      case api.FtiMedallion:
+      case api.MedallionVariant.fti:
         return FtiMedallion(
-          medallion: medallion as api.FtiMedallion,
+          medallion: medallion.fti!,
           onTopic: onTopic,
         );
-      case api.SustainityMedallion:
+      case api.MedallionVariant.sustainity:
         return SustainityMedallion(
-          medallion: medallion as api.SustainityMedallion,
+          medallion: medallion.sustainity!,
         );
-      case api.TcoMedallion:
+      case api.MedallionVariant.tco:
         return TcoMedallion(
-          medallion: medallion as api.TcoMedallion,
+          medallion: medallion.tco!,
           onTopic: onTopic,
         );
     }
@@ -1358,7 +1486,7 @@ class OperationsMenu extends StatelessWidget {
         children: [
           ElevatedButton.icon(
             onPressed: () {
-              navigation.goToLibrary(api.LibraryTopic.forProducers);
+              navigation.goToLibrary(api.LibraryTopic.infoColonForProducers);
             },
             icon: const Icon(Icons.tips_and_updates_outlined),
             label: Padding(
@@ -1448,6 +1576,65 @@ class CategoryAlternativesWidget extends StatelessWidget {
   }
 }
 
+class SustainityScoreBranchesInfo {
+  final String symbol;
+  final String description;
+
+  const SustainityScoreBranchesInfo({
+    required this.symbol,
+    required this.description,
+  });
+}
+
+const sustainityScoreBranchesInfos = {
+  api.SustainityScoreCategory.dataAvailability: SustainityScoreBranchesInfo(
+    symbol: "💁",
+    description:
+        "Data availability\n\nThe more we know about this product the more information we can infer about it.",
+  ),
+  api.SustainityScoreCategory.producerKnown: SustainityScoreBranchesInfo(
+    symbol: '🏭',
+    description:
+        "Do we know who produced this product?\n\nIf so, we can include the producers score in products score.",
+  ),
+  api.SustainityScoreCategory.categoryAssigned: SustainityScoreBranchesInfo(
+    symbol: '📥',
+    description:
+        "Is this product assigned to any category?\n\nIf so, we can compare it to other products and find alternatives.",
+  ),
+  api.SustainityScoreCategory.productionPlaceKnown: SustainityScoreBranchesInfo(
+    symbol: '🌐',
+    description:
+        "Do we know the place of production?\n\nIf so, we can infer CO2 emissions to deliver it to you or your shop.",
+  ),
+  api.SustainityScoreCategory.idKnown: SustainityScoreBranchesInfo(
+    symbol: '👈',
+    description:
+        "Has any identification number?\n\nIf so, we can easily find it various data sources to learn more about it.",
+  ),
+  api.SustainityScoreCategory.category: SustainityScoreBranchesInfo(
+    symbol: '📂',
+    description: "Various scores unique to product category.",
+  ),
+  api.SustainityScoreCategory.warrantyLength: SustainityScoreBranchesInfo(
+    symbol: '👮',
+    description:
+        "Length of warranty.\n\nWe can use it as a proxy of durability. More durable products need to be replaced less frequenty.",
+  ),
+  api.SustainityScoreCategory.numCerts: SustainityScoreBranchesInfo(
+    symbol: '📜',
+    description: "Does this product (or its producer) have any certifications?",
+  ),
+  api.SustainityScoreCategory.atLeastOneCert: SustainityScoreBranchesInfo(
+    symbol: '🙋',
+    description: "At least one certification.",
+  ),
+  api.SustainityScoreCategory.atLeastTwoCerts: SustainityScoreBranchesInfo(
+    symbol: '🙌',
+    description: "At least two certifications.",
+  ),
+};
+
 class SustainityScoreBranchesWidget extends StatelessWidget {
   static const double textPadding = 10.0;
   static const double tablePadding = 8.0;
@@ -1480,10 +1667,15 @@ class SustainityScoreBranchesWidget extends StatelessWidget {
           TableRow(
             children: [
               Tooltip(
-                message: branch.description,
+                message: sustainityScoreBranchesInfos[branch.category]
+                        ?.description ??
+                    "",
                 child: Padding(
                   padding: const EdgeInsets.all(textPadding),
-                  child: Text(branch.symbol, style: symbolStyle),
+                  child: Text(
+                      sustainityScoreBranchesInfos[branch.category]?.symbol ??
+                          "",
+                      style: symbolStyle),
                 ),
               ),
               Padding(
@@ -1801,8 +1993,8 @@ class OrganisationWidget extends StatelessWidget {
   final api.OrganisationShort organisation;
   final String source;
   final Function(String) onOrganisationTap;
-  final Function(api.BadgeName) onBadgeTap;
-  final Function(api.ScorerName) onScorerTap;
+  final Function(BadgeEnum) onBadgeTap;
+  final Function(ScorerEnum) onScorerTap;
 
   const OrganisationWidget({
     super.key,
@@ -1858,8 +2050,8 @@ class OrganisationWidget extends StatelessWidget {
                   ),
                 ),
                 RibbonColumn(
-                  badges: organisation.badges,
-                  scores: organisation.scores,
+                  badges: BadgeEnumExtension.convertList(organisation.badges),
+                  scores: ScorerEnumExtension.convertMap(organisation.scores),
                   onBadgeTap: onBadgeTap,
                   onScorerTap: onScorerTap,
                 ),
@@ -1946,7 +2138,7 @@ class OrganisationView extends StatelessWidget {
                   for (final description in organisation.descriptions)
                     Description(
                       text: description.text,
-                      source: description.source,
+                      source: description.source_,
                     )
                 ] else ...[
                   const Center(child: Text("No description..."))
@@ -1963,7 +2155,7 @@ class OrganisationView extends StatelessWidget {
                       scrollDirection: Axis.horizontal,
                       children: [
                         for (final image in organisation.images)
-                          SourcedImage(image)
+                          SourcedImage.fromApi(image)
                       ],
                     ),
                   )
@@ -2015,7 +2207,7 @@ class ProductView extends StatelessWidget {
                   for (final description in product.descriptions)
                     Description(
                       text: description.text,
-                      source: description.source,
+                      source: description.source_,
                     )
                 ] else ...[
                   const Center(child: Text("No description..."))
@@ -2025,8 +2217,8 @@ class ProductView extends StatelessWidget {
                   onTopic: navigation.goToLibrary,
                 ),
                 const Section(text: 'Producers:'),
-                if (product.manufacturers != null) ...[
-                  for (final manufacturer in product.manufacturers!)
+                if (product.manufacturers.isNotEmpty) ...[
+                  for (final manufacturer in product.manufacturers)
                     OrganisationWidget(
                       organisation: manufacturer,
                       source: "wikidata",
@@ -2042,7 +2234,8 @@ class ProductView extends StatelessWidget {
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       children: [
-                        for (final image in product.images) SourcedImage(image)
+                        for (final image in product.images)
+                          SourcedImage.fromApi(image)
                       ],
                     ),
                   )
@@ -2071,7 +2264,7 @@ class ProductView extends StatelessWidget {
 class OrganisationPage extends StatefulWidget {
   final String organisationId;
   final Navigation navigation;
-  final api.Fetcher fetcher;
+  final api.DefaultApi fetcher;
 
   const OrganisationPage({
     super.key,
@@ -2086,20 +2279,18 @@ class OrganisationPage extends StatefulWidget {
 
 class _OrganisationPageState extends State<OrganisationPage>
     with AutomaticKeepAliveClientMixin {
-  late Future<api.OrganisationFull> _futureOrganisation;
+  late Future<api.OrganisationFull?> _futureOrganisation;
 
   @override
   void initState() {
     super.initState();
-    _futureOrganisation =
-        widget.fetcher.fetchOrganisation(widget.organisationId);
+    _futureOrganisation = widget.fetcher.getOrganisation(widget.organisationId);
   }
 
   @override
   void didUpdateWidget(OrganisationPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _futureOrganisation =
-        widget.fetcher.fetchOrganisation(widget.organisationId);
+    _futureOrganisation = widget.fetcher.getOrganisation(widget.organisationId);
   }
 
   @override
@@ -2109,7 +2300,7 @@ class _OrganisationPageState extends State<OrganisationPage>
   Widget build(BuildContext context) {
     super.build(context);
     return Center(
-      child: FutureBuilder<api.OrganisationFull>(
+      child: FutureBuilder<api.OrganisationFull?>(
         future: _futureOrganisation,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
@@ -2133,7 +2324,7 @@ class ProductPage extends StatefulWidget {
   final String productId;
   final String? regionCode;
   final Navigation navigation;
-  final api.Fetcher fetcher;
+  final api.DefaultApi fetcher;
 
   const ProductPage({
     super.key,
@@ -2149,20 +2340,20 @@ class ProductPage extends StatefulWidget {
 
 class _ProductPageState extends State<ProductPage>
     with AutomaticKeepAliveClientMixin {
-  late Future<api.ProductFull> _futureProduct;
+  late Future<api.ProductFull?> _futureProduct;
 
   @override
   void initState() {
     super.initState();
     _futureProduct =
-        widget.fetcher.fetchProduct(widget.productId, widget.regionCode);
+        widget.fetcher.getProduct(widget.productId, region: widget.regionCode);
   }
 
   @override
   void didUpdateWidget(ProductPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     _futureProduct =
-        widget.fetcher.fetchProduct(widget.productId, widget.regionCode);
+        widget.fetcher.getProduct(widget.productId, region: widget.regionCode);
   }
 
   @override
@@ -2172,7 +2363,7 @@ class _ProductPageState extends State<ProductPage>
   Widget build(BuildContext context) {
     super.build(context);
     return Center(
-      child: FutureBuilder<api.ProductFull>(
+      child: FutureBuilder<api.ProductFull?>(
         future: _futureProduct,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
@@ -2192,7 +2383,7 @@ class _ProductPageState extends State<ProductPage>
 }
 
 class TextSearchPage extends StatefulWidget {
-  final api.Fetcher fetcher;
+  final api.DefaultApi fetcher;
   final Navigation navigation;
 
   const TextSearchPage({
@@ -2210,7 +2401,7 @@ class _TextSearchPageState extends State<TextSearchPage>
   final _searchFieldController = TextEditingController();
 
   bool _searching = false;
-  List<api.SearchResult> _entries = [];
+  List<api.TextSearchResult> _entries = [];
 
   @override
   bool get wantKeepAlive => true;
@@ -2290,7 +2481,7 @@ class _TextSearchPageState extends State<TextSearchPage>
                 scrollDirection: Axis.vertical,
                 children: [
                   for (final entry in _entries)
-                    SearchEntryWidget(
+                    SearchEntryWidget.fromApi(
                       entry: entry,
                       navigation: widget.navigation,
                     ),
@@ -2313,10 +2504,10 @@ class _TextSearchPageState extends State<TextSearchPage>
       _searching = true;
       _entries = [];
     });
-    final result = await widget.fetcher.textSearch(text);
+    final result = await widget.fetcher.searchByText(text);
     setState(() {
       _searching = false;
-      _entries = result.results;
+      _entries = result?.results ?? [];
     });
   }
 
@@ -2335,7 +2526,7 @@ class ProductArguments {
 class ProductScreen extends StatelessWidget {
   final String? productId;
   final Navigation navigation;
-  final api.Fetcher fetcher;
+  final api.DefaultApi fetcher;
   final Settings settings;
 
   const ProductScreen({
@@ -2370,7 +2561,7 @@ class OrganisationArguments {
 
 class OrganisationScreen extends StatelessWidget {
   final String organisationId;
-  final api.Fetcher fetcher;
+  final api.DefaultApi fetcher;
   final Navigation navigation;
 
   const OrganisationScreen({
@@ -2403,7 +2594,7 @@ class LibraryArguments {
 
 class LibraryScreen extends StatelessWidget {
   final api.LibraryTopic topic;
-  final api.Fetcher fetcher;
+  final api.DefaultApi fetcher;
   final Navigation navigation;
 
   const LibraryScreen({
@@ -2429,7 +2620,7 @@ class LibraryScreen extends StatelessWidget {
 }
 
 class RootScreen extends StatefulWidget {
-  final api.Fetcher fetcher;
+  final api.DefaultApi fetcher;
   final Navigation navigation;
   final Settings settings;
   final Function(Settings) onSettingsChanged;
@@ -2513,7 +2704,7 @@ class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
         controller: _tabController,
         children: <Widget>[
           LibraryItemView(
-            topic: api.LibraryTopic.main,
+            topic: api.LibraryTopic.infoColonMain,
             fetcher: widget.fetcher,
             navigation: widget.navigation,
           ),
@@ -2579,7 +2770,7 @@ class Navigation {
   void goToLibrary(api.LibraryTopic topic) {
     Navigator.pushNamed(
       context,
-      "$libraryPath${topic.name}",
+      "$libraryPath${topic.value}",
       arguments: AppArguments(
         NavigationPath.library,
         LibraryArguments(topic: topic),
@@ -2587,11 +2778,11 @@ class Navigation {
     );
   }
 
-  void onBadgeTap(api.BadgeName badge) {
+  void onBadgeTap(BadgeEnum badge) {
     goToLibrary(badge.toLibraryTopic());
   }
 
-  void onScorerTap(api.ScorerName scorer) {
+  void onScorerTap(ScorerEnum scorer) {
     goToLibrary(scorer.toLibraryTopic());
   }
 }
@@ -2604,7 +2795,7 @@ class AppArguments {
 }
 
 class SustainityFrontend extends StatefulWidget {
-  final api.Fetcher fetcher;
+  final api.DefaultApi fetcher;
 
   const SustainityFrontend({super.key, required this.fetcher});
 
@@ -2720,11 +2911,14 @@ class _SustainityFrontendState extends State<SustainityFrontend>
     }
 
     if (path.startsWith(Navigation.libraryPath)) {
-      final topic = path.substring(Navigation.libraryPath.length);
-      return AppArguments(
-        NavigationPath.library,
-        LibraryArguments(topic: api.LibraryTopicExtension.fromString(topic)),
-      );
+      final topicName = path.substring(Navigation.libraryPath.length);
+      final topic = api.LibraryTopic.fromJson(topicName);
+      if (topic != null) {
+        return AppArguments(
+          NavigationPath.library,
+          LibraryArguments(topic: topic),
+        );
+      }
     }
 
     return AppArguments(NavigationPath.root, null);
