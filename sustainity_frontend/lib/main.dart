@@ -17,6 +17,8 @@ const double medallionWidth = 240;
 const double medallionHeight = 180;
 const double iconSize = 32;
 
+const String slugSeparator = ":";
+
 final log = logging.Logger('main');
 
 void main() async {
@@ -92,17 +94,144 @@ extension LibraryTopicGuiExtension on api.LibraryTopic {
   }
 }
 
-enum DataSourceEnum { wiki, off, eu, unknown }
+sealed class TextSearchLink {
+  static fromApi(api.TextSearchLinkHack link) {
+    if (link.organisationIdVariant != null) {
+      return OrganisationLink(
+          id: link.id, variant: link.organisationIdVariant!);
+    } else if (link.productIdVariant != null) {
+      return ProductLink(id: link.id, variant: link.productIdVariant!);
+    } else {
+      return null;
+    }
+  }
+}
+
+class OrganisationLink implements TextSearchLink {
+  final String id;
+  final api.OrganisationIdVariant variant;
+
+  OrganisationLink({required this.id, required this.variant});
+
+  static OrganisationLink vat(String id) {
+    return OrganisationLink(id: id, variant: api.OrganisationIdVariant.vat);
+  }
+
+  static OrganisationLink wiki(String id) {
+    return OrganisationLink(id: id, variant: api.OrganisationIdVariant.wiki);
+  }
+
+  static OrganisationLink www(String id) {
+    return OrganisationLink(id: id, variant: api.OrganisationIdVariant.www);
+  }
+
+  static OrganisationLink? fromIds(api.OrganisationIds ids) {
+    if (ids.vat.isNotEmpty) {
+      return OrganisationLink.vat(ids.vat[0]);
+    }
+    if (ids.wiki.isNotEmpty) {
+      return OrganisationLink.wiki(ids.wiki[0]);
+    }
+    if (ids.domains.isNotEmpty) {
+      return OrganisationLink.www(ids.domains[0]);
+    }
+    return null;
+  }
+
+  String toSlug() {
+    return "{variant.toString()}:$id";
+  }
+
+  static OrganisationLink? fromSlug(String slug) {
+    final parts = slug.split(slugSeparator);
+    if (parts.length != 2) {
+      return null;
+    }
+
+    final variant = api.OrganisationIdVariant.fromJson(parts[0]);
+    final id = parts[1];
+
+    if (variant == null) {
+      return null;
+    }
+
+    return OrganisationLink(
+      variant: variant,
+      id: id,
+    );
+  }
+}
+
+class ProductLink implements TextSearchLink {
+  final String id;
+  final api.ProductIdVariant variant;
+
+  ProductLink({required this.id, required this.variant});
+
+  static ProductLink gtin(String id) {
+    return ProductLink(id: id, variant: api.ProductIdVariant.gtin);
+  }
+
+  static ProductLink ean(String id) {
+    return ProductLink(id: id, variant: api.ProductIdVariant.ean);
+  }
+
+  static ProductLink wiki(String id) {
+    return ProductLink(id: id, variant: api.ProductIdVariant.wiki);
+  }
+
+  static ProductLink? fromIds(api.ProductIds ids) {
+    if (ids.gtins.isNotEmpty) {
+      return ProductLink.gtin(ids.gtins[0]);
+    }
+    if (ids.eans.isNotEmpty) {
+      return ProductLink.ean(ids.eans[0]);
+    }
+    if (ids.wiki.isNotEmpty) {
+      return ProductLink.wiki(ids.wiki[0]);
+    }
+    return null;
+  }
+
+  String toSlug() {
+    return "{variant.toString()}:$id";
+  }
+
+  static ProductLink? fromSlug(String slug) {
+    final parts = slug.split(slugSeparator);
+    if (parts.length != 2) {
+      return null;
+    }
+
+    final variant = api.ProductIdVariant.fromJson(parts[0]);
+    final id = parts[1];
+
+    if (variant == null) {
+      return null;
+    }
+
+    return ProductLink(
+      variant: variant,
+      id: id,
+    );
+  }
+}
+
+enum DataSourceEnum { wiki, off, eu, bCorp, fti, tco, other }
 
 const dataSourceValues = {
   api.DataSource.wiki: DataSourceEnum.wiki,
   api.DataSource.off: DataSourceEnum.off,
   api.DataSource.eu: DataSourceEnum.eu,
+  api.DataSource.bCorp: DataSourceEnum.bCorp,
+  api.DataSource.fti: DataSourceEnum.fti,
+  api.DataSource.tco: DataSourceEnum.tco,
+  api.DataSource.other: DataSourceEnum.other,
 };
 
 extension DataSourceExtension on api.DataSource {
   DataSourceEnum toEnum() {
-    return dataSourceValues[this] ?? DataSourceEnum.unknown;
+    return dataSourceValues[this] ?? DataSourceEnum.other;
   }
 }
 
@@ -154,21 +283,23 @@ const scorerNameValues = {
   api.ScorerName.fti: ScorerEnum.fti,
 };
 
-extension ScorerEnumExtension on ScorerEnum {
-  static ScorerEnum? fromString(String string) {
-    return scorerNameValues[string];
+extension ScorerNameExtension on api.ScorerName {
+  ScorerEnum? toEnum() {
+    return scorerNameValues[this];
   }
+}
 
-  static Map<ScorerEnum, int>? convertMap(Map<String, int>? map) {
-    if (map == null) {
+extension ScorerEnumExtension on ScorerEnum {
+  static Map<ScorerEnum, int>? convertList(List<api.Score>? list) {
+    if (list == null) {
       return null;
     }
 
     var scores = <ScorerEnum, int>{};
-    for (final entry in map.entries) {
-      final scorer = ScorerEnumExtension.fromString(entry.key);
+    for (final entry in list) {
+      final scorer = entry.scorerName.toEnum();
       if (scorer != null) {
-        scores[scorer] = entry.value;
+        scores[scorer] = entry.score;
       }
     }
     return scores;
@@ -183,18 +314,6 @@ extension ScorerEnumExtension on ScorerEnum {
 }
 
 enum SearchResultEnum { organisation, product, unknown }
-
-const Map<api.TextSearchResultVariant, SearchResultEnum>
-    searchResultVariantValues = {
-  api.TextSearchResultVariant.organisation: SearchResultEnum.organisation,
-  api.TextSearchResultVariant.product: SearchResultEnum.product,
-};
-
-extension TextSearchResultVariantExtention on api.TextSearchResultVariant {
-  SearchResultEnum toEnum() {
-    return searchResultVariantValues[this] ?? SearchResultEnum.unknown;
-  }
-}
 
 enum PreviewVariant { organisation, product }
 
@@ -303,6 +422,19 @@ class Description extends StatelessWidget {
       case api.DataSource.eu:
         sourceWidget = Text("Source: Eu Ecolabel", style: sourceStyle);
         break;
+      case api.DataSource.bCorp:
+        sourceWidget = Text("Source: B Corp", style: sourceStyle);
+        break;
+      case api.DataSource.fti:
+        sourceWidget =
+            Text("Source: Fashion Transparency Index", style: sourceStyle);
+        break;
+      case api.DataSource.tco:
+        sourceWidget = Text("Source: TCO", style: sourceStyle);
+        break;
+      case api.DataSource.other:
+        sourceWidget = const Text("");
+        break;
       case null:
         break;
     }
@@ -391,7 +523,10 @@ class FashionTransparencyIndexWidget extends StatelessWidget {
         children: [
           for (final entry in presentation.data)
             ListTile(
-              onTap: () => navigation.goToOrganisation(entry.id),
+              onTap: () => {
+                navigation
+                    .goToOrganisationLink(OrganisationLink.wiki(entry.wikiId))
+              },
               mouseCursor: SystemMouseCursors.click,
               leading: Container(
                 decoration: BoxDecoration(
@@ -489,7 +624,22 @@ class SourcedImage extends StatelessWidget {
         url = imagePath;
         source = "Eu Ecolabel";
         break;
-      case DataSourceEnum.unknown:
+      case DataSourceEnum.bCorp:
+        link = imagePath;
+        url = imagePath;
+        source = "B-Corporations";
+        break;
+      case DataSourceEnum.fti:
+        link = imagePath;
+        url = imagePath;
+        source = "Fashion Transparency Index";
+        break;
+      case DataSourceEnum.tco:
+        link = imagePath;
+        url = imagePath;
+        source = "TCO";
+        break;
+      case DataSourceEnum.other:
         log.severe("Unknown data search variant");
         link = imagePath;
         url = imagePath;
@@ -655,44 +805,47 @@ class _LibraryPageState extends State<LibraryPage>
 }
 
 class SearchEntryWidget extends StatelessWidget {
-  final api.TextSearchResult entry;
+  final String label;
+  final TextSearchLink? link;
   final Navigation navigation;
-  final SearchResultEnum variant;
 
   const SearchEntryWidget({
     super.key,
-    required this.entry,
+    required this.label,
+    required this.link,
     required this.navigation,
-    required this.variant,
   });
 
   SearchEntryWidget.fromApi({
     super.key,
-    required this.entry,
+    required api.TextSearchResult entry,
     required this.navigation,
-  }) : variant = entry.variant.toEnum();
+  })  : label = entry.label,
+        link = TextSearchLink.fromApi(entry.link);
 
   @override
   Widget build(BuildContext context) {
     Widget icon;
     Function() onTap;
 
-    switch (variant) {
-      case SearchResultEnum.organisation:
+    switch (link) {
+      case OrganisationLink():
+        final organisationLink = link as OrganisationLink;
         icon = const Tooltip(
           message: "manufacturer / organisation / business / shop",
           child: Icon(Icons.business_outlined),
         );
-        onTap = () => navigation.goToOrganisation(entry.id);
+        onTap = () => navigation.goToOrganisationLink(organisationLink);
         break;
-      case SearchResultEnum.product:
+      case ProductLink():
+        final productLink = link as ProductLink;
         icon = const Tooltip(
           message: "product / brand / item category",
           child: Icon(Icons.shopping_basket_outlined),
         );
-        onTap = () => navigation.goToProduct(entry.id);
+        onTap = () => navigation.goToProductLink(productLink);
         break;
-      case SearchResultEnum.unknown:
+      case null:
         log.severe("Unknown search result variant");
         icon = const Icon(Icons.pending_outlined);
         onTap = () => {};
@@ -704,7 +857,7 @@ class SearchEntryWidget extends StatelessWidget {
       child: ListTile(
         onTap: onTap,
         leading: icon,
-        title: Text(entry.label),
+        title: Text(label),
       ),
     );
   }
@@ -712,7 +865,7 @@ class SearchEntryWidget extends StatelessWidget {
 
 class ProductTileWidget extends StatelessWidget {
   final api.ProductShort product;
-  final Function(String) onSelected;
+  final Function(api.ProductIds) onSelected;
   final Function(BadgeEnum) onBadgeTap;
   final Function(ScorerEnum) onScorerTap;
 
@@ -740,7 +893,7 @@ class ProductTileWidget extends StatelessWidget {
         cursor: SystemMouseCursors.click,
         child: GestureDetector(
           onTap: () {
-            onSelected(product.productId);
+            onSelected(product.productIds);
           },
           child: Container(
             width: tileWidth,
@@ -763,7 +916,7 @@ class ProductTileWidget extends StatelessWidget {
                   const Space(),
                   RibbonRow(
                     badges: BadgeEnumExtension.convertList(product.badges),
-                    scores: ScorerEnumExtension.convertMap(product.scores),
+                    scores: ScorerEnumExtension.convertList(product.scores),
                     onBadgeTap: onBadgeTap,
                     onScorerTap: onScorerTap,
                   ),
@@ -1940,7 +2093,7 @@ class _SettingsWidgetState extends State<SettingsWidget> {
         Row(
           children: [
             const Spacer(),
-            ElevatedButton.icon(
+            FilledButton.icon(
               onPressed: () {
                 widget.onCancelled();
               },
@@ -1948,7 +2101,7 @@ class _SettingsWidgetState extends State<SettingsWidget> {
               label: const Text("Cancel"),
             ),
             const Space(),
-            ElevatedButton.icon(
+            FilledButton.icon(
               onPressed: () {
                 widget.onSaved(Settings(regionCode: regionCode));
               },
@@ -1992,7 +2145,7 @@ class SettingsPopup extends StatelessWidget {
 class OrganisationWidget extends StatelessWidget {
   final api.OrganisationShort organisation;
   final String source;
-  final Function(String) onOrganisationTap;
+  final Function(api.OrganisationIds) onOrganisationTap;
   final Function(BadgeEnum) onBadgeTap;
   final Function(ScorerEnum) onScorerTap;
 
@@ -2022,7 +2175,7 @@ class OrganisationWidget extends StatelessWidget {
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: () {
-          onOrganisationTap(organisation.organisationId);
+          onOrganisationTap(organisation.organisationIds);
         },
         child: Container(
           decoration: BoxDecoration(
@@ -2051,7 +2204,7 @@ class OrganisationWidget extends StatelessWidget {
                 ),
                 RibbonColumn(
                   badges: BadgeEnumExtension.convertList(organisation.badges),
-                  scores: ScorerEnumExtension.convertMap(organisation.scores),
+                  scores: ScorerEnumExtension.convertList(organisation.scores),
                   onBadgeTap: onBadgeTap,
                   onScorerTap: onScorerTap,
                 ),
@@ -2245,8 +2398,8 @@ class ProductView extends StatelessWidget {
                 for (final a in product.alternatives)
                   CategoryAlternativesWidget(ca: a, navigation: navigation),
                 const Section(text: 'Barcodes'),
-                product.gtins.isNotEmpty
-                    ? Description(text: product.gtins.join(", "))
+                product.productIds.gtins.isNotEmpty
+                    ? Description(text: product.productIds.gtins.join(", "))
                     : const Center(child: Text("No barcodes...")),
                 OperationsMenu(
                   variant: PreviewVariant.product,
@@ -2262,13 +2415,13 @@ class ProductView extends StatelessWidget {
 }
 
 class OrganisationPage extends StatefulWidget {
-  final String organisationId;
+  final OrganisationLink link;
   final Navigation navigation;
   final api.DefaultApi fetcher;
 
   const OrganisationPage({
     super.key,
-    required this.organisationId,
+    required this.link,
     required this.navigation,
     required this.fetcher,
   });
@@ -2284,13 +2437,15 @@ class _OrganisationPageState extends State<OrganisationPage>
   @override
   void initState() {
     super.initState();
-    _futureOrganisation = widget.fetcher.getOrganisation(widget.organisationId);
+    _futureOrganisation =
+        widget.fetcher.getOrganisation(widget.link.variant, widget.link.id);
   }
 
   @override
   void didUpdateWidget(OrganisationPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _futureOrganisation = widget.fetcher.getOrganisation(widget.organisationId);
+    _futureOrganisation =
+        widget.fetcher.getOrganisation(widget.link.variant, widget.link.id);
   }
 
   @override
@@ -2321,14 +2476,14 @@ class _OrganisationPageState extends State<OrganisationPage>
 }
 
 class ProductPage extends StatefulWidget {
-  final String productId;
+  final ProductLink link;
   final String? regionCode;
   final Navigation navigation;
   final api.DefaultApi fetcher;
 
   const ProductPage({
     super.key,
-    required this.productId,
+    required this.link,
     required this.regionCode,
     required this.navigation,
     required this.fetcher,
@@ -2345,15 +2500,17 @@ class _ProductPageState extends State<ProductPage>
   @override
   void initState() {
     super.initState();
-    _futureProduct =
-        widget.fetcher.getProduct(widget.productId, region: widget.regionCode);
+    _futureProduct = widget.fetcher.getProduct(
+        widget.link.variant, widget.link.id,
+        region: widget.regionCode);
   }
 
   @override
   void didUpdateWidget(ProductPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _futureProduct =
-        widget.fetcher.getProduct(widget.productId, region: widget.regionCode);
+    _futureProduct = widget.fetcher.getProduct(
+        widget.link.variant, widget.link.id,
+        region: widget.regionCode);
   }
 
   @override
@@ -2484,7 +2641,7 @@ class _TextSearchPageState extends State<TextSearchPage>
                     SearchEntryWidget.fromApi(
                       entry: entry,
                       navigation: widget.navigation,
-                    ),
+                    )
                 ],
               ),
             ),
@@ -2518,20 +2675,20 @@ class _TextSearchPageState extends State<TextSearchPage>
 }
 
 class ProductArguments {
-  final String id;
+  final ProductLink link;
 
-  ProductArguments({required this.id});
+  ProductArguments({required this.link});
 }
 
 class ProductScreen extends StatelessWidget {
-  final String? productId;
+  final ProductLink link;
   final Navigation navigation;
   final api.DefaultApi fetcher;
   final Settings settings;
 
   const ProductScreen({
     super.key,
-    required this.productId,
+    required this.link,
     required this.navigation,
     required this.fetcher,
     required this.settings,
@@ -2544,7 +2701,7 @@ class ProductScreen extends StatelessWidget {
         title: const Text("Product"),
       ),
       body: ProductPage(
-        productId: productId!,
+        link: link,
         regionCode: settings.regionCode,
         navigation: navigation,
         fetcher: fetcher,
@@ -2554,19 +2711,19 @@ class ProductScreen extends StatelessWidget {
 }
 
 class OrganisationArguments {
-  final String id;
+  final OrganisationLink link;
 
-  OrganisationArguments({required this.id});
+  OrganisationArguments({required this.link});
 }
 
 class OrganisationScreen extends StatelessWidget {
-  final String organisationId;
+  final OrganisationLink link;
   final api.DefaultApi fetcher;
   final Navigation navigation;
 
   const OrganisationScreen({
     super.key,
-    required this.organisationId,
+    required this.link,
     required this.fetcher,
     required this.navigation,
   });
@@ -2578,7 +2735,7 @@ class OrganisationScreen extends StatelessWidget {
         title: const Text("Organisation"),
       ),
       body: OrganisationPage(
-        organisationId: organisationId,
+        link: link,
         navigation: navigation,
         fetcher: fetcher,
       ),
@@ -2679,8 +2836,11 @@ class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
         ],
         bottom: TabBar(
           controller: _tabController,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.lightGreen[200],
           indicatorColor: Colors.lightGreen[100],
           indicatorWeight: 7,
+          indicatorSize: TabBarIndicatorSize.tab,
           tabs: const <Widget>[
             Tab(
               icon: Icon(Icons.home_outlined),
@@ -2745,24 +2905,38 @@ class Navigation {
 
   Navigation(this.context);
 
-  void goToProduct(String productId) {
+  void goToProduct(api.ProductIds productIds) {
+    final productLink = ProductLink.fromIds(productIds);
+    if (productLink != null) {
+      goToProductLink(productLink);
+    }
+  }
+
+  void goToProductLink(ProductLink link) {
     Navigator.pushNamed(
       context,
-      "$productPath$productId",
+      "$productPath${link.toSlug()}",
       arguments: AppArguments(
         NavigationPath.product,
-        ProductArguments(id: productId),
+        ProductArguments(link: link),
       ),
     );
   }
 
-  void goToOrganisation(String organisationId) {
+  void goToOrganisation(api.OrganisationIds organisationIds) {
+    final organisationLink = OrganisationLink.fromIds(organisationIds);
+    if (organisationLink != null) {
+      goToOrganisationLink(organisationLink);
+    }
+  }
+
+  void goToOrganisationLink(OrganisationLink link) {
     Navigator.pushNamed(
       context,
-      "$organisationPath$organisationId",
+      "$organisationPath${link.toSlug()}",
       arguments: AppArguments(
         NavigationPath.organisation,
-        OrganisationArguments(id: organisationId),
+        OrganisationArguments(link: link),
       ),
     );
   }
@@ -2854,7 +3028,7 @@ class _SustainityFrontendState extends State<SustainityFrontend>
                 settings: settings,
                 builder: (context) {
                   return ProductScreen(
-                    productId: args.id,
+                    link: args.link,
                     fetcher: widget.fetcher,
                     navigation: Navigation(context),
                     settings: _settings,
@@ -2867,7 +3041,7 @@ class _SustainityFrontendState extends State<SustainityFrontend>
                 settings: settings,
                 builder: (context) {
                   return OrganisationScreen(
-                    organisationId: args.id,
+                    link: args.link,
                     fetcher: widget.fetcher,
                     navigation: Navigation(context),
                   );
@@ -2895,19 +3069,31 @@ class _SustainityFrontendState extends State<SustainityFrontend>
     }
 
     if (path.startsWith(Navigation.productPath)) {
-      final productId = path.substring(Navigation.productPath.length);
-      return AppArguments(
-        NavigationPath.product,
-        ProductArguments(id: productId),
-      );
+      final slug = path.substring(Navigation.productPath.length);
+      final link = ProductLink.fromSlug(slug);
+      if (link != null) {
+        return AppArguments(
+          NavigationPath.product,
+          ProductArguments(link: link),
+        );
+      } else {
+        log.severe("Failed to parse path: '$path'");
+        return AppArguments(NavigationPath.root, null);
+      }
     }
 
     if (path.startsWith(Navigation.organisationPath)) {
-      final organisationId = path.substring(Navigation.organisationPath.length);
-      return AppArguments(
-        NavigationPath.organisation,
-        OrganisationArguments(id: organisationId),
-      );
+      final slug = path.substring(Navigation.organisationPath.length);
+      final link = OrganisationLink.fromSlug(slug);
+      if (link != null) {
+        return AppArguments(
+          NavigationPath.organisation,
+          OrganisationArguments(link: link),
+        );
+      } else {
+        log.severe("Failed to parse path: '$path'");
+        return AppArguments(NavigationPath.root, null);
+      }
     }
 
     if (path.startsWith(Navigation.libraryPath)) {
