@@ -4,10 +4,15 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import 'package:countries_utils/countries_utils.dart' as countries_utils;
 import 'package:logging/logging.dart' as logging;
+import 'package:firebase_analytics/firebase_analytics.dart' as analytics;
+import 'package:firebase_core/firebase_core.dart' as firebase;
+import 'package:flutter/foundation.dart' as foundation;
 
 import 'package:sustainity_api/api.dart' as api;
 
 import 'package:sustainity_frontend/configuration.dart';
+
+import 'firebase_options.dart' as firebase_options;
 
 const double defaultPadding = 10.0;
 const double tileWidth = 180;
@@ -22,6 +27,14 @@ const String slugSeparator = ":";
 final log = logging.Logger('main');
 
 void main() async {
+  logging.Logger.root.level = logging.Level.INFO;
+  logging.Logger.root.onRecord.listen((record) {
+    debugPrint(
+        '[${record.time}][${record.level}][${record.loggerName}] ${record.message}');
+  });
+
+  log.info('Welcome to Sustainity');
+
   final config = Config.load();
   final fetcher = api.DefaultApi(
     api.ApiClient(
@@ -29,7 +42,26 @@ void main() async {
           "${config.backendScheme}://${config.backendHost}:${config.backendPort}",
     ),
   );
+  await logAnalytics();
   runApp(SustainityFrontend(fetcher: fetcher));
+}
+
+Future<void> logAnalytics() async {
+  if (!foundation.kIsWeb) {
+    return;
+  }
+
+  try {
+    await firebase.Firebase.initializeApp(
+      options: firebase_options.DefaultFirebaseOptions.currentPlatform,
+    );
+    log.info('Analytics: initialized');
+
+    await analytics.FirebaseAnalytics.instance.logAppOpen();
+    log.info('Analytics: logged app open');
+  } catch (e) {
+    log.severe('Analytics error: $e');
+  }
 }
 
 extension LibraryTopicGuiExtension on api.LibraryTopic {
