@@ -171,7 +171,7 @@ class OrganisationLink implements TextSearchLink {
   }
 
   String toSlug() {
-    return "{variant.toString()}:$id";
+    return "${variant.toString()}:$id";
   }
 
   static OrganisationLink? fromSlug(String slug) {
@@ -226,7 +226,7 @@ class ProductLink implements TextSearchLink {
   }
 
   String toSlug() {
-    return "{variant.toString()}:$id";
+    return "${variant.toString()}:$id";
   }
 
   static ProductLink? fromSlug(String slug) {
