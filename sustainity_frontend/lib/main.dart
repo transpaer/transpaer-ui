@@ -14,6 +14,8 @@ import 'package:sustainity_frontend/configuration.dart';
 
 import 'firebase_options.dart' as firebase_options;
 
+const double space = 10.0;
+const double flipWidth = 600.0;
 const double defaultPadding = 10.0;
 const double tileWidth = 180;
 const double tileHeight = 240;
@@ -379,8 +381,8 @@ class Space extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const SizedBox(
-      width: 10,
-      height: 10,
+      width: space,
+      height: space,
     );
   }
 }
@@ -471,23 +473,16 @@ class Description extends StatelessWidget {
         break;
     }
 
-    return Container(
-      decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius:
-              const BorderRadius.all(Radius.circular(defaultPadding))),
-      child: Padding(
-        padding: const EdgeInsets.all(defaultPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SelectableText(text, style: textStyle),
-            if (sourceWidget != null) ...[
-              const Space(),
-              sourceWidget,
-            ]
-          ],
-        ),
+    return Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SelectableText(text, style: textStyle),
+          if (sourceWidget != null) ...[
+            const Space(),
+            sourceWidget,
+          ]
+        ],
       ),
     );
   }
@@ -672,7 +667,7 @@ class SourcedImage extends StatelessWidget {
         source = "TCO";
         break;
       case DataSourceEnum.other:
-        log.severe("Unknown data search variant");
+        log.severe("Unknown image source");
         link = imagePath;
         url = imagePath;
         source = "???";
@@ -942,7 +937,9 @@ class ProductTileWidget extends StatelessWidget {
                   Text(product.name, style: titleStyle),
                   const Space(),
                   Text(
-                    product.description != null ? product.description! : "",
+                    product.description != null
+                        ? product.description!.text
+                        : "",
                     style: textStyle,
                   ),
                   const Space(),
@@ -1091,6 +1088,82 @@ class RibbonRow extends RibbonFlex {
           onBadgeTap: onBadgeTap,
           onScorerTap: onScorerTap,
         );
+}
+
+class FlipFlex extends StatelessWidget {
+  final double flipWidth;
+  final List<Widget> children;
+
+  const FlipFlex({super.key, required this.flipWidth, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    var width = MediaQuery.sizeOf(context).width;
+    bool flipped = width < flipWidth;
+
+    if (flipped) {
+      return Column(
+        spacing: space,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      );
+    } else {
+      return Row(
+        spacing: space,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final entry in children.asMap().entries)
+            Expanded(
+              flex: entry.key == 0 ? 3 : 1,
+              child: entry.value,
+            ),
+        ],
+      );
+    }
+  }
+}
+
+class Countries extends StatelessWidget {
+  final List<String> origins;
+
+  const Countries({super.key, required this.origins});
+
+  static bool hasContent(List<String> origins) {
+    return origins.isNotEmpty;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("Origins:"),
+          for (final country in origins
+              .map((code) => countries_utils.Countries.byAlpha3Code(code)))
+            Text("${country.flagIcon ?? ""} ${country.name ?? "<unknown>"}"),
+        ],
+      ),
+    );
+  }
+}
+
+class Card extends StatelessWidget {
+  final Widget child;
+
+  const Card({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius:
+              const BorderRadius.all(Radius.circular(defaultPadding))),
+      child:
+          Padding(padding: const EdgeInsets.all(defaultPadding), child: child),
+    );
+  }
 }
 
 class MedallionFrame extends StatelessWidget {
@@ -1669,7 +1742,7 @@ class OperationsMenu extends StatelessWidget {
       padding: const EdgeInsets.all(defaultPadding),
       child: Column(
         children: [
-          ElevatedButton.icon(
+          FilledButton.icon(
             onPressed: () {
               navigation.goToLibrary(api.LibraryTopic.infoColonForProducers);
             },
@@ -1680,7 +1753,7 @@ class OperationsMenu extends StatelessWidget {
             ),
           ),
           const Space(),
-          ElevatedButton.icon(
+          FilledButton.icon(
             onPressed: () async {
               final url = Uri.parse(
                   'https://github.com/sustainity-dev/issues/issues/new');
@@ -2039,7 +2112,7 @@ class CountrySelectionPopup extends StatelessWidget {
                     title: Text(
                         "${country.flagIcon ?? ""} ${country.name ?? "<unknown>"}"),
                     onTap: () {
-                      onSelected(country.alpha2Code);
+                      onSelected(country.alpha3Code);
                       Navigator.of(context).pop();
                     },
                   ),
@@ -2087,7 +2160,7 @@ class _SettingsWidgetState extends State<SettingsWidget> {
   Widget build(BuildContext context) {
     var region = 'world-wide';
     if (regionCode != null) {
-      final country = countries_utils.Countries.byCode(regionCode!);
+      final country = countries_utils.Countries.byAlpha3Code(regionCode!);
       region = "${country.flagIcon ?? ""} ${country.name ?? "<unknown>"}";
     }
 
@@ -2098,7 +2171,7 @@ class _SettingsWidgetState extends State<SettingsWidget> {
           children: [
             const Text('Region:'),
             const Space(),
-            ElevatedButton(
+            FilledButton(
               onPressed: () {
                 showDialog(
                   context: context,
@@ -2226,7 +2299,7 @@ class OrganisationWidget extends StatelessWidget {
                       const Space(),
                       Text(
                           organisation.description != null
-                              ? organisation.description!
+                              ? organisation.description!.text
                               : "",
                           style: textStyle),
                       const Space(),
@@ -2318,16 +2391,29 @@ class OrganisationView extends StatelessWidget {
           Expanded(
             child: ListView(
               children: [
-                const Section(text: 'Descriptions:'),
-                if (organisation.descriptions.isNotEmpty) ...[
-                  for (final description in organisation.descriptions)
-                    Description(
-                      text: description.text,
-                      source: description.source_,
-                    )
-                ] else ...[
-                  const Center(child: Text("No description..."))
-                ],
+                FlipFlex(
+                  flipWidth: flipWidth,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Section(text: 'Descriptions:'),
+                        if (organisation.descriptions.isNotEmpty) ...[
+                          for (final description in organisation.descriptions)
+                            Description(
+                              text: description.text,
+                              source: description.source_,
+                            )
+                        ] else ...[
+                          const Center(child: Text("No description..."))
+                        ],
+                      ],
+                    ),
+                    if (Countries.hasContent(organisation.origins)) ...[
+                      Countries(origins: organisation.origins)
+                    ],
+                  ],
+                ),
                 OrganisationMedallions(
                   medallions: organisation.medallions,
                   onTopic: navigation.goToLibrary,
@@ -2353,6 +2439,18 @@ class OrganisationView extends StatelessWidget {
                   emptyText: "Seems like this organisation has no products...",
                   navigation: navigation,
                 ),
+                const Section(text: 'Links'),
+                if (organisation.websites.isNotEmpty) ...[
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final link in organisation.websites)
+                        SelectableText(link)
+                    ],
+                  )
+                ] else ...[
+                  const Center(child: Text("No links..."))
+                ],
                 OperationsMenu(
                   variant: PreviewVariant.organisation,
                   navigation: navigation,
@@ -2406,6 +2504,7 @@ class ProductView extends StatelessWidget {
                   for (final manufacturer in product.manufacturers)
                     OrganisationWidget(
                       organisation: manufacturer,
+                      // TODO: Use the actual source
                       source: "wikidata",
                       onOrganisationTap: navigation.goToOrganisation,
                       onBadgeTap: navigation.onBadgeTap,
@@ -2827,7 +2926,7 @@ class RootScreen extends StatefulWidget {
 }
 
 class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
-  static const int _tabNum = 5;
+  static const int _tabNum = 4;
 
   late Settings _settings;
   late TabController _tabController;
@@ -2836,7 +2935,8 @@ class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _settings = widget.settings;
-    _tabController = TabController(length: _tabNum, vsync: this);
+    _tabController =
+        TabController(length: _tabNum, vsync: this, initialIndex: 1);
   }
 
   @override
@@ -2875,9 +2975,6 @@ class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
           indicatorSize: TabBarIndicatorSize.tab,
           tabs: const <Widget>[
             Tab(
-              icon: Icon(Icons.home_outlined),
-            ),
-            Tab(
               icon: Icon(Icons.menu_book_outlined),
             ),
             Tab(
@@ -2895,11 +2992,6 @@ class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
       body: TabBarView(
         controller: _tabController,
         children: <Widget>[
-          LibraryItemView(
-            topic: api.LibraryTopic.infoColonMain,
-            fetcher: widget.fetcher,
-            navigation: widget.navigation,
-          ),
           LibraryPage(
             fetcher: widget.fetcher,
             navigation: widget.navigation,
@@ -3027,6 +3119,8 @@ class _SustainityFrontendState extends State<SustainityFrontend>
           colorScheme: ColorScheme.fromSwatch().copyWith(
             primary: Colors.green[800],
             onPrimary: Colors.white,
+            outline: Colors.green[800],
+            outlineVariant: Colors.green[800],
           ),
         ),
         initialRoute: "/",
