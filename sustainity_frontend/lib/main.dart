@@ -2708,9 +2708,14 @@ class _TextSearchPageState extends State<TextSearchPage>
             children: [
               Flexible(
                 child: TextField(
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
                     labelText: 'Text search',
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.cancel),
+                      color: Colors.grey,
+                      onPressed: _clear,
+                    ),
                   ),
                   controller: _searchFieldController,
                   onSubmitted: _onSubmitted,
@@ -2802,6 +2807,13 @@ class _TextSearchPageState extends State<TextSearchPage>
   Future<void> _onExampleSubmitted(String text) async {
     _searchFieldController.text = text;
     await _onSubmitted(text);
+  }
+
+  void _clear() {
+    _searchFieldController.clear();
+    setState(() {
+      _entries = [];
+    });
   }
 }
 
