@@ -23,6 +23,8 @@ const double imageSize = 220;
 const double medallionWidth = 240;
 const double medallionHeight = 180;
 const double iconSize = 32;
+const double iconRound = 16;
+const double logoSize = 24;
 
 const String slugSeparator = ":";
 
@@ -387,6 +389,142 @@ class Space extends StatelessWidget {
   }
 }
 
+class TextLinkButton extends StatelessWidget {
+  final String text;
+  final Uri link;
+
+  const TextLinkButton({super.key, required this.text, required this.link});
+
+  TextLinkButton.parse({
+    Key? key,
+    required String text,
+    required String link,
+  }) : this(key: key, text: text, link: Uri.parse(link));
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      onPressed: () async {
+        await url_launcher.launchUrl(link);
+      },
+      icon: const Icon(Icons.shopping_cart_outlined),
+      label: Padding(
+        padding: const EdgeInsets.all(defaultPadding),
+        child: Text(text),
+      ),
+    );
+  }
+}
+
+class FilledLinkButton extends StatelessWidget {
+  final String text;
+  final Uri link;
+
+  const FilledLinkButton({super.key, required this.text, required this.link});
+
+  FilledLinkButton.parse({
+    Key? key,
+    required String text,
+    required String link,
+  }) : this(key: key, text: text, link: Uri.parse(link));
+
+  @override
+  Widget build(BuildContext context) {
+    return FilledButton.icon(
+      onPressed: () async {
+        await url_launcher.launchUrl(link);
+      },
+      icon: const Icon(Icons.shopping_cart_outlined),
+      label: Padding(
+        padding: const EdgeInsets.all(defaultPadding),
+        child: Text(text),
+      ),
+    );
+  }
+}
+
+class MediaLinkButton extends StatelessWidget {
+  final String text;
+  final Uri link;
+
+  const MediaLinkButton({super.key, required this.text, required this.link});
+
+  MediaLinkButton.parse({
+    Key? key,
+    required String text,
+    required String link,
+  }) : this(key: key, text: text, link: Uri.parse(link));
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      child: Row(
+        spacing: space,
+        children: [
+          if (link.host == "youtube.com" || link.host == "www.youtube.com")
+            Logo.youtube(),
+          Text(
+            text,
+            overflow: TextOverflow.fade,
+            maxLines: 1,
+            softWrap: false,
+          ),
+        ],
+      ),
+      onPressed: () async {
+        await url_launcher.launchUrl(link);
+      },
+    );
+  }
+}
+
+const String youtubeLogoLink =
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/YouTube_full-color_icon_%282024%29.svg/1486px-YouTube_full-color_icon_%282024%29.svg.png";
+
+class Logo extends StatelessWidget {
+  final String link;
+
+  const Logo({super.key, required this.link});
+
+  Logo.youtube({
+    Key? key,
+  }) : this(key: key, link: youtubeLogoLink);
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.network(
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/YouTube_full-color_icon_%282024%29.svg/1486px-YouTube_full-color_icon_%282024%29.svg.png",
+      height: logoSize,
+    );
+  }
+}
+
+class ProfilePic extends StatelessWidget {
+  final String? source;
+
+  const ProfilePic({super.key, required this.source});
+
+  @override
+  Widget build(BuildContext context) {
+    if (source != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(iconRound),
+        child: Image.network(
+          source!,
+          width: iconSize,
+          height: iconSize,
+        ),
+      );
+    } else {
+      return const Icon(
+        Icons.account_circle,
+        color: Colors.black,
+        size: iconSize,
+      );
+    }
+  }
+}
+
 class Title extends StatelessWidget {
   final String text;
 
@@ -485,6 +623,78 @@ class Description extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class DescriptionSection extends StatelessWidget {
+  final List<api.LongText> descriptions;
+
+  const DescriptionSection({
+    super.key,
+    required this.descriptions,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (descriptions.isNotEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final description in descriptions)
+            Description(
+              text: description.text,
+              source: description.source_,
+            )
+        ],
+      );
+    } else {
+      return const Center(child: Text("No description..."));
+    }
+  }
+}
+
+class LinkSection extends StatelessWidget {
+  final List<String> links;
+
+  const LinkSection({
+    super.key,
+    required this.links,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (links.isNotEmpty) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [for (final link in links) SelectableText(link)],
+      );
+    } else {
+      return const Center(child: Text("No links..."));
+    }
+  }
+}
+
+class ImageSection extends StatelessWidget {
+  final List<api.Image> images;
+
+  const ImageSection({
+    super.key,
+    required this.images,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (images.isNotEmpty) {
+      return SizedBox(
+        height: tileHeight,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          children: [for (final image in images) SourcedImage.fromApi(image)],
+        ),
+      );
+    } else {
+      return const Center(child: Text("No images..."));
+    }
   }
 }
 
@@ -1166,6 +1376,24 @@ class Card extends StatelessWidget {
   }
 }
 
+class Tile extends StatelessWidget {
+  final Widget child;
+  final Function() onTap;
+
+  const Tile({super.key, required this.onTap, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Card(child: child),
+      ),
+    );
+  }
+}
+
 class MedallionFrame extends StatelessWidget {
   final Widget child;
   final Color color;
@@ -1560,8 +1788,73 @@ class SustainityMedallion extends StatelessWidget {
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
-                      return SustainityScoreDetailsPopup(
-                        score: medallion.score,
+                      return SustainityDialog(
+                        title: "Sustainity score details",
+                        content: SustainityScoreDetailsWidget(
+                          score: medallion.score,
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class MediaMedallion extends StatelessWidget {
+  final List<api.Medium> media;
+
+  const MediaMedallion({
+    super.key,
+    required this.media,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final mainStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
+          color: Colors.black,
+        );
+
+    return MedallionFrame(
+      color: Colors.grey.shade400,
+      child: Column(
+        children: [
+          Text(
+            "Talking about it",
+            style: mainStyle,
+            textAlign: TextAlign.center,
+          ),
+          const Spacer(),
+          SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: Flex(
+              direction: Axis.horizontal,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final medium in media) ProfilePic(source: medium.icon)
+              ],
+            ),
+          ),
+          const Spacer(),
+          Row(
+            children: [
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.more_outlined),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return SustainityDialog(
+                        title: "Talking about it:",
+                        content: MediaDetails(
+                          media: media,
+                        ),
                       );
                     },
                   );
@@ -1671,11 +1964,13 @@ class DisposalMedallion extends StatelessWidget {
 
 class OrganisationMedallions extends StatelessWidget {
   final List<api.Medallion> medallions;
+  final List<api.Medium> media;
   final Function(api.LibraryTopic) onTopic;
 
   const OrganisationMedallions({
     super.key,
     required this.medallions,
+    required this.media,
     required this.onTopic,
   });
 
@@ -1686,6 +1981,7 @@ class OrganisationMedallions extends StatelessWidget {
       children: [
         for (final medallion in medallions)
           MedallionSwitcher(medallion: medallion, onTopic: onTopic),
+        if (media.isNotEmpty) MediaMedallion(media: media),
       ],
     );
   }
@@ -1693,11 +1989,13 @@ class OrganisationMedallions extends StatelessWidget {
 
 class ProductMedallions extends StatelessWidget {
   final List<api.Medallion> medallions;
+  final List<api.Medium> media;
   final Function(api.LibraryTopic) onTopic;
 
   const ProductMedallions({
     super.key,
     required this.medallions,
+    required this.media,
     required this.onTopic,
   });
 
@@ -1708,6 +2006,7 @@ class ProductMedallions extends StatelessWidget {
       children: [
         for (final medallion in medallions)
           MedallionSwitcher(medallion: medallion, onTopic: onTopic),
+        if (media.isNotEmpty) MediaMedallion(media: media),
         const GhgMedallion(),
         const DisposalMedallion(),
       ],
@@ -1768,6 +2067,40 @@ class OperationsMenu extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class OrganisationListWidget extends StatelessWidget {
+  final List<api.OrganisationShort> organisations;
+  final String emptyText;
+  final Navigation navigation;
+
+  const OrganisationListWidget({
+    super.key,
+    required this.organisations,
+    required this.emptyText,
+    required this.navigation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (organisations.isNotEmpty) {
+      return Column(
+        children: [
+          for (final organisation in organisations)
+            OrganisationWidget(
+              organisation: organisation,
+              // TODO: Use the actual source
+              source: "wikidata",
+              onOrganisationTap: navigation.goToOrganisation,
+              onBadgeTap: navigation.onBadgeTap,
+              onScorerTap: navigation.onScorerTap,
+            )
+        ],
+      );
+    } else {
+      return Center(child: Text(emptyText));
+    }
   }
 }
 
@@ -2005,12 +2338,21 @@ class SustainityScoreDetailsWidget extends StatelessWidget {
 }
 
 class SustainityDialog extends Dialog {
+  final String title;
   final Widget content;
 
-  const SustainityDialog({super.key, required this.content});
+  const SustainityDialog({
+    super.key,
+    required this.title,
+    required this.content,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final titleStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
+          color: Colors.black,
+        );
+
     return Dialog(
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(defaultPadding)),
@@ -2024,46 +2366,63 @@ class SustainityDialog extends Dialog {
         ),
         child: Padding(
           padding: const EdgeInsets.all(defaultPadding),
-          child: content,
+          child: Column(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: titleStyle,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              ),
+              content,
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class SustainityScoreDetailsPopup extends StatelessWidget {
-  final api.SustainityScore score;
+class MediaDetails extends StatelessWidget {
+  final List<api.Medium> media;
 
-  const SustainityScoreDetailsPopup({super.key, required this.score});
+  const MediaDetails({super.key, required this.media});
 
   @override
   Widget build(BuildContext context) {
-    final headerStyle = Theme.of(context).textTheme.headlineSmall?.copyWith(
-          color: Colors.black,
-        );
-
-    return SustainityDialog(
-      content: Column(
+    return Flexible(
+      child: ListView(
+        scrollDirection: Axis.vertical,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  "Sustainity score details",
-                  style: headerStyle,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          ),
-          SustainityScoreDetailsWidget(score: score),
+          for (final medium in media)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ProfilePic(source: medium.icon),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    for (final mention in medium.mentions)
+                      MediaLinkButton(
+                        link: Uri.parse(mention.link),
+                        text: mention.title,
+                      ),
+                  ],
+                )
+              ],
+            ),
         ],
       ),
     );
@@ -2083,43 +2442,30 @@ class CountrySelectionPopup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SustainityDialog(
-      content: Column(
-        children: [
-          Row(children: [
-            const Section(text: "Select region"),
-            const Spacer(),
-            IconButton(
-              icon: const Icon(Icons.close),
-              onPressed: () {
-                onCancelled();
+      title: "Select region",
+      content: Expanded(
+        child: ListView(
+          scrollDirection: Axis.vertical,
+          children: [
+            ListTile(
+              title: const Text("world-wide"),
+              onTap: () {
+                onSelected(null);
                 Navigator.of(context).pop();
               },
             ),
-          ]),
-          Expanded(
-            child: ListView(
-              scrollDirection: Axis.vertical,
-              children: [
-                ListTile(
-                  title: const Text("world-wide"),
-                  onTap: () {
-                    onSelected(null);
-                    Navigator.of(context).pop();
-                  },
+            for (final country in countries_utils.Countries.all())
+              ListTile(
+                title: Text(
+                  "${country.flagIcon ?? ""} ${country.name ?? "<unknown>"}",
                 ),
-                for (final country in countries_utils.Countries.all())
-                  ListTile(
-                    title: Text(
-                        "${country.flagIcon ?? ""} ${country.name ?? "<unknown>"}"),
-                    onTap: () {
-                      onSelected(country.alpha3Code);
-                      Navigator.of(context).pop();
-                    },
-                  ),
-              ],
-            ),
-          ),
-        ],
+                onTap: () {
+                  onSelected(country.alpha3Code);
+                  Navigator.of(context).pop();
+                },
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -2165,8 +2511,8 @@ class _SettingsWidgetState extends State<SettingsWidget> {
     }
 
     return Column(
+      spacing: space,
       children: [
-        const Section(text: 'Settings'),
         Row(
           children: [
             const Text('Region:'),
@@ -2194,7 +2540,7 @@ class _SettingsWidgetState extends State<SettingsWidget> {
             ),
           ],
         ),
-        const Spacer(),
+        const Space(),
         Row(
           children: [
             const Spacer(),
@@ -2233,6 +2579,7 @@ class SettingsPopup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SustainityDialog(
+      title: "Settings",
       content: SettingsWidget(
         settings: settings,
         onCancelled: () {
@@ -2386,7 +2733,9 @@ class OrganisationView extends StatelessWidget {
       padding: const EdgeInsets.all(defaultPadding),
       child: Column(
         children: [
-          Title(text: organisation.names[0].text),
+          Title(
+            text: organisation.names.firstOrNull?.text ?? "<<< no title >>>",
+          ),
           const Space(),
           Expanded(
             child: ListView(
@@ -2398,15 +2747,9 @@ class OrganisationView extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const Section(text: 'Descriptions:'),
-                        if (organisation.descriptions.isNotEmpty) ...[
-                          for (final description in organisation.descriptions)
-                            Description(
-                              text: description.text,
-                              source: description.source_,
-                            )
-                        ] else ...[
-                          const Center(child: Text("No description..."))
-                        ],
+                        DescriptionSection(
+                          descriptions: organisation.descriptions,
+                        ),
                       ],
                     ),
                     if (Countries.hasContent(organisation.origins)) ...[
@@ -2416,23 +2759,11 @@ class OrganisationView extends StatelessWidget {
                 ),
                 OrganisationMedallions(
                   medallions: organisation.medallions,
+                  media: organisation.media,
                   onTopic: navigation.goToLibrary,
                 ),
                 const Section(text: 'Images'),
-                if (organisation.images.isNotEmpty) ...[
-                  SizedBox(
-                    height: tileHeight,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: [
-                        for (final image in organisation.images)
-                          SourcedImage.fromApi(image)
-                      ],
-                    ),
-                  )
-                ] else ...[
-                  const Center(child: Text("No images..."))
-                ],
+                ImageSection(images: organisation.images),
                 const Section(text: 'Example products'),
                 ProductListWidget(
                   products: organisation.products,
@@ -2440,17 +2771,7 @@ class OrganisationView extends StatelessWidget {
                   navigation: navigation,
                 ),
                 const Section(text: 'Links'),
-                if (organisation.websites.isNotEmpty) ...[
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      for (final link in organisation.websites)
-                        SelectableText(link)
-                    ],
-                  )
-                ] else ...[
-                  const Center(child: Text("No links..."))
-                ],
+                LinkSection(links: organisation.websites),
                 OperationsMenu(
                   variant: PreviewVariant.organisation,
                   navigation: navigation,
@@ -2480,58 +2801,50 @@ class ProductView extends StatelessWidget {
       padding: const EdgeInsets.all(defaultPadding),
       child: Column(
         children: [
-          Title(text: product.names.map((n) => n.text).join("\n")),
+          Title(text: product.names.firstOrNull?.text ?? "<<< no title >>>"),
           const Space(),
           Expanded(
             child: ListView(
               children: [
                 const Section(text: 'Descriptions:'),
-                if (product.descriptions.isNotEmpty) ...[
-                  for (final description in product.descriptions)
-                    Description(
-                      text: description.text,
-                      source: description.source_,
-                    )
-                ] else ...[
-                  const Center(child: Text("No description..."))
-                ],
+                DescriptionSection(descriptions: product.descriptions),
                 ProductMedallions(
                   medallions: product.medallions,
+                  media: product.media,
                   onTopic: navigation.goToLibrary,
                 ),
-                const Section(text: 'Producers:'),
-                if (product.manufacturers.isNotEmpty) ...[
-                  for (final manufacturer in product.manufacturers)
-                    OrganisationWidget(
-                      organisation: manufacturer,
-                      // TODO: Use the actual source
-                      source: "wikidata",
-                      onOrganisationTap: navigation.goToOrganisation,
-                      onBadgeTap: navigation.onBadgeTap,
-                      onScorerTap: navigation.onScorerTap,
-                    )
-                ],
                 const Section(text: 'Images'),
-                if (product.images.isNotEmpty) ...[
-                  SizedBox(
-                    height: tileHeight,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      children: [
-                        for (final image in product.images)
-                          SourcedImage.fromApi(image)
-                      ],
-                    ),
-                  )
-                ] else ...[
-                  const Center(child: Text("No images..."))
-                ],
+                ImageSection(images: product.images),
                 for (final a in product.alternatives)
                   CategoryAlternativesWidget(ca: a, navigation: navigation),
-                const Section(text: 'Barcodes'),
-                product.productIds.gtins.isNotEmpty
-                    ? Description(text: product.productIds.gtins.join(", "))
-                    : const Center(child: Text("No barcodes...")),
+                FlipFlex(
+                  flipWidth: flipWidth,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Section(text: 'Producers:'),
+                        OrganisationListWidget(
+                          organisations: product.manufacturers,
+                          emptyText:
+                              "Seems like this organisation has no products...",
+                          navigation: navigation,
+                        ),
+                        const Section(text: 'Barcodes'),
+                        product.productIds.gtins.isNotEmpty
+                            ? Description(
+                                text: product.productIds.gtins.join(", "))
+                            : const Center(child: Text("No barcodes...")),
+                      ],
+                    ),
+                    if (product.shopping.isNotEmpty) ...[
+                      Shopping(
+                        shopping: product.shopping,
+                        navigation: navigation,
+                      )
+                    ],
+                  ],
+                ),
                 OperationsMenu(
                   variant: PreviewVariant.product,
                   navigation: navigation,
@@ -2540,6 +2853,167 @@ class ProductView extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class Shopping extends StatelessWidget {
+  final List<api.ShoppingEntry> shopping;
+  final Navigation navigation;
+
+  const Shopping({
+    super.key,
+    required this.shopping,
+    required this.navigation,
+  });
+
+  String shopName(api.VerifiedShop shop) {
+    switch (shop) {
+      case api.VerifiedShop.fairphone:
+        return "Fairphone Shop";
+      case api.VerifiedShop.amazon:
+        return "Amazon";
+      default:
+        return "On-line store";
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final shopStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+        );
+
+    final linkStyle = Theme.of(context).textTheme.bodyMedium?.copyWith();
+
+    return Column(
+      spacing: space,
+      children: [
+        for (final shop in shopping)
+          Tile(
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return SustainityDialog(
+                    title: "Before you buy...",
+                    content: BeforeYouBuyWidget.parse(link: shop.link),
+                  );
+                },
+              );
+            },
+            child: Row(
+              spacing: space,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const Icon(Icons.shopping_cart_outlined),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      shopName(shop.shop),
+                      style: shopStyle,
+                    ),
+                    Text(
+                      shop.description,
+                      style: linkStyle,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 3,
+                      softWrap: true,
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class BeforeYouBuyWidget extends StatelessWidget {
+  final Uri link;
+
+  const BeforeYouBuyWidget({
+    super.key,
+    required this.link,
+  });
+
+  BeforeYouBuyWidget.parse({
+    Key? key,
+    required String link,
+  }) : this(key: key, link: Uri.parse(link));
+
+  @override
+  Widget build(BuildContext context) {
+    final smallStyle = Theme.of(context).textTheme.bodySmall?.copyWith();
+    final textStyle = Theme.of(context).textTheme.bodyMedium?.copyWith();
+    final adviceStyle = Theme.of(context).textTheme.bodyLarge?.copyWith();
+
+    return Expanded(
+      child: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: Column(
+          spacing: space,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(defaultPadding),
+              child: Text(
+                "The link to the shop is below. But before you click it, here's a few things you may want to consider:",
+                style: textStyle,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(defaultPadding),
+              child: Text(
+                "1. Make sure you need it - wait a week or a month, and buy it only if after this time you still want it",
+                style: adviceStyle,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(defaultPadding),
+              child: Column(
+                children: [
+                  Text(
+                    "2. Consider buying a second hand version - it might be much cheaper",
+                    style: adviceStyle,
+                  ),
+                  Text(
+                    "Here are some second hand shops and marketplaces:",
+                    style: textStyle,
+                  ),
+                  Wrap(
+                    direction: Axis.horizontal,
+                    children: [
+                      TextLinkButton.parse(
+                        text: "Vinted",
+                        link: "https://www.vinted.com",
+                      ),
+                      TextLinkButton.parse(
+                        text: "Marktplaats",
+                        link: "https://www.marktplaats.nl",
+                      ),
+                      TextLinkButton.parse(
+                        text: "2de kansje",
+                        link: "https://www.2dekansje.com",
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Center(
+              child: FilledLinkButton(
+                link: link,
+                text: "Go to the shop",
+              ),
+            ),
+            Center(child: Text(link.toString(), style: smallStyle)),
+          ],
+        ),
       ),
     );
   }

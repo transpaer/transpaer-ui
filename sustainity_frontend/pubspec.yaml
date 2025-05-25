@@ -22,11 +22,12 @@ dependencies:
   url_launcher: ^6.1.11
 
   sustainity_api:
-    git:
-      url: https://github.com/sustainity-dev/sustainity-api-dart.git
-      ref: main
-      path: sustainity-api
     version: ^1.0.0
+    #git:
+    #  url: https://github.com/sustainity-dev/sustainity-api-dart.git
+    #  ref: main
+    #  path: sustainity-api
+    path: ../../sustainity-api-dart/sustainity-api
 
 dev_dependencies:
   flutter_test:
