@@ -77,6 +77,8 @@ extension LibraryTopicGuiExtension on api.LibraryTopic {
         return const Icon(Icons.question_answer_outlined);
       case api.LibraryTopic.infoColonFaq:
         return const Icon(Icons.question_answer_outlined);
+      case api.LibraryTopic.infoColonGreenwashing:
+        return const Icon(Icons.question_answer_outlined);
 
       case api.LibraryTopic.dataColonWiki:
         // TODO: Prepare an icon.
@@ -253,9 +255,10 @@ class ProductLink implements TextSearchLink {
   }
 }
 
-enum DataSourceEnum { wiki, off, eu, bCorp, fti, tco, other }
+enum DataSourceEnum { sustainity, wiki, off, eu, bCorp, fti, tco, other }
 
 const dataSourceValues = {
+  api.DataSource.sustainity: DataSourceEnum.sustainity,
   api.DataSource.wiki: DataSourceEnum.wiki,
   api.DataSource.off: DataSourceEnum.off,
   api.DataSource.eu: DataSourceEnum.eu,
@@ -460,9 +463,10 @@ class MediaLinkButton extends StatelessWidget {
     return TextButton(
       child: Row(
         spacing: space,
+        mainAxisSize: MainAxisSize.min,
         children: [
           if (link.host == "youtube.com" || link.host == "www.youtube.com")
-            Logo.youtube(),
+            const Logo.youtube(),
           Text(
             text,
             overflow: TextOverflow.fade,
@@ -478,6 +482,28 @@ class MediaLinkButton extends StatelessWidget {
   }
 }
 
+class ImprovementButton extends StatelessWidget {
+  final String text;
+
+  const ImprovementButton({super.key, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final url =
+        Uri.parse('https://github.com/sustainity-dev/issues/issues/new');
+    return FilledButton.icon(
+      onPressed: () async {
+        await url_launcher.launchUrl(url);
+      },
+      icon: const Icon(Icons.bug_report_outlined),
+      label: Padding(
+        padding: const EdgeInsets.all(defaultPadding),
+        child: Text(text),
+      ),
+    );
+  }
+}
+
 const String youtubeLogoLink =
     "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/YouTube_full-color_icon_%282024%29.svg/1486px-YouTube_full-color_icon_%282024%29.svg.png";
 
@@ -486,7 +512,7 @@ class Logo extends StatelessWidget {
 
   const Logo({super.key, required this.link});
 
-  Logo.youtube({
+  const Logo.youtube({
     Key? key,
   }) : this(key: key, link: youtubeLogoLink);
 
@@ -604,6 +630,9 @@ class Description extends StatelessWidget {
       case api.DataSource.tco:
         sourceWidget = Text("Source: TCO", style: sourceStyle);
         break;
+      case api.DataSource.sustainity:
+        sourceWidget = const Text("");
+        break;
       case api.DataSource.other:
         sourceWidget = const Text("");
         break;
@@ -639,6 +668,7 @@ class DescriptionSection extends StatelessWidget {
     if (descriptions.isNotEmpty) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: space,
         children: [
           for (final description in descriptions)
             Description(
@@ -810,6 +840,11 @@ class ItemWidget extends StatelessWidget {
               scrollDirection: Axis.vertical,
               children: [
                 Article(markdown: item.article),
+                if (item.links.isNotEmpty) ...[
+                  const Section(text: "Learn more..."),
+                  for (final link in item.links)
+                    MediaLinkButton.parse(text: link.title, link: link.link),
+                ],
                 if (item.presentation != null) ...[
                   const Space(),
                   if (item.id == api.LibraryTopic.certColonFti) ...[
@@ -846,6 +881,11 @@ class SourcedImage extends StatelessWidget {
     String url;
     String source;
     switch (imageSource) {
+      case DataSourceEnum.sustainity:
+        link = imagePath;
+        url = imagePath;
+        source = "Sustainity";
+        break;
       case DataSourceEnum.wiki:
         link = "$url1/$imagePath";
         url = "$link?width=200";
@@ -2052,17 +2092,8 @@ class OperationsMenu extends StatelessWidget {
             ),
           ),
           const Space(),
-          FilledButton.icon(
-            onPressed: () async {
-              final url = Uri.parse(
-                  'https://github.com/sustainity-dev/issues/issues/new');
-              await url_launcher.launchUrl(url);
-            },
-            icon: const Icon(Icons.bug_report_outlined),
-            label: const Padding(
-              padding: EdgeInsets.all(defaultPadding),
-              child: Text("Found problem with data? Report it to us!"),
-            ),
+          const ImprovementButton(
+            text: "Found problem with data? Report it to us!",
           ),
         ],
       ),
@@ -2815,8 +2846,19 @@ class ProductView extends StatelessWidget {
                 ),
                 const Section(text: 'Images'),
                 ImageSection(images: product.images),
-                for (final a in product.alternatives)
-                  CategoryAlternativesWidget(ca: a, navigation: navigation),
+                if (product.alternatives.isNotEmpty) ...[
+                  for (final a in product.alternatives)
+                    CategoryAlternativesWidget(ca: a, navigation: navigation),
+                ] else ...[
+                  const Section(text: "Alternatives"),
+                  const Text(
+                    "This product does not have any category assigned yet",
+                  ),
+                  const ImprovementButton(
+                    text:
+                        "Let us know to prititize adding a category for this product",
+                  ),
+                ],
                 FlipFlex(
                   flipWidth: flipWidth,
                   children: [
@@ -2968,9 +3010,21 @@ class BeforeYouBuyWidget extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.all(defaultPadding),
-              child: Text(
-                "1. Make sure you need it - wait a week or a month, and buy it only if after this time you still want it",
-                style: adviceStyle,
+              child: Column(
+                children: [
+                  Text(
+                    "1. Make sure you need it - wait a week or a month, and buy it only if after this time you still want it",
+                    style: adviceStyle,
+                  ),
+                  Text(
+                    "In the meantime, try leaning how to avoid overconsumption:",
+                    style: textStyle,
+                  ),
+                  MediaLinkButton.parse(
+                    link: "https://www.youtube.com/watch?v=D3ksVUSOgeQ",
+                    text: "Is it possible to break up with capitalism?",
+                  ),
+                ],
               ),
             ),
             Padding(
@@ -3001,6 +3055,28 @@ class BeforeYouBuyWidget extends StatelessWidget {
                         link: "https://www.2dekansje.com",
                       ),
                     ],
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(defaultPadding),
+              child: Column(
+                children: [
+                  Text(
+                    "3. Is this item high quality that will last you a long time?",
+                    style: adviceStyle,
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(defaultPadding),
+              child: Column(
+                children: [
+                  Text(
+                    "4. Do you have plan for this item when it no longer serves you (i.e. donation, selling, etc)?",
+                    style: adviceStyle,
                   ),
                 ],
               ),
