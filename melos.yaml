@@ -7,13 +7,17 @@ scripts:
   check:
     run: cd sustainity_frontend && flutter analyze
 
-  build:
+  build-web:
     # Dart2jsOptimization ias required by Google ananlytics
     run: cd sustainity_frontend && flutter analyze && flutter build web --no-tree-shake-icons --dart-define=Dart2jsOptimization=O9
 
-  build-debug:
+  build-web-debug:
     # Dart2jsOptimization ias required by Google ananlytics
     run: cd sustainity_frontend && flutter build web --no-tree-shake-icons --dart-define=Dart2jsOptimization=O9 --debug
+
+  build-android:
+    # Dart2jsOptimization ias required by Google ananlytics
+    run: cd sustainity_frontend && flutter analyze && flutter build apk
 
   test:
     run: cd sustainity_frontend && flutter test

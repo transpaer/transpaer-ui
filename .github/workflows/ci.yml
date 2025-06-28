@@ -27,11 +27,14 @@ jobs:
       - name: Fetch assets
         run: melos run fetch_assets
 
-      - name: Build
-        run: melos run build
+      - name: Check compilation
+        run: melos run check
 
-      - name: Format
+      - name: Check format
         run: melos run check_format
+
+      - name: Build web
+        run: melos run build-web
 
       - name: Test
         run: melos run test
