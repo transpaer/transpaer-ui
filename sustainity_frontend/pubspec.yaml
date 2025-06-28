@@ -19,6 +19,7 @@ dependencies:
   json_annotation: ^4.8.0
   json_serializable: ^6.5.4
   logging: ^1.2.0
+  mobile_scanner: ^7.0.1
   url_launcher: ^6.1.11
 
   sustainity_api:

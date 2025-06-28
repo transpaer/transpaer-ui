@@ -7,6 +7,7 @@ import 'package:logging/logging.dart' as logging;
 import 'package:firebase_analytics/firebase_analytics.dart' as analytics;
 import 'package:firebase_core/firebase_core.dart' as firebase;
 import 'package:flutter/foundation.dart' as foundation;
+import 'package:mobile_scanner/mobile_scanner.dart' as mobile_scanner;
 
 import 'package:sustainity_api/api.dart' as api;
 
@@ -23,6 +24,7 @@ const double imageSize = 220;
 const double medallionWidth = 240;
 const double medallionHeight = 180;
 const double iconSize = 32;
+const double hugeIconSize = 128;
 const double iconRound = 16;
 const double logoSize = 24;
 
@@ -1021,7 +1023,8 @@ class _LibraryItemViewState extends State<LibraryItemView>
               navigation: widget.navigation,
             );
           } else if (snapshot.hasError) {
-            return Text('Error while fetching data: ${snapshot.error}');
+            debugPrint('Error while fetching data: ${snapshot.error}');
+            return FetchErrorView(error: snapshot.error as api.ApiException);
           } else {
             return const CircularProgressIndicator();
           }
@@ -1071,7 +1074,8 @@ class _LibraryPageState extends State<LibraryPage>
               navigation: widget.navigation,
             );
           } else if (snapshot.hasError) {
-            return Text('Error while fetching data: ${snapshot.error}');
+            debugPrint('Error while fetching data: ${snapshot.error}');
+            return FetchErrorView(error: snapshot.error as api.ApiException);
           } else {
             return const CircularProgressIndicator();
           }
@@ -2900,6 +2904,45 @@ class ProductView extends StatelessWidget {
   }
 }
 
+class FetchErrorView extends StatelessWidget {
+  final api.ApiException? error;
+
+  const FetchErrorView({
+    super.key,
+    required this.error,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textStyle = Theme.of(context).textTheme.bodyLarge?.copyWith();
+    if (error?.code == 404) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.folder_off_outlined,
+            size: hugeIconSize,
+            color: Colors.grey,
+          ),
+          Text('This item does not exist...', style: textStyle),
+        ],
+      );
+    } else {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.report_problem_outlined,
+            size: hugeIconSize,
+            color: Colors.grey,
+          ),
+          Text('This item does not exist...', style: textStyle),
+        ],
+      );
+    }
+  }
+}
+
 class Shopping extends StatelessWidget {
   final List<api.ShoppingEntry> shopping;
   final Navigation navigation;
@@ -3146,7 +3189,8 @@ class _OrganisationPageState extends State<OrganisationPage>
               navigation: widget.navigation,
             );
           } else if (snapshot.hasError) {
-            return Text('Error while fetching data: ${snapshot.error}');
+            debugPrint('Error while fetching data: ${snapshot.error}');
+            return FetchErrorView(error: snapshot.error as api.ApiException);
           } else {
             return const CircularProgressIndicator();
           }
@@ -3210,7 +3254,8 @@ class _ProductPageState extends State<ProductPage>
               navigation: widget.navigation,
             );
           } else if (snapshot.hasError) {
-            return Text('Error while fetching data: ${snapshot.error}');
+            debugPrint('Error while fetching data: ${snapshot.error}');
+            return FetchErrorView(error: snapshot.error as api.ApiException);
           } else {
             return const CircularProgressIndicator();
           }
@@ -3364,6 +3409,86 @@ class _TextSearchPageState extends State<TextSearchPage>
     setState(() {
       _entries = [];
     });
+  }
+}
+
+class BarcodeScanPage extends StatefulWidget {
+  final Navigation navigation;
+
+  const BarcodeScanPage({
+    super.key,
+    required this.navigation,
+  });
+
+  @override
+  State<BarcodeScanPage> createState() => _BarcodeScanPageState();
+}
+
+class _BarcodeScanPageState extends State<BarcodeScanPage> {
+  @override
+  Widget build(BuildContext context) {
+    final barcodeScanAvailable = foundation.kIsWeb ||
+        foundation.defaultTargetPlatform == foundation.TargetPlatform.android;
+    final textStyle = Theme.of(context).textTheme.bodyLarge?.copyWith();
+
+    return Column(
+      children: [
+        Center(
+          child: Text('Point the camera to a barcode', style: textStyle),
+        ),
+        Expanded(
+          child: barcodeScanAvailable
+              ? _buildScanner(context)
+              : _buildPlaceholder(context),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildScanner(BuildContext context) {
+    return mobile_scanner.MobileScanner(
+      controller: mobile_scanner.MobileScannerController(
+        detectionTimeoutMs: 5000,
+        formats: [mobile_scanner.BarcodeFormat.all],
+      ),
+      onDetect: _handleBarcode,
+      onDetectError: _handleError,
+    );
+  }
+
+  Widget _buildPlaceholder(BuildContext context) {
+    final textStyle = Theme.of(context).textTheme.bodyLarge?.copyWith();
+
+    return Column(
+      children: [
+        const Icon(
+          Icons.videocam_off_outlined,
+          size: hugeIconSize,
+          color: Colors.grey,
+        ),
+        Text('This feature is available only on Android and Web...',
+            style: textStyle),
+      ],
+    );
+  }
+
+  void _handleBarcode(mobile_scanner.BarcodeCapture barcodes) {
+    debugPrint("Scan: ${barcodes.barcodes.length} barcodes");
+    if (barcodes.barcodes.isNotEmpty) {
+      var barcode = barcodes.barcodes.first.rawValue;
+      if (barcode != null) {
+        debugPrint("Scan: barcode $barcode");
+        widget.navigation.goToProductByEan(barcode);
+      } else {
+        debugPrint("Null barcode");
+      }
+    } else {
+      debugPrint("No barcodes");
+    }
+  }
+
+  void _handleError(Object error, StackTrace stackTrace) {
+    debugPrint("Bardoce scanning error: $error");
   }
 }
 
@@ -3565,8 +3690,8 @@ class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
           const Center(
             child: Text('There will be map search here.\n\nWork in progress!'),
           ),
-          const Center(
-            child: Text('There will be QRC search here.\n\nWork in progress!'),
+          BarcodeScanPage(
+            navigation: widget.navigation,
           ),
         ],
       ),
@@ -3596,6 +3721,10 @@ class Navigation {
     if (productLink != null) {
       goToProductLink(productLink);
     }
+  }
+
+  void goToProductByEan(String ean) {
+    goToProductLink(ProductLink.ean(ean));
   }
 
   void goToProductLink(ProductLink link) {
