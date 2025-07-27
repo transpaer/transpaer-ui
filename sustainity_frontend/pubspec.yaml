@@ -28,7 +28,7 @@ dependencies:
       url: https://github.com/sustainity-dev/sustainity-api-dart.git
       ref: main
       path: sustainity-api
-    # path: ../../sustainity-api-dart/sustainity-api
+    #path: ../../sustainity-api-dart/sustainity-api
 
 dev_dependencies:
   flutter_test:

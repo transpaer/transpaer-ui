@@ -134,6 +134,56 @@ extension LibraryTopicGuiExtension on api.LibraryTopic {
   }
 }
 
+extension CategoryStatusExtension on api.CategoryStatus {
+  Color tileColor() {
+    switch (this) {
+      case api.CategoryStatus.exploratory:
+        return const Color.fromRGBO(255, 155, 155, 0x01);
+      case api.CategoryStatus.incomplete:
+        return const Color.fromRGBO(220, 190, 155, 0x01);
+      case api.CategoryStatus.satisfactory:
+        return const Color.fromRGBO(190, 220, 155, 0x01);
+      case api.CategoryStatus.complete:
+        return const Color.fromRGBO(155, 255, 155, 0x01);
+      case api.CategoryStatus.broad:
+        return const Color.fromRGBO(200, 200, 200, 0x01);
+    }
+    return const Color.fromRGBO(255, 155, 155, 0x01);
+  }
+
+  String title() {
+    switch (this) {
+      case api.CategoryStatus.exploratory:
+        return "Exploratory";
+      case api.CategoryStatus.incomplete:
+        return "Incomplete";
+      case api.CategoryStatus.satisfactory:
+        return "Satisfactory";
+      case api.CategoryStatus.complete:
+        return "Complete";
+      case api.CategoryStatus.broad:
+        return "Broad";
+    }
+    return "---";
+  }
+
+  String explanation() {
+    switch (this) {
+      case api.CategoryStatus.exploratory:
+        return "This category is not refined yet. The displayed products and not scored well. We display this data only for exploratory purposes.";
+      case api.CategoryStatus.incomplete:
+        return "We consider this category to be partialy usable, but it still requires a lot of work.";
+      case api.CategoryStatus.satisfactory:
+        return "We have quite a lot of information about this category, but we still see some imrpovements to be made.";
+      case api.CategoryStatus.complete:
+        return "We have slod data in this category. The work in it is considered complete.";
+      case api.CategoryStatus.broad:
+        return "This category is very broad and the products within it cannot be compared easily.";
+    }
+    return "---";
+  }
+}
+
 sealed class TextSearchLink {
   static fromApi(api.TextSearchLinkHack link) {
     if (link.organisationIdVariant != null) {
@@ -1213,6 +1263,74 @@ class ProductTileWidget extends StatelessWidget {
   }
 }
 
+class CategoryProductWidget extends StatelessWidget {
+  final api.ProductShort product;
+  final Function(api.ProductIds) onSelected;
+  final Function(BadgeEnum) onBadgeTap;
+  final Function(ScorerEnum) onScorerTap;
+
+  const CategoryProductWidget({
+    super.key,
+    required this.product,
+    required this.onSelected,
+    required this.onBadgeTap,
+    required this.onScorerTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final titleStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
+          color: Colors.black,
+          fontWeight: FontWeight.bold,
+        );
+    final textStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
+          color: Colors.black,
+        );
+
+    return Padding(
+      padding: const EdgeInsets.all(defaultPadding),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () {
+            onSelected(product.productIds);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              borderRadius:
+                  const BorderRadius.all(Radius.circular(defaultPadding)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(defaultPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(product.name, style: titleStyle),
+                  const Space(),
+                  Text(
+                    product.description != null
+                        ? product.description!.text
+                        : "",
+                    style: textStyle,
+                  ),
+                  const Space(),
+                  RibbonRow(
+                    badges: BadgeEnumExtension.convertList(product.badges),
+                    scores: ScorerEnumExtension.convertList(product.scores),
+                    onBadgeTap: onBadgeTap,
+                    onScorerTap: onScorerTap,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class Badge extends StatelessWidget {
   final BadgeEnum badge;
   final Function(BadgeEnum) onTap;
@@ -2190,7 +2308,10 @@ class CategoryAlternativesWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Section(text: 'Alternatives (category: "${ca.category}")'),
+        TextButton(
+          child: Text("Category: \"${ca.categoryLabel}\""),
+          onPressed: () => {navigation.goToCategory(ca.categoryId)},
+        ),
         ProductListWidget(
           products: ca.alternatives,
           emptyText:
@@ -2850,11 +2971,11 @@ class ProductView extends StatelessWidget {
                 ),
                 const Section(text: 'Images'),
                 ImageSection(images: product.images),
+                const Section(text: "Alternatives"),
                 if (product.alternatives.isNotEmpty) ...[
                   for (final a in product.alternatives)
                     CategoryAlternativesWidget(ca: a, navigation: navigation),
                 ] else ...[
-                  const Section(text: "Alternatives"),
                   const Text(
                     "This product does not have any category assigned yet",
                   ),
@@ -2895,6 +3016,120 @@ class ProductView extends StatelessWidget {
                   variant: PreviewVariant.product,
                   navigation: navigation,
                 ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CategoryView extends StatelessWidget {
+  final api.CategoryFull category;
+  final Navigation navigation;
+
+  const CategoryView({
+    super.key,
+    required this.category,
+    required this.navigation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final titleStyle = Theme.of(context).textTheme.headlineSmall;
+    final statusStyle = Theme.of(context).textTheme.bodyLarge;
+    final explanationStyle = Theme.of(context).textTheme.bodyMedium;
+
+    return Padding(
+      padding: const EdgeInsets.all(defaultPadding),
+      child: Column(
+        children: [
+          Wrap(
+            direction: Axis.horizontal,
+            alignment: WrapAlignment.center,
+            children: [
+              TextButton(
+                child: Text("All", style: titleStyle),
+                onPressed: () => {navigation.goToCategory("")},
+              ),
+              for (final supercategory in category.supercategories)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.chevron_right,
+                      size: iconSize,
+                    ),
+                    TextButton(
+                      child: Text(supercategory.label, style: titleStyle),
+                      onPressed: () =>
+                          {navigation.goToCategory(supercategory.id)},
+                    ),
+                  ],
+                ),
+            ],
+          ),
+          const Space(),
+          Container(
+            decoration: BoxDecoration(
+              color: category.status.tileColor(),
+              borderRadius:
+                  const BorderRadius.all(Radius.circular(defaultPadding)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(defaultPadding),
+              child: Column(
+                children: [
+                  Text(
+                    "Category status: ${category.status.title()}",
+                    style: statusStyle,
+                  ),
+                  Text(
+                    category.status.explanation(),
+                    style: explanationStyle,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const Space(),
+          Expanded(
+            child: ListView(
+              children: [
+                const Section(text: "Subcategories:"),
+                if (category.subcategories.isNotEmpty) ...[
+                  Wrap(
+                    direction: Axis.horizontal,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      for (final subcategory in category.subcategories)
+                        TextButton(
+                          child: Text(subcategory.label),
+                          onPressed: () =>
+                              {navigation.goToCategory(subcategory.id)},
+                        ),
+                    ],
+                  ),
+                ] else ...[
+                  const Center(
+                    child: Text("This category does not have subcategories"),
+                  ),
+                ],
+                const Section(text: "Products:"),
+                if (category.products.isNotEmpty) ...[
+                  for (final product in category.products)
+                    CategoryProductWidget(
+                      product: product,
+                      onSelected: navigation.goToProduct,
+                      onBadgeTap: navigation.onBadgeTap,
+                      onScorerTap: navigation.onScorerTap,
+                    ),
+                ] else ...[
+                  const Center(
+                    child: Text("This category does not have products"),
+                  ),
+                ],
               ],
             ),
           ),
@@ -3265,6 +3500,65 @@ class _ProductPageState extends State<ProductPage>
   }
 }
 
+class CategoryPage extends StatefulWidget {
+  final String category;
+  final Navigation navigation;
+  final api.DefaultApi fetcher;
+
+  const CategoryPage({
+    super.key,
+    required this.category,
+    required this.navigation,
+    required this.fetcher,
+  });
+
+  @override
+  State<CategoryPage> createState() => _CategoryPageState();
+}
+
+class _CategoryPageState extends State<CategoryPage>
+    with AutomaticKeepAliveClientMixin {
+  late Future<api.CategoryFull?> _futureCategory;
+
+  @override
+  void initState() {
+    super.initState();
+    _futureCategory = widget.fetcher.getCategory(widget.category);
+  }
+
+  @override
+  void didUpdateWidget(CategoryPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _futureCategory = widget.fetcher.getCategory(widget.category);
+  }
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return Center(
+      child: FutureBuilder<api.CategoryFull?>(
+        future: _futureCategory,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return CategoryView(
+              category: snapshot.data!,
+              navigation: widget.navigation,
+            );
+          } else if (snapshot.hasError) {
+            debugPrint('Error while fetching data: ${snapshot.error}');
+            return FetchErrorView(error: snapshot.error as api.ApiException);
+          } else {
+            return const CircularProgressIndicator();
+          }
+        },
+      ),
+    );
+  }
+}
+
 class TextSearchPage extends StatefulWidget {
   final api.DefaultApi fetcher;
   final Navigation navigation;
@@ -3561,6 +3855,39 @@ class OrganisationScreen extends StatelessWidget {
   }
 }
 
+class CategoryArguments {
+  final String category;
+
+  CategoryArguments({required this.category});
+}
+
+class CategoryScreen extends StatelessWidget {
+  final String category;
+  final api.DefaultApi fetcher;
+  final Navigation navigation;
+
+  const CategoryScreen({
+    super.key,
+    required this.category,
+    required this.fetcher,
+    required this.navigation,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Category"),
+      ),
+      body: CategoryPage(
+        category: category,
+        navigation: navigation,
+        fetcher: fetcher,
+      ),
+    );
+  }
+}
+
 class LibraryArguments {
   final api.LibraryTopic topic;
 
@@ -3704,6 +4031,7 @@ enum NavigationPath {
   product,
   organisation,
   library,
+  category,
 }
 
 class Navigation {
@@ -3711,6 +4039,7 @@ class Navigation {
   static const productPath = "/product:";
   static const organisationPath = "/organisation:";
   static const libraryPath = "/library:";
+  static const categoryPath = "/category:";
 
   final BuildContext context;
 
@@ -3752,6 +4081,17 @@ class Navigation {
       arguments: AppArguments(
         NavigationPath.organisation,
         OrganisationArguments(link: link),
+      ),
+    );
+  }
+
+  void goToCategory(String category) {
+    Navigator.pushNamed(
+      context,
+      "$categoryPath$category",
+      arguments: AppArguments(
+        NavigationPath.category,
+        CategoryArguments(category: category),
       ),
     );
   }
@@ -3859,6 +4199,18 @@ class _SustainityFrontendState extends State<SustainityFrontend>
                 builder: (context) {
                   return OrganisationScreen(
                     link: args.link,
+                    fetcher: widget.fetcher,
+                    navigation: Navigation(context),
+                  );
+                },
+              );
+            case NavigationPath.category:
+              final args = appArgs.args as CategoryArguments;
+              return MaterialPageRoute(
+                settings: settings,
+                builder: (context) {
+                  return CategoryScreen(
+                    category: args.category,
                     fetcher: widget.fetcher,
                     navigation: Navigation(context),
                   );
