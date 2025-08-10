@@ -9,9 +9,9 @@ import 'package:firebase_core/firebase_core.dart' as firebase;
 import 'package:flutter/foundation.dart' as foundation;
 import 'package:mobile_scanner/mobile_scanner.dart' as mobile_scanner;
 
-import 'package:sustainity_api/api.dart' as api;
+import 'package:transpaer_api/api.dart' as api;
 
-import 'package:sustainity_frontend/configuration.dart';
+import 'package:transpaer_frontend/configuration.dart';
 
 import 'firebase_options.dart' as firebase_options;
 
@@ -39,7 +39,7 @@ void main() async {
         '[${record.time}][${record.level}][${record.loggerName}] ${record.message}');
   });
 
-  log.info('Welcome to Sustainity');
+  log.info('Welcome to Transpaer');
 
   final config = Config.load();
   final fetcher = api.DefaultApi(
@@ -49,7 +49,7 @@ void main() async {
     ),
   );
   await logAnalytics();
-  runApp(SustainityFrontend(fetcher: fetcher));
+  runApp(TranspaerFrontend(fetcher: fetcher));
 }
 
 Future<void> logAnalytics() async {
@@ -307,10 +307,10 @@ class ProductLink implements TextSearchLink {
   }
 }
 
-enum DataSourceEnum { sustainity, wiki, off, eu, bCorp, fti, tco, other }
+enum DataSourceEnum { transpaer, wiki, off, eu, bCorp, fti, tco, other }
 
 const dataSourceValues = {
-  api.DataSource.sustainity: DataSourceEnum.sustainity,
+  api.DataSource.transpaer: DataSourceEnum.transpaer,
   api.DataSource.wiki: DataSourceEnum.wiki,
   api.DataSource.off: DataSourceEnum.off,
   api.DataSource.eu: DataSourceEnum.eu,
@@ -541,8 +541,7 @@ class ImprovementButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final url =
-        Uri.parse('https://github.com/sustainity-dev/issues/issues/new');
+    final url = Uri.parse('https://github.com/transpaer/transpaer/issues/new');
     return FilledButton.icon(
       onPressed: () async {
         await url_launcher.launchUrl(url);
@@ -682,7 +681,7 @@ class Description extends StatelessWidget {
       case api.DataSource.tco:
         sourceWidget = Text("Source: TCO", style: sourceStyle);
         break;
-      case api.DataSource.sustainity:
+      case api.DataSource.transpaer:
         sourceWidget = const Text("");
         break;
       case api.DataSource.other:
@@ -933,10 +932,10 @@ class SourcedImage extends StatelessWidget {
     String url;
     String source;
     switch (imageSource) {
-      case DataSourceEnum.sustainity:
+      case DataSourceEnum.transpaer:
         link = imagePath;
         url = imagePath;
-        source = "Sustainity";
+        source = "Transpaer";
         break;
       case DataSourceEnum.wiki:
         link = "$url1/$imagePath";
@@ -1627,7 +1626,7 @@ class BCorpMedallion extends StatelessWidget {
               icon: const Icon(Icons.bug_report_outlined),
               onPressed: () async {
                 final url = Uri.parse(
-                    'https://github.com/sustainity-dev/issues/issues/new');
+                    'https://github.com/transpaer/transpaer/issues/new');
                 await url_launcher.launchUrl(url);
               },
             ),
@@ -1695,7 +1694,7 @@ class EuEcolabelMedallion extends StatelessWidget {
               icon: const Icon(Icons.bug_report_outlined),
               onPressed: () async {
                 final url = Uri.parse(
-                  'https://github.com/sustainity-dev/issues/issues/new',
+                  'https://github.com/transpaer/transpaer/issues/new',
                 );
                 await url_launcher.launchUrl(url);
               },
@@ -1767,7 +1766,7 @@ class FtiMedallion extends StatelessWidget {
             icon: const Icon(Icons.bug_report_outlined),
             onPressed: () async {
               final url = Uri.parse(
-                  'https://github.com/sustainity-dev/issues/issues/new');
+                  'https://github.com/transpaer/transpaer/issues/new');
               await url_launcher.launchUrl(url);
             },
           ),
@@ -1834,7 +1833,7 @@ class TcoMedallion extends StatelessWidget {
               icon: const Icon(Icons.bug_report_outlined),
               onPressed: () async {
                 final url = Uri.parse(
-                    'https://github.com/sustainity-dev/issues/issues/new');
+                    'https://github.com/transpaer/transpaer/issues/new');
                 await url_launcher.launchUrl(url);
               },
             ),
@@ -1885,9 +1884,9 @@ class MedallionSwitcher extends StatelessWidget {
           medallion: medallion.fti!,
           onTopic: onTopic,
         );
-      case api.MedallionVariant.sustainity:
-        return SustainityMedallion(
-          medallion: medallion.sustainity!,
+      case api.MedallionVariant.transpaer:
+        return TranspaerMedallion(
+          medallion: medallion.transpaer!,
         );
       case api.MedallionVariant.tco:
         return TcoMedallion(
@@ -1899,10 +1898,10 @@ class MedallionSwitcher extends StatelessWidget {
   }
 }
 
-class SustainityMedallion extends StatelessWidget {
-  final api.SustainityMedallion medallion;
+class TranspaerMedallion extends StatelessWidget {
+  final api.TranspaerMedallion medallion;
 
-  const SustainityMedallion({super.key, required this.medallion});
+  const TranspaerMedallion({super.key, required this.medallion});
 
   @override
   Widget build(BuildContext context) {
@@ -1916,7 +1915,7 @@ class SustainityMedallion extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            "Sustainity score",
+            "Transpaer score",
             style: mainStyle,
             textAlign: TextAlign.center,
           ),
@@ -1940,7 +1939,7 @@ class SustainityMedallion extends StatelessWidget {
                 icon: const Icon(Icons.bug_report_outlined),
                 onPressed: () async {
                   final url = Uri.parse(
-                      'https://github.com/sustainity-dev/issues/issues/new');
+                      'https://github.com/transpaer/transpaer/issues/new');
                   await url_launcher.launchUrl(url);
                 },
               ),
@@ -1950,9 +1949,9 @@ class SustainityMedallion extends StatelessWidget {
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
-                      return SustainityDialog(
-                        title: "Sustainity score details",
-                        content: SustainityScoreDetailsWidget(
+                      return TranspaerDialog(
+                        title: "Transpaer score details",
+                        content: TranspaerScoreDetailsWidget(
                           score: medallion.score,
                         ),
                       );
@@ -2012,7 +2011,7 @@ class MediaMedallion extends StatelessWidget {
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
-                      return SustainityDialog(
+                      return TranspaerDialog(
                         title: "Talking about it:",
                         content: MediaDetails(
                           media: media,
@@ -2323,72 +2322,72 @@ class CategoryAlternativesWidget extends StatelessWidget {
   }
 }
 
-class SustainityScoreBranchesInfo {
+class TranspaerScoreBranchesInfo {
   final String symbol;
   final String description;
 
-  const SustainityScoreBranchesInfo({
+  const TranspaerScoreBranchesInfo({
     required this.symbol,
     required this.description,
   });
 }
 
-const sustainityScoreBranchesInfos = {
-  api.SustainityScoreCategory.dataAvailability: SustainityScoreBranchesInfo(
+const transpaerScoreBranchesInfos = {
+  api.TranspaerScoreCategory.dataAvailability: TranspaerScoreBranchesInfo(
     symbol: "💁",
     description:
         "Data availability\n\nThe more we know about this product the more information we can infer about it.",
   ),
-  api.SustainityScoreCategory.producerKnown: SustainityScoreBranchesInfo(
+  api.TranspaerScoreCategory.producerKnown: TranspaerScoreBranchesInfo(
     symbol: '🏭',
     description:
         "Do we know who produced this product?\n\nIf so, we can include the producers score in products score.",
   ),
-  api.SustainityScoreCategory.categoryAssigned: SustainityScoreBranchesInfo(
+  api.TranspaerScoreCategory.categoryAssigned: TranspaerScoreBranchesInfo(
     symbol: '📥',
     description:
         "Is this product assigned to any category?\n\nIf so, we can compare it to other products and find alternatives.",
   ),
-  api.SustainityScoreCategory.productionPlaceKnown: SustainityScoreBranchesInfo(
+  api.TranspaerScoreCategory.productionPlaceKnown: TranspaerScoreBranchesInfo(
     symbol: '🌐',
     description:
         "Do we know the place of production?\n\nIf so, we can infer CO2 emissions to deliver it to you or your shop.",
   ),
-  api.SustainityScoreCategory.idKnown: SustainityScoreBranchesInfo(
+  api.TranspaerScoreCategory.idKnown: TranspaerScoreBranchesInfo(
     symbol: '👈',
     description:
         "Has any identification number?\n\nIf so, we can easily find it various data sources to learn more about it.",
   ),
-  api.SustainityScoreCategory.category: SustainityScoreBranchesInfo(
+  api.TranspaerScoreCategory.category: TranspaerScoreBranchesInfo(
     symbol: '📂',
     description: "Various scores unique to product category.",
   ),
-  api.SustainityScoreCategory.warrantyLength: SustainityScoreBranchesInfo(
+  api.TranspaerScoreCategory.warrantyLength: TranspaerScoreBranchesInfo(
     symbol: '👮',
     description:
         "Length of warranty.\n\nWe can use it as a proxy of durability. More durable products need to be replaced less frequenty.",
   ),
-  api.SustainityScoreCategory.numCerts: SustainityScoreBranchesInfo(
+  api.TranspaerScoreCategory.numCerts: TranspaerScoreBranchesInfo(
     symbol: '📜',
     description: "Does this product (or its producer) have any certifications?",
   ),
-  api.SustainityScoreCategory.atLeastOneCert: SustainityScoreBranchesInfo(
+  api.TranspaerScoreCategory.atLeastOneCert: TranspaerScoreBranchesInfo(
     symbol: '🙋',
     description: "At least one certification.",
   ),
-  api.SustainityScoreCategory.atLeastTwoCerts: SustainityScoreBranchesInfo(
+  api.TranspaerScoreCategory.atLeastTwoCerts: TranspaerScoreBranchesInfo(
     symbol: '🙌',
     description: "At least two certifications.",
   ),
 };
 
-class SustainityScoreBranchesWidget extends StatelessWidget {
+class TranspaerScoreBranchesWidget extends StatelessWidget {
   static const double textPadding = 10.0;
   static const double tablePadding = 8.0;
 
-  final List<api.SustainityScoreBranch> branches;
+  final List<api.TranspaerScoreBranch> branches;
 
-  const SustainityScoreBranchesWidget({
+  const TranspaerScoreBranchesWidget({
     super.key,
     required this.branches,
   });
@@ -2414,13 +2413,13 @@ class SustainityScoreBranchesWidget extends StatelessWidget {
           TableRow(
             children: [
               Tooltip(
-                message: sustainityScoreBranchesInfos[branch.category]
-                        ?.description ??
-                    "",
+                message:
+                    transpaerScoreBranchesInfos[branch.category]?.description ??
+                        "",
                 child: Padding(
                   padding: const EdgeInsets.all(textPadding),
                   child: Text(
-                      sustainityScoreBranchesInfos[branch.category]?.symbol ??
+                      transpaerScoreBranchesInfos[branch.category]?.symbol ??
                           "",
                       style: symbolStyle),
                 ),
@@ -2436,7 +2435,7 @@ class SustainityScoreBranchesWidget extends StatelessWidget {
               branch.branches.isNotEmpty
                   ? Padding(
                       padding: const EdgeInsets.all(tablePadding),
-                      child: SustainityScoreBranchesWidget(
+                      child: TranspaerScoreBranchesWidget(
                         branches: branch.branches,
                       ),
                     )
@@ -2454,10 +2453,10 @@ class SustainityScoreBranchesWidget extends StatelessWidget {
   }
 }
 
-class SustainityScoreDetailsWidget extends StatelessWidget {
-  final api.SustainityScore score;
+class TranspaerScoreDetailsWidget extends StatelessWidget {
+  final api.TranspaerScore score;
 
-  const SustainityScoreDetailsWidget({
+  const TranspaerScoreDetailsWidget({
     super.key,
     required this.score,
   });
@@ -2478,7 +2477,7 @@ class SustainityScoreDetailsWidget extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SustainityScoreBranchesWidget(branches: score.tree),
+                TranspaerScoreBranchesWidget(branches: score.tree),
                 Text(
                   "Total: ${score.total.toStringAsFixed(3)}",
                   style: mainStyle,
@@ -2493,11 +2492,11 @@ class SustainityScoreDetailsWidget extends StatelessWidget {
   }
 }
 
-class SustainityDialog extends Dialog {
+class TranspaerDialog extends Dialog {
   final String title;
   final Widget content;
 
-  const SustainityDialog({
+  const TranspaerDialog({
     super.key,
     required this.title,
     required this.content,
@@ -2597,7 +2596,7 @@ class CountrySelectionPopup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SustainityDialog(
+    return TranspaerDialog(
       title: "Select region",
       content: Expanded(
         child: ListView(
@@ -2734,7 +2733,7 @@ class SettingsPopup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SustainityDialog(
+    return TranspaerDialog(
       title: "Settings",
       content: SettingsWidget(
         settings: settings,
@@ -3217,7 +3216,7 @@ class Shopping extends StatelessWidget {
               showDialog(
                 context: context,
                 builder: (BuildContext context) {
-                  return SustainityDialog(
+                  return TranspaerDialog(
                     title: "Before you buy...",
                     content: BeforeYouBuyWidget.parse(link: shop.link),
                   );
@@ -3957,7 +3956,7 @@ class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sustainity'),
+        title: const Text('Transpaer'),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
@@ -4123,23 +4122,23 @@ class AppArguments {
   AppArguments(this.path, this.args);
 }
 
-class SustainityFrontend extends StatefulWidget {
+class TranspaerFrontend extends StatefulWidget {
   final api.DefaultApi fetcher;
 
-  const SustainityFrontend({super.key, required this.fetcher});
+  const TranspaerFrontend({super.key, required this.fetcher});
 
   @override
-  State<SustainityFrontend> createState() => _SustainityFrontendState();
+  State<TranspaerFrontend> createState() => _TranspaerFrontendState();
 }
 
-class _SustainityFrontendState extends State<SustainityFrontend>
+class _TranspaerFrontendState extends State<TranspaerFrontend>
     with TickerProviderStateMixin {
   Settings _settings = Settings(regionCode: null);
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Sustainity',
+        title: 'Transpaer',
         theme: ThemeData(
           cardColor: Colors.white,
           scaffoldBackgroundColor: Colors.grey[200],

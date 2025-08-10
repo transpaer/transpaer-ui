@@ -19,7 +19,7 @@ class Config {
   Config.release()
       : this(
           backendScheme: 'https',
-          backendHost: 'api.sustainity.dev',
+          backendHost: 'api.transpaer.app',
           backendPort: 443,
         );
 

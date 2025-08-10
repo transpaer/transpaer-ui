@@ -1,5 +1,5 @@
-name: sustainity_frontend
-description: sustainity.dev frontend.
+name: transpaer_frontend
+description: transpaer.app frontend.
 publish_to: 'none'
 
 version: 0.1.0
@@ -22,13 +22,13 @@ dependencies:
   mobile_scanner: ^7.0.1
   url_launcher: ^6.1.11
 
-  sustainity_api:
+  transpaer_api:
     version: ^1.0.0
     git:
-      url: https://github.com/sustainity-dev/sustainity-api-dart.git
+      url: https://github.com/transpaer/transpaer-api-dart.git
       ref: main
-      path: sustainity-api
-    #path: ../../sustainity-api-dart/sustainity-api
+      path: transpaer-api
+    #path: ../../transpaer-api-dart/transpaer-api
 
 dev_dependencies:
   flutter_test:

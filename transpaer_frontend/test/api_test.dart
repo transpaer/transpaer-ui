@@ -7,8 +7,8 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:sustainity_frontend/main.dart';
-import 'package:sustainity_api/api.dart' as api;
+import 'package:transpaer_frontend/main.dart';
+import 'package:transpaer_api/api.dart' as api;
 
 void main() {
   test('DataSources', () {
@@ -23,9 +23,9 @@ void main() {
     expect(scorerNameValues.length, api.ScorerName.values.length);
   });
 
-  test('SustainityScoreCategory', () {
-    expect(sustainityScoreBranchesInfos.length,
-        api.SustainityScoreCategory.values.length);
+  test('TranspaerScoreCategory', () {
+    expect(transpaerScoreBranchesInfos.length,
+        api.TranspaerScoreCategory.values.length);
   });
 
   test('Deserialize TextSearchResult with an organisation', () {

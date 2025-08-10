@@ -1,4 +1,4 @@
-name: sustainity_ui_workspace
+name: transpaer_ui_workspace
 
 environment:
   sdk: '>=3.0.2 <4.0.0'
