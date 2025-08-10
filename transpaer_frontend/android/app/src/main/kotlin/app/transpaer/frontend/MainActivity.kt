@@ -1,4 +1,4 @@
-package dev.sustainity.sustainity_frontend
+package dev.transpaer.frontend
 
 import io.flutter.embedding.android.FlutterActivity
 

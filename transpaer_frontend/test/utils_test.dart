@@ -7,8 +7,8 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:sustainity_frontend/main.dart';
-import 'package:sustainity_api/api.dart' as api;
+import 'package:transpaer_frontend/main.dart';
+import 'package:transpaer_api/api.dart' as api;
 
 void main() {
   test('OrganisationLink fromSlug', () {

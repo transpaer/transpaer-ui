@@ -1,6 +1,6 @@
 {
-    "name": "sustainity_frontend",
-    "short_name": "sustainity_frontend",
+    "name": "transpaer_frontend",
+    "short_name": "transpaer_frontend",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
