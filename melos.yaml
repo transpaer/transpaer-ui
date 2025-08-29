@@ -8,15 +8,14 @@ scripts:
     run: cd transpaer_frontend && flutter analyze
 
   build-web:
-    # Dart2jsOptimization ias required by Google ananlytics
+    # Dart2jsOptimization is required by Google analytics
     run: cd transpaer_frontend && flutter analyze && flutter build web --no-tree-shake-icons --dart-define=Dart2jsOptimization=O9
 
   build-web-debug:
-    # Dart2jsOptimization ias required by Google ananlytics
+    # Dart2jsOptimization is required by Google analytics
     run: cd transpaer_frontend && flutter build web --no-tree-shake-icons --dart-define=Dart2jsOptimization=O9 --debug
 
   build-android:
-    # Dart2jsOptimization ias required by Google ananlytics
     run: cd transpaer_frontend && flutter analyze && flutter build apk
 
   test:
