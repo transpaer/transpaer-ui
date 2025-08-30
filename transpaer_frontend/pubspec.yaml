@@ -21,6 +21,7 @@ dependencies:
   logging: ^1.2.0
   mobile_scanner: ^7.0.1
   url_launcher: ^6.1.11
+  web: ^1.1.1
 
   transpaer_api:
     version: ^1.0.0

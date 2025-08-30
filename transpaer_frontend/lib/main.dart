@@ -18,13 +18,14 @@ import 'package:transpaer_api/api.dart' as api;
 import 'package:transpaer_frontend/configuration.dart';
 
 import 'firebase_options.dart' as firebase_options;
+import 'cors_image.dart' if (dart.library.html) 'cors_image_web.dart';
 
 const double space = 10.0;
 const double flipWidth = 600.0;
 const double defaultPadding = 10.0;
 const double tileWidth = 180;
 const double tileHeight = 240;
-const double imageSize = 220;
+const int imageSize = 220;
 const double medallionWidth = 240;
 const double medallionHeight = 180;
 const double iconSize = 32;
@@ -981,8 +982,8 @@ class SourcedImage extends StatelessWidget {
 
     return Column(
       children: [
-        Image.network(
-          url,
+        CorsImage(
+          src: url,
           width: imageSize,
           height: imageSize,
         ),
