@@ -25,11 +25,11 @@ dependencies:
 
   transpaer_api:
     version: ^1.0.0
-    git:
-      url: https://github.com/transpaer/transpaer-api-dart.git
-      ref: main
-      path: transpaer-api
-    #path: ../../transpaer-api-dart/transpaer-api
+    #git:
+    #  url: https://github.com/transpaer/transpaer-api-dart.git
+    #  ref: main
+    #  path: transpaer-api
+    path: ../../api-dart/transpaer-api
 
 dev_dependencies:
   flutter_test:
@@ -41,9 +41,12 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
-    - images/main.png
-    - images/bcorp.png
-    - images/eu_ecolabel.png
-    - images/tco.png
-    - images/fti.png
+    - assets/images/bcorp.png
+    - assets/images/eu_ecolabel.png
+    - assets/images/tco.png
+    - assets/images/fti.png
+    - assets/library/info:faq.md
+    - assets/library/info:for_producers.md
+    - assets/library/terms:greenwashing.md
+    - assets/library/other:not_found.md
 
