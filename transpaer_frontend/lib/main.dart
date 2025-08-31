@@ -5,20 +5,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 
-import 'package:url_launcher/url_launcher.dart' as url_launcher;
 import 'package:countries_utils/countries_utils.dart' as countries_utils;
-import 'package:logging/logging.dart' as logging;
 import 'package:firebase_analytics/firebase_analytics.dart' as analytics;
 import 'package:firebase_core/firebase_core.dart' as firebase;
 import 'package:flutter/foundation.dart' as foundation;
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:logging/logging.dart' as logging;
 import 'package:mobile_scanner/mobile_scanner.dart' as mobile_scanner;
+import 'package:url_launcher/url_launcher.dart' as url_launcher;
 
 import 'package:transpaer_api/api.dart' as api;
 
 import 'package:transpaer_frontend/configuration.dart';
+import 'cors_image.dart' if (dart.library.html) 'cors_image_web.dart';
 
 import 'firebase_options.dart' as firebase_options;
-import 'cors_image.dart' if (dart.library.html) 'cors_image_web.dart';
 
 const double space = 10.0;
 const double flipWidth = 600.0;
@@ -34,6 +35,41 @@ const double iconRound = 16;
 const double logoSize = 24;
 
 const String slugSeparator = ":";
+
+const Map<AssetLibraryTopic, LibraryEntry> library = {
+  AssetLibraryTopic.infoForProducers: LibraryEntry(
+    asset: "info:for_producers",
+    title: "For producers",
+    summary: "Tips and advices for producers",
+    links: [],
+  ),
+  AssetLibraryTopic.infoFaq: LibraryEntry(
+    asset: "info:faq",
+    title: "FAQ",
+    summary: "Frequently asked questions",
+    links: [],
+  ),
+  AssetLibraryTopic.termsGreenwashing: LibraryEntry(
+    asset: "terms:greenwashing",
+    title: "Greenwashing",
+    summary: "What is greenwashing",
+    links: [
+      LibraryLink(
+        title: "How to spot greenwashing?",
+        url: "https://www.youtube.com/watch?v=HOxMd_7DnmY",
+      ),
+    ],
+  ),
+};
+
+const List<AssetLibraryTopic> infoLibraryOrder = [
+  AssetLibraryTopic.infoForProducers,
+  AssetLibraryTopic.infoFaq,
+];
+
+const List<AssetLibraryTopic> termsLibraryOrder = [
+  AssetLibraryTopic.termsGreenwashing,
+];
 
 final log = logging.Logger('main');
 
@@ -78,64 +114,48 @@ Future<void> logAnalytics() async {
 extension LibraryTopicGuiExtension on api.LibraryTopic {
   Widget get image {
     switch (this) {
-      case api.LibraryTopic.infoColonMain:
-        return const Icon(Icons.question_answer_outlined);
-      case api.LibraryTopic.infoColonForProducers:
-        return const Icon(Icons.question_answer_outlined);
-      case api.LibraryTopic.infoColonFaq:
-        return const Icon(Icons.question_answer_outlined);
-      case api.LibraryTopic.infoColonGreenwashing:
-        return const Icon(Icons.question_answer_outlined);
-
-      case api.LibraryTopic.dataColonWiki:
-        // TODO: Prepare an icon.
-        return const Icon(Icons.question_answer_outlined);
-      case api.LibraryTopic.dataColonOpenFoodFacts:
+      case api.LibraryTopic.wiki:
         // TODO: Prepare an icon.
         return const Icon(Icons.question_answer_outlined);
 
-      case api.LibraryTopic.certColonBcorp:
+      case api.LibraryTopic.openFoodFacts:
+        // TODO: Prepare an icon.
+        return const Icon(Icons.question_answer_outlined);
+
+      case api.LibraryTopic.bcorp:
         return const Image(
-          image: AssetImage("images/bcorp.png"),
-          height: iconSize,
-          width: iconSize,
-        );
-      case api.LibraryTopic.certColonEuEcolabel:
-        return const Image(
-          image: AssetImage("images/eu_ecolabel.png"),
-          height: iconSize,
-          width: iconSize,
-        );
-      case api.LibraryTopic.certColonTco:
-        return const Image(
-          image: AssetImage("images/tco.png"),
-          height: iconSize,
-          width: iconSize,
-        );
-      case api.LibraryTopic.certColonFti:
-        return const Image(
-          image: AssetImage("images/fti.png"),
+          image: AssetImage("assets/images/bcorp.png"),
           height: iconSize,
           width: iconSize,
         );
 
-      case api.LibraryTopic.otherColonNotFound:
-        return const Icon(Icons.question_answer_outlined);
+      case api.LibraryTopic.euEcolabel:
+        return const Image(
+          image: AssetImage("assets/images/eu_ecolabel.png"),
+          height: iconSize,
+          width: iconSize,
+        );
+
+      case api.LibraryTopic.tco:
+        return const Image(
+          image: AssetImage("assets/images/tco.png"),
+          height: iconSize,
+          width: iconSize,
+        );
+
+      case api.LibraryTopic.fti:
+        return const Image(
+          image: AssetImage("assets/images/fti.png"),
+          height: iconSize,
+          width: iconSize,
+        );
     }
 
     return const Icon(Icons.question_answer_outlined);
   }
 
-  bool get isInfo {
-    return value.startsWith("info:");
-  }
-
-  bool get isCert {
-    return value.startsWith("cert:");
-  }
-
-  bool get isData {
-    return value.startsWith("data:");
+  String get slug {
+    return "data:$value";
   }
 }
 
@@ -257,6 +277,83 @@ class OrganisationLink implements TextSearchLink {
   }
 }
 
+enum LibraryTopicType {
+  asset,
+  data,
+}
+
+enum AssetLibraryTopic {
+  infoFaq,
+  infoForProducers,
+  termsGreenwashing,
+  otherNotFound
+}
+
+extension AssetLibraryTopicExtension on AssetLibraryTopic {
+  String get slug {
+    switch (this) {
+      case AssetLibraryTopic.infoFaq:
+        return "info:faq";
+      case AssetLibraryTopic.infoForProducers:
+        return "info:for_producers";
+      case AssetLibraryTopic.termsGreenwashing:
+        return "terms:greenwashing";
+      case AssetLibraryTopic.otherNotFound:
+        return "other:not_found";
+    }
+  }
+
+  static AssetLibraryTopic fromString(String str) {
+    switch (str) {
+      case "info:faq":
+        return AssetLibraryTopic.infoFaq;
+      case "info:for_producers":
+        return AssetLibraryTopic.infoForProducers;
+      case "terms:greenwashing":
+        return AssetLibraryTopic.termsGreenwashing;
+      case "other:not_found":
+        return AssetLibraryTopic.otherNotFound;
+    }
+    return AssetLibraryTopic.otherNotFound;
+  }
+}
+
+class LibraryTopic {
+  final LibraryTopicType type;
+  final dynamic detail;
+
+  const LibraryTopic({required this.type, required this.detail});
+
+  static LibraryTopic asset(AssetLibraryTopic topic) {
+    return LibraryTopic(type: LibraryTopicType.asset, detail: topic);
+  }
+
+  static LibraryTopic data(api.LibraryTopic topic) {
+    return LibraryTopic(type: LibraryTopicType.data, detail: topic);
+  }
+}
+
+class LibraryEntry {
+  final String asset;
+  final String title;
+  final String summary;
+  final List<LibraryLink> links;
+
+  const LibraryEntry({
+    required this.asset,
+    required this.title,
+    required this.summary,
+    required this.links,
+  });
+}
+
+class LibraryLink {
+  final String title;
+  final String url;
+
+  const LibraryLink({required this.title, required this.url});
+}
+
 class ProductLink implements TextSearchLink {
   final String id;
   final api.ProductIdVariant variant;
@@ -349,11 +446,11 @@ extension BadgeEnumExtension on BadgeEnum {
   api.LibraryTopic toLibraryTopic() {
     switch (this) {
       case BadgeEnum.bcorp:
-        return api.LibraryTopic.certColonBcorp;
+        return api.LibraryTopic.bcorp;
       case BadgeEnum.eu:
-        return api.LibraryTopic.certColonEuEcolabel;
+        return api.LibraryTopic.euEcolabel;
       case BadgeEnum.tco:
-        return api.LibraryTopic.certColonTco;
+        return api.LibraryTopic.tco;
     }
   }
 
@@ -404,7 +501,7 @@ extension ScorerEnumExtension on ScorerEnum {
   api.LibraryTopic toLibraryTopic() {
     switch (this) {
       case ScorerEnum.fti:
-        return api.LibraryTopic.certColonFti;
+        return api.LibraryTopic.fti;
     }
   }
 }
@@ -873,14 +970,20 @@ class FashionTransparencyIndexWidget extends StatelessWidget {
   }
 }
 
-class ItemWidget extends StatelessWidget {
-  final api.LibraryItemFull item;
+class LibraryItemWidget extends StatelessWidget {
+  final String title;
+  final String article;
+  final List<LibraryLink> links;
+  final api.Presentation? presentation;
   final Navigation navigation;
 
-  const ItemWidget({
+  const LibraryItemWidget({
     super.key,
-    required this.item,
+    required this.title,
+    required this.article,
+    required this.links,
     required this.navigation,
+    this.presentation,
   });
 
   @override
@@ -889,26 +992,25 @@ class ItemWidget extends StatelessWidget {
       padding: const EdgeInsets.all(defaultPadding),
       child: Column(
         children: [
-          Title(text: item.title),
+          Title(text: title),
           const Space(),
           Expanded(
             child: ListView(
               scrollDirection: Axis.vertical,
               children: [
-                Article(markdown: item.article),
-                if (item.links.isNotEmpty) ...[
+                Article(markdown: article),
+                if (links.isNotEmpty) ...[
                   const Section(text: "Learn more..."),
-                  for (final link in item.links)
-                    MediaLinkButton.parse(text: link.title, link: link.link),
+                  for (final link in links)
+                    MediaLinkButton.parse(text: link.title, link: link.url),
                 ],
-                if (item.presentation != null) ...[
+                if (presentation != null) ...[
                   const Space(),
-                  if (item.id == api.LibraryTopic.certColonFti) ...[
-                    FashionTransparencyIndexWidget(
-                      presentation: item.presentation!,
-                      navigation: navigation,
-                    )
-                  ]
+                  // For not FTI is the only presentation.
+                  FashionTransparencyIndexWidget(
+                    presentation: presentation!,
+                    navigation: navigation,
+                  ),
                 ]
               ],
             ),
@@ -1005,29 +1107,38 @@ class LibraryContentsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final aboutUs = contents.items.where((i) => i.id.isInfo);
-    final aboutData = contents.items.where((i) => i.id.isCert || i.id.isData);
-
+    debugPrint("XXX n ${contents.items.length}");
     return ListView(
       scrollDirection: Axis.vertical,
       children: [
         const Center(child: Section(text: "About us")),
-        ...aboutUs.map((item) {
+        ...infoLibraryOrder.map((topic) {
+          var item = library[topic]!;
           return ListTile(
-            leading: item.id.image,
+            leading: const Icon(Icons.question_answer_outlined),
             title: Text(item.title),
             subtitle: Text(item.summary),
-            onTap: () => navigation.goToLibrary(item.id),
+            onTap: () => navigation.goToAssetLibrary(topic),
+          );
+        }),
+        const Center(child: Section(text: "Terminology and glossary")),
+        ...termsLibraryOrder.map((topic) {
+          var item = library[topic]!;
+          return ListTile(
+            leading: const Icon(Icons.library_books_outlined),
+            title: Text(item.title),
+            subtitle: Text(item.summary),
+            onTap: () => navigation.goToAssetLibrary(topic),
           );
         }),
         const Center(
             child: Section(text: "About certifications and data sources")),
-        ...aboutData.map((item) {
+        ...contents.items.map((item) {
           return ListTile(
             leading: item.id.image,
             title: Text(item.title),
             subtitle: Text(item.summary),
-            onTap: () => navigation.goToLibrary(item.id),
+            onTap: () => navigation.goToDataLibrary(item.id),
           );
         }),
       ],
@@ -1035,8 +1146,8 @@ class LibraryContentsView extends StatelessWidget {
   }
 }
 
-class LibraryItemView extends StatefulWidget {
-  final api.LibraryTopic topic;
+class LibraryItemView extends StatelessWidget {
+  final LibraryTopic topic;
   final api.DefaultApi fetcher;
   final Navigation navigation;
 
@@ -1048,10 +1159,97 @@ class LibraryItemView extends StatefulWidget {
   });
 
   @override
-  State<LibraryItemView> createState() => _LibraryItemViewState();
+  Widget build(BuildContext context) {
+    switch (topic.type) {
+      case LibraryTopicType.asset:
+        return AssetLibraryItemView(
+          topic: topic.detail as AssetLibraryTopic,
+          navigation: navigation,
+        );
+      case LibraryTopicType.data:
+        return DataLibraryItemView(
+          topic: topic.detail as api.LibraryTopic,
+          fetcher: fetcher,
+          navigation: navigation,
+        );
+    }
+  }
 }
 
-class _LibraryItemViewState extends State<LibraryItemView>
+class AssetLibraryItemView extends StatefulWidget {
+  final AssetLibraryTopic topic;
+  final Navigation navigation;
+
+  const AssetLibraryItemView({
+    super.key,
+    required this.topic,
+    required this.navigation,
+  });
+
+  @override
+  State<AssetLibraryItemView> createState() => _AssetLibraryItemViewState();
+}
+
+class _AssetLibraryItemViewState extends State<AssetLibraryItemView>
+    with AutomaticKeepAliveClientMixin, SingleTickerProviderStateMixin {
+  late LibraryEntry _item;
+  late Future<String> _futureArticle;
+
+  @override
+  void initState() {
+    super.initState();
+    _item = library[widget.topic]!;
+    _futureArticle = rootBundle.loadString("assets/library/${_item.asset}.md");
+  }
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+
+    return Center(
+      child: FutureBuilder<String>(
+        future: _futureArticle,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return LibraryItemWidget(
+              title: _item.title,
+              article: snapshot.data!,
+              links: _item.links,
+              presentation: null,
+              navigation: widget.navigation,
+            );
+          } else if (snapshot.hasError) {
+            debugPrint('Error while fetching data: ${snapshot.error}');
+            return FetchErrorView(error: snapshot.error as api.ApiException);
+          } else {
+            return const CircularProgressIndicator();
+          }
+        },
+      ),
+    );
+  }
+}
+
+class DataLibraryItemView extends StatefulWidget {
+  final api.LibraryTopic topic;
+  final api.DefaultApi fetcher;
+  final Navigation navigation;
+
+  const DataLibraryItemView({
+    super.key,
+    required this.topic,
+    required this.fetcher,
+    required this.navigation,
+  });
+
+  @override
+  State<DataLibraryItemView> createState() => _DataLibraryItemViewState();
+}
+
+class _DataLibraryItemViewState extends State<DataLibraryItemView>
     with AutomaticKeepAliveClientMixin {
   late Future<api.LibraryItemFull?> _futureItem;
 
@@ -1072,8 +1270,12 @@ class _LibraryItemViewState extends State<LibraryItemView>
         future: _futureItem,
         builder: (context, snapshot) {
           if (snapshot.hasData) {
-            return ItemWidget(
-              item: snapshot.data!,
+            final data = snapshot.data!;
+            return LibraryItemWidget(
+              title: data.title,
+              article: data.article,
+              links: const [],
+              presentation: data.presentation,
               navigation: widget.navigation,
             );
           } else if (snapshot.hasError) {
@@ -1613,7 +1815,7 @@ class BCorpMedallion extends StatelessWidget {
             child: Row(
               children: [
                 const Spacer(),
-                api.LibraryTopic.certColonBcorp.image,
+                api.LibraryTopic.bcorp.image,
                 const Space(),
                 Text(
                   "BCorporations",
@@ -1637,7 +1839,7 @@ class BCorpMedallion extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.info_outlined),
-              onPressed: () => onTopic(api.LibraryTopic.certColonBcorp),
+              onPressed: () => onTopic(api.LibraryTopic.bcorp),
             ),
             IconButton(
               icon: const Icon(Icons.arrow_outward_outlined),
@@ -1681,7 +1883,7 @@ class EuEcolabelMedallion extends StatelessWidget {
             child: Row(
               children: [
                 const Spacer(),
-                api.LibraryTopic.certColonEuEcolabel.image,
+                api.LibraryTopic.euEcolabel.image,
                 const Space(),
                 Text(
                   "EU Ecolabel",
@@ -1706,7 +1908,7 @@ class EuEcolabelMedallion extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.info_outlined),
-              onPressed: () => onTopic(api.LibraryTopic.certColonEuEcolabel),
+              onPressed: () => onTopic(api.LibraryTopic.euEcolabel),
             ),
             IconButton(
               icon: const Icon(Icons.arrow_outward_outlined),
@@ -1777,7 +1979,7 @@ class FtiMedallion extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.info_outlined),
-            onPressed: () => onTopic(api.LibraryTopic.certColonFti),
+            onPressed: () => onTopic(api.LibraryTopic.fti),
           ),
           IconButton(
             icon: const Icon(Icons.arrow_outward_outlined),
@@ -1820,7 +2022,7 @@ class TcoMedallion extends StatelessWidget {
             child: Row(
               children: [
                 const Spacer(),
-                api.LibraryTopic.certColonTco.image,
+                api.LibraryTopic.tco.image,
                 const Space(),
                 Text(
                   "TCO",
@@ -1844,7 +2046,7 @@ class TcoMedallion extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.info_outlined),
-              onPressed: () => onTopic(api.LibraryTopic.certColonTco),
+              onPressed: () => onTopic(api.LibraryTopic.tco),
             ),
             IconButton(
               icon: const Icon(Icons.arrow_outward_outlined),
@@ -2209,7 +2411,7 @@ class OperationsMenu extends StatelessWidget {
         children: [
           FilledButton.icon(
             onPressed: () {
-              navigation.goToLibrary(api.LibraryTopic.infoColonForProducers);
+              navigation.goToAssetLibrary(AssetLibraryTopic.infoForProducers);
             },
             icon: const Icon(Icons.tips_and_updates_outlined),
             label: Padding(
@@ -2920,7 +3122,7 @@ class OrganisationView extends StatelessWidget {
                 OrganisationMedallions(
                   medallions: organisation.medallions,
                   media: organisation.media,
-                  onTopic: navigation.goToLibrary,
+                  onTopic: navigation.goToDataLibrary,
                 ),
                 const Section(text: 'Images'),
                 ImageSection(images: organisation.images),
@@ -2971,7 +3173,7 @@ class ProductView extends StatelessWidget {
                 ProductMedallions(
                   medallions: product.medallions,
                   media: product.media,
-                  onTopic: navigation.goToLibrary,
+                  onTopic: navigation.goToDataLibrary,
                 ),
                 const Section(text: 'Images'),
                 ImageSection(images: product.images),
@@ -3893,13 +4095,13 @@ class CategoryScreen extends StatelessWidget {
 }
 
 class LibraryArguments {
-  final api.LibraryTopic topic;
+  final LibraryTopic topic;
 
   LibraryArguments({required this.topic});
 }
 
 class LibraryScreen extends StatelessWidget {
-  final api.LibraryTopic topic;
+  final LibraryTopic topic;
   final api.DefaultApi fetcher;
   final Navigation navigation;
 
@@ -4100,23 +4302,34 @@ class Navigation {
     );
   }
 
-  void goToLibrary(api.LibraryTopic topic) {
+  void goToAssetLibrary(AssetLibraryTopic topic) {
     Navigator.pushNamed(
       context,
-      "$libraryPath${topic.value}",
+      "$libraryPath${topic.slug}",
       arguments: AppArguments(
         NavigationPath.library,
-        LibraryArguments(topic: topic),
+        LibraryArguments(topic: LibraryTopic.asset(topic)),
+      ),
+    );
+  }
+
+  void goToDataLibrary(api.LibraryTopic topic) {
+    Navigator.pushNamed(
+      context,
+      "$libraryPath${topic.slug}",
+      arguments: AppArguments(
+        NavigationPath.library,
+        LibraryArguments(topic: LibraryTopic.data(topic)),
       ),
     );
   }
 
   void onBadgeTap(BadgeEnum badge) {
-    goToLibrary(badge.toLibraryTopic());
+    goToDataLibrary(badge.toLibraryTopic());
   }
 
   void onScorerTap(ScorerEnum scorer) {
-    goToLibrary(scorer.toLibraryTopic());
+    goToDataLibrary(scorer.toLibraryTopic());
   }
 }
 
@@ -4236,6 +4449,7 @@ class _TranspaerFrontendState extends State<TranspaerFrontend>
         });
   }
 
+  // TODO: Add unit tests.
   AppArguments parseArgs(String? path) {
     if (path == null || path == Navigation.rootPath) {
       return AppArguments(NavigationPath.root, null);
@@ -4271,11 +4485,19 @@ class _TranspaerFrontendState extends State<TranspaerFrontend>
 
     if (path.startsWith(Navigation.libraryPath)) {
       final topicName = path.substring(Navigation.libraryPath.length);
-      final topic = api.LibraryTopic.fromJson(topicName);
-      if (topic != null) {
+      if (topicName.startsWith("data")) {
+        final topic = api.LibraryTopic.fromJson(topicName);
+        if (topic != null) {
+          return AppArguments(
+            NavigationPath.library,
+            LibraryArguments(topic: LibraryTopic.data(topic)),
+          );
+        }
+      } else {
+        final topic = AssetLibraryTopicExtension.fromString(topicName);
         return AppArguments(
           NavigationPath.library,
-          LibraryArguments(topic: topic),
+          LibraryArguments(topic: LibraryTopic.asset(topic)),
         );
       }
     }
