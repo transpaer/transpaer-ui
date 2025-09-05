@@ -16,7 +16,7 @@ class CorsImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: width as double,
       height: height as double,
       child: Center(

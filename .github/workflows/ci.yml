@@ -1,6 +1,10 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+    tags: ['*']
+  pull_request:
 
 jobs:
 
@@ -25,13 +29,13 @@ jobs:
         run: dart pub global activate melos
 
       - name: Fetch assets
-        run: melos run fetch_assets
+        run: melos run fetch-assets
 
       - name: Check compilation
         run: melos run check
 
       - name: Check format
-        run: melos run check_format
+        run: melos run check-format
 
       - name: Build web
         run: melos run build-web
