@@ -24,13 +24,13 @@ scripts:
   run:
     run: cd transpaer_frontend && flutter run
   
-  check_format:
+  check-format:
     run: melos exec -- dart format .
     descritption: Check code formating
   
-  fix_format:
+  fix-format:
     run: melos exec -- dart format . --fix
     descritption: Reformat the code
 
-  fetch_assets:
+  fetch-assets:
     run: ./scripts/fetch_assets.sh

@@ -24,12 +24,12 @@ dependencies:
   web: ^1.1.1
 
   transpaer_api:
-    version: ^1.0.0
-    #git:
-    #  url: https://github.com/transpaer/transpaer-api-dart.git
-    #  ref: main
-    #  path: transpaer-api
-    path: ../../api-dart/transpaer-api
+    version: ^0.1.0
+    git:
+      url: https://github.com/transpaer/transpaer-api-dart.git
+      ref: v0.1.0
+      path: transpaer-api
+    #path: ../../api-dart/transpaer-api
 
 dev_dependencies:
   flutter_test:
