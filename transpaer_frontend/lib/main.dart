@@ -38,19 +38,19 @@ const String slugSeparator = ":";
 
 const Map<AssetLibraryTopic, LibraryEntry> library = {
   AssetLibraryTopic.infoForProducers: LibraryEntry(
-    asset: "info:for_producers",
+    asset: "info/for_producers",
     title: "For producers",
     summary: "Tips and advices for producers",
     links: [],
   ),
   AssetLibraryTopic.infoFaq: LibraryEntry(
-    asset: "info:faq",
+    asset: "info/faq",
     title: "FAQ",
     summary: "Frequently asked questions",
     links: [],
   ),
   AssetLibraryTopic.termsGreenwashing: LibraryEntry(
-    asset: "terms:greenwashing",
+    asset: "terms/greenwashing",
     title: "Greenwashing",
     summary: "What is greenwashing",
     links: [
@@ -1107,13 +1107,13 @@ class LibraryContentsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("XXX n ${contents.items.length}");
     return ListView(
       scrollDirection: Axis.vertical,
       children: [
         const Center(child: Section(text: "About us")),
         ...infoLibraryOrder.map((topic) {
           var item = library[topic]!;
+
           return ListTile(
             leading: const Icon(Icons.question_answer_outlined),
             title: Text(item.title),
