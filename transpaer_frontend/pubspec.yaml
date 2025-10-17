@@ -45,8 +45,8 @@ flutter:
     - assets/images/eu_ecolabel.png
     - assets/images/tco.png
     - assets/images/fti.png
-    - assets/library/info:faq.md
-    - assets/library/info:for_producers.md
-    - assets/library/terms:greenwashing.md
-    - assets/library/other:not_found.md
+    - assets/library/info/faq.md
+    - assets/library/info/for_producers.md
+    - assets/library/terms/greenwashing.md
+    - assets/library/other/not_found.md
 
