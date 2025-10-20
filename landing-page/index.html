@@ -56,9 +56,15 @@
       </div>
     </section>
 
-    <section class="audience-section">
-      <div class="cards">
-        <div class="card">
+    <section class="tab-section">
+      <div class="tabs" role="tablist">
+        <button class="tab active" role="tab" aria-selected="true" aria-controls="consumers" id="tab-consumers">For consumers</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="companies" id="tab-companies">For companies</button>
+        <button class="tab" role="tab" aria-selected="false" aria-controls="experts" id="tab-experts">For experts</button>
+      </div>
+
+      <div class="tab-content">
+        <div class="tab-panel active" role="tabpanel" id="consumers" aria-labelledby="tab-consumers">
           <h3>For consumers</h3>
           <p>
             Buying products from companies aligned with your values and boycotting those that are not aligned
@@ -79,7 +85,7 @@
           </p>
         </div>
 
-        <div class="card">
+        <div class="tab-panel" role="tabpanel" id="companies" aria-labelledby="tab-companies">
           <h3>For companies</h3>
           <p>
             Transpaer is still a very small community, but when it grows it will be full of people
@@ -89,7 +95,7 @@
           </p>
         </div>
 
-        <div class="card">
+        <div class="tab-panel" role="tabpanel" id="experts" aria-labelledby="tab-experts  ">
           <h3>For experts</h3>
           <p>
             Research about market and impact of products is typically not very accessible for regular consummers.
@@ -145,5 +151,28 @@
   </main>
   <footer>
   </footer>
+
+  <script>
+    const tabs = document.querySelectorAll('.tab');
+    const panels = document.querySelectorAll('.tab-panel');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.setAttribute('aria-selected', 'true');
+
+        panels.forEach(panel => panel.classList.remove('active'));
+
+        tab.classList.add('active');
+        document.getElementById(tab.getAttribute('aria-controls')).classList.add('active');
+
+        tabs.forEach(t => {
+          if (t !== tab) {
+            t.setAttribute('aria-selected', 'false');
+          }
+        });
+      });
+    });
+  </script>
 </body>
 </html>

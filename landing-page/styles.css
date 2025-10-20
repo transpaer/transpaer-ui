@@ -107,34 +107,76 @@ button {
 }
 
 /* Audience section */
-.audience-section {
+.tab-section {
   padding: 4rem 1rem;
 }
 
-.cards {
+.tabs {
   display: flex;
-  gap: 2rem;
-  flex-wrap: wrap;
   justify-content: center;
+  gap: 5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
 }
 
-.card {
-  background-color: var(--text-secondary-color);
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px rgba(44, 62, 80, 0.05);
-  padding: 2rem 1.5rem;
-  flex: 1 1 250px;
-  max-width: 350px;
-  transition: transform .3s ease, box-shadow .3s ease;
+.tab {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  border-bottom: 2px solid var(--accent-color);
+  padding: 0.5rem 1.5rem;
+  cursor: pointer;
+  transition: all .3s ease;
 }
 
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(44, 62, 80, 0.1);
-}
-
-.card h3 {
+.tab.active {
+  background-color: var(--accent-color);
   color: var(--secondary-color);
+  border-color: var(--accent-color);
+  border-radius: 6px;
+}
+
+.tab:hover:not(.active) {
+  border-color: var(--secondary-color);
+  color: var(--secondary-color);
+}
+
+.tab-content {
+  max-width: 800px;
+  margin: 0 auto;
+  min-height: 400px;
+  position: relative;
+}
+
+.tab-panel {
+  display: none;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity .4s ease, transform .4s ease;
+}
+
+.tab-panel.active {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.tab-panel h3 {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 2s ease, transform 2s ease; 
+}
+
+.tap-panel p {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 2s ease .1s, transform 2s ease .1s;
+}
+
+.tab-panel.active h3,
+.tab-panel.active p {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 @keyframes scroll {
