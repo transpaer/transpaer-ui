@@ -1,99 +1,60 @@
 <html>
 <head>
   <title>Transpaer</title>
-  <style>
-
-* {
-  margin: 0;
-  padding: 0;
-  font-family: sans;
-}
-
-p, h1, h2, .buttons {
-  padding: 1ex;
-}
-
-main>div, .buttons {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-main>div:nth-child(even) {
-    background-color: #FFEEDD;
-}
-
-body, main>div:nth-child(odd){
-    background-color: #EEDDCC;
-}
-
-main>div>div {
-  display: flex;
-  max-width: 80em;
-}
-
-main>div:nth-child(even)>div {
-    flex-direction: row-reverse;
-}
-
-main>div:nth-child(odd)>div {
-    flex-direction: row;
-}
-
-main>div>div>aside {
-  display:inline-block;
-  vertical-align: top;
-  width: 20%;
-}
-
-aside>img {
-  width: 100%;
-}
-
-main>div>div>section {
-  display:inline-block;
-  vertical-align: top;
-  width: 80%;
-}
-
-.button-link {
-  padding: 1ex;
-  margin: 1ex;
-  color: white;
-  background-color: #229922;
-  border-radius: 1ex;
-}
-
-  </style>
+  <link rel="stylesheet" href="./styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 </head>
 <body>
   <main>
-    <div>
+    <header>
+      <a href="/">
+        <h1>Transpaer&middot</h1>
+      </a>
+    </header>
+    <section class="hero">
       <div>
-        <section>
-          <h1>Transpaer</h1>
-          <p>
-            <b>Transpaer</b> is a project aimed to help people make better decisions as customers and
-            help them find alternatives to the products they buy that are more aligned with their values.
-            In other words, makes the consumer market <b>more transparent</b>.
-            All in one place, accessible quickly and easily, e.g. with a barcode scan with your phone.
-          </p>
-          <div class="buttons">
-            <a class="button-link">Go to the web app</a>
-            <a class="button-link">Download Android app (comming soon)</a>
-          </div>
-          <p>
-            Transpaer is a community project. Anyone with enough skills and determination can joint it,
-            share ideas, propose new features and contribute.
-          </p>
-        </section>
-        <aside>
-          <img src="image.png">
-        </aside>
+        <h3>Scan a product to see the truth behind the brand.</h3>
+        <h1>Stop guessing.
+          Start knowing.</h1>
+        <p>
+          <b>Transpaer</b> is a project aimed to help people make better decisions as customers and
+          help them find alternatives to the products they buy that are more aligned with their values.
+          In other words, makes the consumer market <b>more transparent</b>.
+          All in one place, accessible quickly and easily.
+        </p>
+        <div class="buttons">
+          <button class="primary-button">
+            <a href="https://transpaer.app/" target="_blank">Go to the web app</a>
+          </button>
+          
+        <button class="secondary-button">
+          <a href="#">Download Android app</a>
+        </button>
+        </div>
       </div>
-    </div>
+    </section>
+    <section class="trusted-logos">
+      <div class="carousel">
+        <div class="carousel-track">
+          <img src="logos/TCO_logo.svg" alt="TCO Certified logo">
+          <img src="logos/open_food_facts_logo.svg" alt="Open Food Facts logo">
+          <img src="logos/b_corp_logo.svg" alt="B Corp logo">
+          <img src="logos/EU_ecolabel_logo.svg" alt="EU Ecolabel logo">
+          <img src="logos/fairtrade_logo.svg" alt="Fairtrade International logo">
+          <img src="logos/wikidata_logo.svg" alt="Wikidata logo">
 
+          <!-- Duplicate logos for seamless loop -->
+          <img src="logos/TCO_logo.svg" alt="TCO Certified logo">
+          <img src="logos/open_food_facts_logo.svg" alt="Open Food Facts logo">
+          <img src="logos/b_corp_logo.svg" alt="B Corp logo">
+          <img src="logos/EU_ecolabel_logo.svg" alt="EU Ecolabel logo">
+          <img src="logos/fairtrade_logo.svg" alt="Fairtrade International logo">
+          <img src="logos/wikidata_logo.svg" alt="Wikidata logo">
+        </div>
+      </div>
+    </section>
     <div>
       <div>
         <section>
@@ -188,7 +149,8 @@ main>div>div>section {
         <section>
           <h2>How to contribute</h2>
           <p>
-            XXX Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+            Transpaer is a community project. Anyone with enough skills and determination can joint it,
+            share ideas, propose new features and contribute.
           </p>
         </section>
         <aside>
