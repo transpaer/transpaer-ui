@@ -8,15 +8,14 @@ scripts:
     run: cd transpaer_frontend && flutter analyze
 
   build-web:
-    # Dart2jsOptimization ias required by Google ananlytics
+    # Dart2jsOptimization is required by Google analytics
     run: cd transpaer_frontend && flutter analyze && flutter build web --no-tree-shake-icons --dart-define=Dart2jsOptimization=O9
 
   build-web-debug:
-    # Dart2jsOptimization ias required by Google ananlytics
+    # Dart2jsOptimization is required by Google analytics
     run: cd transpaer_frontend && flutter build web --no-tree-shake-icons --dart-define=Dart2jsOptimization=O9 --debug
 
   build-android:
-    # Dart2jsOptimization ias required by Google ananlytics
     run: cd transpaer_frontend && flutter analyze && flutter build apk
 
   test:
@@ -25,13 +24,13 @@ scripts:
   run:
     run: cd transpaer_frontend && flutter run
   
-  check_format:
+  check-format:
     run: melos exec -- dart format .
     descritption: Check code formating
   
-  fix_format:
+  fix-format:
     run: melos exec -- dart format . --fix
     descritption: Reformat the code
 
-  fetch_assets:
+  fetch-assets:
     run: ./scripts/fetch_assets.sh
