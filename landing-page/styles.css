@@ -4,7 +4,6 @@
   --accent-color: #F4B860;
   --text-primary-color: #3A3A3A;
   --text-secondary-color: #FAFAFA;
-  --subtle-color: #E8EAF6;
 }
 
 body {
@@ -69,6 +68,7 @@ button {
 }
 
 /* Sections */
+/* Hero */
 .hero {
   background-color: var(--primary-bg-color);
   padding: .5rem 5rem 2rem 5rem;
@@ -91,7 +91,7 @@ button {
   align-items: center;
   gap: 10rem;
   width: calc(2 * 100%);
-  animation: scroll 16s linear infinite;
+  animation: scroll 22s linear infinite;
 }
 
 .carousel-track img {
@@ -104,6 +104,37 @@ button {
 
 .carousel-track img:hover {
   opacity: 1;
+}
+
+/* Audience section */
+.audience-section {
+  padding: 4rem 1rem;
+}
+
+.cards {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.card {
+  background-color: var(--text-secondary-color);
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px rgba(44, 62, 80, 0.05);
+  padding: 2rem 1.5rem;
+  flex: 1 1 250px;
+  max-width: 350px;
+  transition: transform .3s ease, box-shadow .3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(44, 62, 80, 0.1);
+}
+
+.card h3 {
+  color: var(--secondary-color);
 }
 
 @keyframes scroll {
