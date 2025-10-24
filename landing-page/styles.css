@@ -1,9 +1,26 @@
-:root {
+/* :root {
   --primary-bg-color: #EAE7DC;
   --secondary-color: #2C3E50;
   --accent-color: #F4B860;
-  --text-primary-color: #3A3A3A;
+  --text-primary-color: #6C5566;
   --text-secondary-color: #FAFAFA;
+} */
+
+/* :root {
+  --primary-bg-color: #443D69;
+  --secondary-color: #EAE7DC;
+  --accent-color: #AB6F75;
+  --text-primary-color: #FAFAFA;
+  --text-secondary-color: #2C3E50;
+} */
+
+:root {
+  --primary-bg-color: #F7F6FB;
+  --secondary-color: #E4E7F5;
+  --accent-color: #4F7BFF;
+  --accent-color-2: #E3B8D0;
+  --text-primary-color: #2C2C3A;
+  --text-secondary-color: #E3B8D0;
 }
 
 body {
@@ -60,6 +77,7 @@ button {
   background-color: transparent;
   border: 2px solid var(--accent-color);
   margin-left: 1rem;
+  color: var(--accent-color)
 }
 
 .secondary-button:hover {
@@ -68,6 +86,31 @@ button {
 }
 
 /* Sections */
+/* Header */
+header {
+  background-color: var(--primary-bg-color);
+  border-bottom: 1px solid var(--accent-color);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo img {
+  height: 54px;
+  margin: 1rem;
+}
+
+.logo h1 {
+  margin-top: 0;
+  margin-bottom: .5rem;
+  color: var(--accent-color);
+  opacity: .8;
+}
+
 /* Hero */
 .hero {
   background-color: var(--primary-bg-color);
@@ -127,6 +170,7 @@ button {
   padding: 0.5rem 1.5rem;
   cursor: pointer;
   transition: all .3s ease;
+  color: var(--accent-color);
 }
 
 .tab.active {
@@ -137,8 +181,9 @@ button {
 }
 
 .tab:hover:not(.active) {
-  border-color: var(--secondary-color);
-  color: var(--secondary-color);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  opacity: .8;
 }
 
 .tab-content {
