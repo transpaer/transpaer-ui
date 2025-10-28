@@ -34,6 +34,12 @@ const double hugeIconSize = 128;
 const double iconRound = 16;
 const double logoSize = 24;
 
+const Color primaryBgColor = Color.fromRGBO(0x44, 0x3d, 0x69, 0x01);
+const Color primaryFgColor = Colors.white;
+const Color secondaryBgColor = Colors.white;
+const Color plainColor = Color.fromRGBO(0xee, 0xee, 0xee, 0x01);
+const Color tabFgColor = Color.fromRGBO(0xad, 0xc1, 0xed, 0x01);
+
 const String slugSeparator = ":";
 
 const Map<AssetLibraryTopic, LibraryEntry> library = {
@@ -4189,8 +4195,8 @@ class _RootScreenState extends State<RootScreen> with TickerProviderStateMixin {
         bottom: TabBar(
           controller: _tabController,
           labelColor: Colors.white,
-          unselectedLabelColor: Colors.lightGreen[200],
-          indicatorColor: Colors.lightGreen[100],
+          unselectedLabelColor: tabFgColor,
+          indicatorColor: tabFgColor,
           indicatorWeight: 7,
           indicatorSize: TabBarIndicatorSize.tab,
           tabs: const <Widget>[
@@ -4358,17 +4364,17 @@ class _TranspaerFrontendState extends State<TranspaerFrontend>
     return MaterialApp(
         title: 'Transpaer',
         theme: ThemeData(
-          cardColor: Colors.white,
-          scaffoldBackgroundColor: Colors.grey[200],
-          appBarTheme: AppBarTheme(
-            backgroundColor: Colors.green[800],
-            foregroundColor: Colors.white,
+          cardColor: secondaryBgColor,
+          scaffoldBackgroundColor: plainColor,
+          appBarTheme: const AppBarTheme(
+            backgroundColor: primaryBgColor,
+            foregroundColor: primaryFgColor,
           ),
           colorScheme: ColorScheme.fromSwatch().copyWith(
-            primary: Colors.green[800],
-            onPrimary: Colors.white,
-            outline: Colors.green[800],
-            outlineVariant: Colors.green[800],
+            primary: primaryBgColor,
+            onPrimary: primaryFgColor,
+            outline: primaryBgColor,
+            outlineVariant: primaryBgColor,
           ),
         ),
         initialRoute: "/",
