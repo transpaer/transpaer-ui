@@ -7,6 +7,7 @@
 }
 
 body {
+  margin: 0;
   background-image: url('data:image/svg+xml;utf8, <svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" fill="none" stroke="%23DADFE8" stroke-width="0.5"><path d="M0 90 L90 0 L180 90 L90 180 Z"/><path d="M90 0 L180 90 L270 0"/></svg>');
   background-repeat: repeat;
   background-size: 180px 180px;
@@ -173,7 +174,6 @@ header {
   background-blend-mode: overlay; /* makes the gradient and pattern blend softly */
   color: #2B2F36;
   font-family: "Inter", sans-serif;
-  min-height: 100vh;
   color: var(--text-primary-color);
 }
 
@@ -265,12 +265,46 @@ footer {
 }
 
 @media (max-width: 768px) {
+  .buttons {
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: center;
+    padding-top: 2rem;
+  }
+
+  button {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .secondary-button {
+    margin-left: 0;
+  }
+
+  .content {
+    text-align: justify;
+    padding: 0 1rem;
+  }
+
   .hero {
+    padding: 2rem 1rem;
+    text-align: left;
+    margin: 1rem;
+  }
+
+  .trusted-logos {
+    padding-bottom: 4rem;
+  }
+
+  .tab-section {
     padding: 2rem 1rem;
   }
 
-  .carousel-track img {
-    height: 28px;
-    gap: 2rem;
+  .tabs {
+    gap: 1rem;
+  }
+
+  .carousel-track {
+    gap: 6rem;
   }
 }
