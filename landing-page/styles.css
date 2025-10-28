@@ -15,16 +15,21 @@
 } */
 
 :root {
-  --primary-bg-color: #F7F6FB;
+  --primary-bg-color: #FAF9F6;
   --secondary-color: #E4E7F5;
-  --accent-color: #4F7BFF;
-  --accent-color-2: #E3B8D0;
-  --text-primary-color: #2C2C3A;
-  --text-secondary-color: #E3B8D0;
+  --accent-color: #5670B2;
+  --accent-color-2: #AB6F75;
+  --text-primary-color: #34507E;
 }
 
 body {
-  background-color: var(--primary-bg-color);
+  /* background-color: var(--primary-bg-color); */
+  background-image: url('data:image/svg+xml;utf8, <svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" fill="none" stroke="%23DADFE8" stroke-width="0.5"><path d="M0 90 L90 0 L180 90 L90 180 Z"/><path d="M90 0 L180 90 L270 0"/></svg>');
+  background-repeat: repeat;
+  background-size: 180px 180px;
+  background-blend-mode: overlay; /* makes the gradient and pattern blend softly */
+  color: #2B2F36;
+  min-height: 100vh;
   color: var(--text-primary-color);
 }
 
@@ -47,6 +52,7 @@ h3 {
   font-size: clamp(1.1rem, 2.5vw, 1.7rem);
   font-family: "Montserrat", sans-serif;
   margin-bottom: 1rem;
+  color: var(--accent-color-2);
 }
 
 p {
@@ -54,6 +60,11 @@ p {
   line-height: 1.6;
   margin-bottom: 1.5rem;
   font-family: "Inter", sans-serif;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
 }
 
 button {
@@ -71,6 +82,7 @@ button {
   background-color: var(--accent-color);
   border: none;
   padding: 0.5rem 1rem;
+  min-width: 210px;
 }
 
 .secondary-button {
@@ -88,7 +100,7 @@ button {
 /* Sections */
 /* Header */
 header {
-  background-color: var(--primary-bg-color);
+  background-color: white;
   border-bottom: 1px solid var(--accent-color);
   position: sticky;
   top: 0;
@@ -108,12 +120,29 @@ header {
   margin-top: 0;
   margin-bottom: .5rem;
   color: var(--accent-color);
-  opacity: .8;
+  opacity: .9;
+  font-family: "Nunito", sans-serif;
+
+  background: linear-gradient(90deg, #4D7CFF, #C5C1F0, #E88B75);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  /* Outline */
+  -webkit-text-stroke: .8px #2B2F36; /* charcoal outline */
+  text-stroke: .8px #2B2F36; /* fallback */
+  font-weight: 700
+}
+
+.content {
+  max-width: 800px;
+  margin: 0 auto;
+  min-height: 400px;
+  position: relative;
 }
 
 /* Hero */
 .hero {
-  background-color: var(--primary-bg-color);
   padding: .5rem 5rem 2rem 5rem;
   text-align: center;
 }
@@ -152,6 +181,17 @@ header {
 /* Audience section */
 .tab-section {
   padding: 4rem 1rem;
+  background:
+         linear-gradient(
+          180deg,
+          rgba(255, 255, 255, 0.4) 0%,
+          rgba(86, 112, 178, 0.6) 100%
+        ), transparent;
+  background-blend-mode: overlay; /* makes the gradient and pattern blend softly */
+  color: #2B2F36;
+  font-family: "Inter", sans-serif;
+  min-height: 100vh;
+  color: var(--text-primary-color);
 }
 
 .tabs {
@@ -186,13 +226,6 @@ header {
   opacity: .8;
 }
 
-.tab-content {
-  max-width: 800px;
-  margin: 0 auto;
-  min-height: 400px;
-  position: relative;
-}
-
 .tab-panel {
   display: none;
   opacity: 0;
@@ -222,6 +255,34 @@ header {
 .tab-panel.active p {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* Contact section */
+.contact-section {
+  /* padding: 4rem 1rem;
+  background:
+          linear-gradient(
+          180deg,
+          rgba(86, 112, 178, 0.6) 0%,
+          rgba(86, 112, 178, 0.6) 50%,
+          rgba(255, 255, 255, 0.8) 100%
+        ), transparent;
+  background-blend-mode: overlay;
+  color: #2B2F36;
+  font-family: "Inter", sans-serif;
+  min-height: 100vh;
+  color: var(--text-primary-color); */
+  padding: 4rem 1rem;
+  background-color: #9BAAD2;
+  text-align: justify;
+}
+
+footer {
+  background-color: #9BAAD2;
+  color: var(--accent-color);
+  text-align: center;
+  padding: .5rem;
+  border-top: 1px solid var(--accent-color);
 }
 
 @keyframes scroll {
