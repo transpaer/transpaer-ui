@@ -24,10 +24,10 @@ dependencies:
   web: ^1.1.1
 
   transpaer_api:
-    version: ^0.1.0
+    version: ^0.2.0
     git:
       url: https://github.com/transpaer/transpaer-api-dart.git
-      ref: v0.1.0
+      ref: v0.2.0
       path: transpaer-api
     #path: ../../api-dart/transpaer-api
 
