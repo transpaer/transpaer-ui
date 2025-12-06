@@ -466,22 +466,22 @@ class ProductLink implements TextSearchLink {
   }
 }
 
-enum DataSourceEnum { transpaer, wiki, off, eu, bCorp, fti, tco, other }
+enum DataSource { transpaer, wiki, off, ofr, eu, bCorp, fti, tco, other }
 
 const dataSourceValues = {
-  api.DataSource.transpaer: DataSourceEnum.transpaer,
-  api.DataSource.wiki: DataSourceEnum.wiki,
-  api.DataSource.off: DataSourceEnum.off,
-  api.DataSource.eu: DataSourceEnum.eu,
-  api.DataSource.bCorp: DataSourceEnum.bCorp,
-  api.DataSource.fti: DataSourceEnum.fti,
-  api.DataSource.tco: DataSourceEnum.tco,
-  api.DataSource.other: DataSourceEnum.other,
+  "transpaer": DataSource.transpaer,
+  "bcorp": DataSource.bCorp,
+  "eu_ecolabel": DataSource.eu,
+  "fti": DataSource.fti,
+  "open_food_facts": DataSource.off,
+  "open_food_repo": DataSource.ofr,
+  "tco": DataSource.tco,
+  "wikidata": DataSource.wiki,
 };
 
-extension DataSourceExtension on api.DataSource {
-  DataSourceEnum toEnum() {
-    return dataSourceValues[this] ?? DataSourceEnum.other;
+extension DataSourceExtension on DataSource {
+  static DataSource fromString(String string) {
+    return dataSourceValues[string] ?? DataSource.other;
   }
 }
 
@@ -802,12 +802,12 @@ class Section extends StatelessWidget {
 
 class Description extends StatelessWidget {
   final String text;
-  final api.DataSource? source;
+  final DataSource source;
 
   const Description({
     super.key,
     required this.text,
-    this.source,
+    required this.source,
   });
 
   @override
@@ -821,32 +821,33 @@ class Description extends StatelessWidget {
 
     Widget? sourceWidget;
     switch (source) {
-      case api.DataSource.wiki:
+      case DataSource.wiki:
         sourceWidget = Text("Source: Wikidata", style: sourceStyle);
         break;
-      case api.DataSource.off:
+      case DataSource.off:
         sourceWidget = Text("Source: Open Food Facts", style: sourceStyle);
         break;
-      case api.DataSource.eu:
+      case DataSource.ofr:
+        sourceWidget = Text("Source: Open Food Repo", style: sourceStyle);
+        break;
+      case DataSource.eu:
         sourceWidget = Text("Source: Eu Ecolabel", style: sourceStyle);
         break;
-      case api.DataSource.bCorp:
+      case DataSource.bCorp:
         sourceWidget = Text("Source: B Corp", style: sourceStyle);
         break;
-      case api.DataSource.fti:
+      case DataSource.fti:
         sourceWidget =
             Text("Source: Fashion Transparency Index", style: sourceStyle);
         break;
-      case api.DataSource.tco:
+      case DataSource.tco:
         sourceWidget = Text("Source: TCO", style: sourceStyle);
         break;
-      case api.DataSource.transpaer:
-        sourceWidget = const Text("");
+      case DataSource.transpaer:
+        sourceWidget = null;
         break;
-      case api.DataSource.other:
-        sourceWidget = const Text("");
-        break;
-      case null:
+      case DataSource.other:
+        sourceWidget = null;
         break;
     }
 
@@ -883,7 +884,7 @@ class DescriptionSection extends StatelessWidget {
           for (final description in descriptions)
             Description(
               text: description.text,
-              source: description.source_,
+              source: DataSourceExtension.fromString(description.source_),
             )
         ],
       );
@@ -1082,13 +1083,13 @@ class SourcedImage extends StatelessWidget {
   static const url1 = "https://commons.wikimedia.org/wiki/Special:FilePath";
 
   final String imagePath;
-  final DataSourceEnum imageSource;
+  final DataSource imageSource;
 
   const SourcedImage(this.imagePath, this.imageSource, {super.key});
 
   SourcedImage.fromApi(api.Image image, {super.key})
       : imagePath = image.image,
-        imageSource = image.source_.toEnum();
+        imageSource = DataSourceExtension.fromString(image.source_);
 
   @override
   Widget build(BuildContext context) {
@@ -1096,42 +1097,47 @@ class SourcedImage extends StatelessWidget {
     String url;
     String source;
     switch (imageSource) {
-      case DataSourceEnum.transpaer:
+      case DataSource.transpaer:
         link = imagePath;
         url = imagePath;
         source = "Transpaer";
         break;
-      case DataSourceEnum.wiki:
+      case DataSource.wiki:
         link = "$url1/$imagePath";
         url = "$link?width=200";
         source = "Wikidata";
         break;
-      case DataSourceEnum.off:
+      case DataSource.off:
         link = imagePath;
         url = imagePath;
         source = "Open Food Facts";
         break;
-      case DataSourceEnum.eu:
+      case DataSource.ofr:
+        link = imagePath;
+        url = imagePath;
+        source = "Open Food Repo";
+        break;
+      case DataSource.eu:
         link = imagePath;
         url = imagePath;
         source = "Eu Ecolabel";
         break;
-      case DataSourceEnum.bCorp:
+      case DataSource.bCorp:
         link = imagePath;
         url = imagePath;
         source = "B-Corporations";
         break;
-      case DataSourceEnum.fti:
+      case DataSource.fti:
         link = imagePath;
         url = imagePath;
         source = "Fashion Transparency Index";
         break;
-      case DataSourceEnum.tco:
+      case DataSource.tco:
         link = imagePath;
         url = imagePath;
         source = "TCO";
         break;
-      case DataSourceEnum.other:
+      case DataSource.other:
         log.severe("Unknown image source");
         link = imagePath;
         url = imagePath;
@@ -3268,8 +3274,7 @@ class ProductView extends StatelessWidget {
                         ),
                         const Section(text: 'Barcodes'),
                         product.productIds.gtins.isNotEmpty
-                            ? Description(
-                                text: product.productIds.gtins.join(", "))
+                            ? Text(product.productIds.gtins.join(", "))
                             : const Center(child: Text("No barcodes...")),
                       ],
                     ),

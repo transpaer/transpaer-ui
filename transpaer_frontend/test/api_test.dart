@@ -8,10 +8,6 @@ import 'package:transpaer_frontend/main.dart';
 import 'package:transpaer_api/api.dart' as api;
 
 void main() {
-  test('DataSources', () {
-    expect(dataSourceValues.length, api.DataSource.values.length);
-  });
-
   test('BadgeName', () {
     expect(badgeNameValues.length, api.BadgeName.values.length);
   });
