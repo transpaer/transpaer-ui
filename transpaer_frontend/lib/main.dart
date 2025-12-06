@@ -117,54 +117,6 @@ Future<void> logAnalytics() async {
   }
 }
 
-extension LibraryTopicGuiExtension on api.LibraryTopic {
-  Widget get image {
-    switch (this) {
-      case api.LibraryTopic.wiki:
-        // TODO: Prepare an icon.
-        return const Icon(Icons.question_answer_outlined);
-
-      case api.LibraryTopic.openFoodFacts:
-        // TODO: Prepare an icon.
-        return const Icon(Icons.question_answer_outlined);
-
-      case api.LibraryTopic.bcorp:
-        return const Image(
-          image: AssetImage("assets/images/bcorp.png"),
-          height: iconSize,
-          width: iconSize,
-        );
-
-      case api.LibraryTopic.euEcolabel:
-        return const Image(
-          image: AssetImage("assets/images/eu_ecolabel.png"),
-          height: iconSize,
-          width: iconSize,
-        );
-
-      case api.LibraryTopic.tco:
-        return const Image(
-          image: AssetImage("assets/images/tco.png"),
-          height: iconSize,
-          width: iconSize,
-        );
-
-      case api.LibraryTopic.fti:
-        return const Image(
-          image: AssetImage("assets/images/fti.png"),
-          height: iconSize,
-          width: iconSize,
-        );
-    }
-
-    return const Icon(Icons.question_answer_outlined);
-  }
-
-  String get slug {
-    return "data:$value";
-  }
-}
-
 extension CategoryStatusExtension on api.CategoryStatus {
   Color tileColor() {
     switch (this) {
@@ -288,6 +240,105 @@ enum LibraryTopicType {
   data,
 }
 
+enum DataLibraryTopic {
+  bcorp,
+  euEcolabel,
+  fti,
+  openFoodFacts,
+  openFoodRepo,
+  tco,
+  wikidata,
+}
+
+extension DataLibraryTopicExtension on DataLibraryTopic {
+  static DataLibraryTopic? fromString(String topic) {
+    switch (topic) {
+      case "bcorp":
+        return DataLibraryTopic.bcorp;
+      case "eu_ecolabel":
+        return DataLibraryTopic.euEcolabel;
+      case "fti":
+        return DataLibraryTopic.fti;
+      case "open_food_facts":
+        return DataLibraryTopic.openFoodFacts;
+      case "open_food_repo":
+        return DataLibraryTopic.openFoodRepo;
+      case "tco":
+        return DataLibraryTopic.tco;
+      case "wiki":
+        return DataLibraryTopic.wikidata;
+    }
+    return null;
+  }
+
+  String get id {
+    switch (this) {
+      case DataLibraryTopic.bcorp:
+        return "bcorp";
+      case DataLibraryTopic.euEcolabel:
+        return "eu_ecolabel";
+      case DataLibraryTopic.fti:
+        return "fti";
+      case DataLibraryTopic.openFoodFacts:
+        return "open_food_facts";
+      case DataLibraryTopic.openFoodRepo:
+        return "open_food_repo";
+      case DataLibraryTopic.tco:
+        return "tco";
+      case DataLibraryTopic.wikidata:
+        return "wiki";
+    }
+  }
+
+  Widget get image {
+    switch (this) {
+      case DataLibraryTopic.bcorp:
+        return const Image(
+          image: AssetImage("assets/images/bcorp.png"),
+          height: iconSize,
+          width: iconSize,
+        );
+
+      case DataLibraryTopic.euEcolabel:
+        return const Image(
+          image: AssetImage("assets/images/eu_ecolabel.png"),
+          height: iconSize,
+          width: iconSize,
+        );
+
+      case DataLibraryTopic.fti:
+        return const Image(
+          image: AssetImage("assets/images/fti.png"),
+          height: iconSize,
+          width: iconSize,
+        );
+
+      case DataLibraryTopic.openFoodFacts:
+        // TODO: Prepare an icon.
+        return const Icon(Icons.question_answer_outlined);
+
+      case DataLibraryTopic.openFoodRepo:
+        // TODO: Prepare an icon.
+        return const Icon(Icons.question_answer_outlined);
+
+      case DataLibraryTopic.tco:
+        return const Image(
+          image: AssetImage("assets/images/tco.png"),
+          height: iconSize,
+          width: iconSize,
+        );
+
+      case DataLibraryTopic.wikidata:
+        // TODO: Prepare an icon.
+        return const Icon(Icons.question_answer_outlined);
+    }
+  }
+
+  String get slug {
+    return "data:$id";
+  }
+}
+
 enum AssetLibraryTopic {
   infoFaq,
   infoForProducers,
@@ -334,7 +385,7 @@ class LibraryTopic {
     return LibraryTopic(type: LibraryTopicType.asset, detail: topic);
   }
 
-  static LibraryTopic data(api.LibraryTopic topic) {
+  static LibraryTopic data(DataLibraryTopic topic) {
     return LibraryTopic(type: LibraryTopicType.data, detail: topic);
   }
 }
@@ -415,22 +466,22 @@ class ProductLink implements TextSearchLink {
   }
 }
 
-enum DataSourceEnum { transpaer, wiki, off, eu, bCorp, fti, tco, other }
+enum DataSource { transpaer, wiki, off, ofr, eu, bCorp, fti, tco, other }
 
 const dataSourceValues = {
-  api.DataSource.transpaer: DataSourceEnum.transpaer,
-  api.DataSource.wiki: DataSourceEnum.wiki,
-  api.DataSource.off: DataSourceEnum.off,
-  api.DataSource.eu: DataSourceEnum.eu,
-  api.DataSource.bCorp: DataSourceEnum.bCorp,
-  api.DataSource.fti: DataSourceEnum.fti,
-  api.DataSource.tco: DataSourceEnum.tco,
-  api.DataSource.other: DataSourceEnum.other,
+  "transpaer": DataSource.transpaer,
+  "bcorp": DataSource.bCorp,
+  "eu_ecolabel": DataSource.eu,
+  "fti": DataSource.fti,
+  "open_food_facts": DataSource.off,
+  "open_food_repo": DataSource.ofr,
+  "tco": DataSource.tco,
+  "wikidata": DataSource.wiki,
 };
 
-extension DataSourceExtension on api.DataSource {
-  DataSourceEnum toEnum() {
-    return dataSourceValues[this] ?? DataSourceEnum.other;
+extension DataSourceExtension on DataSource {
+  static DataSource fromString(String string) {
+    return dataSourceValues[string] ?? DataSource.other;
   }
 }
 
@@ -449,14 +500,14 @@ extension BadgeNameExtension on api.BadgeName {
 }
 
 extension BadgeEnumExtension on BadgeEnum {
-  api.LibraryTopic toLibraryTopic() {
+  DataLibraryTopic toLibraryTopic() {
     switch (this) {
       case BadgeEnum.bcorp:
-        return api.LibraryTopic.bcorp;
+        return DataLibraryTopic.bcorp;
       case BadgeEnum.eu:
-        return api.LibraryTopic.euEcolabel;
+        return DataLibraryTopic.euEcolabel;
       case BadgeEnum.tco:
-        return api.LibraryTopic.tco;
+        return DataLibraryTopic.tco;
     }
   }
 
@@ -504,10 +555,10 @@ extension ScorerEnumExtension on ScorerEnum {
     return scores;
   }
 
-  api.LibraryTopic toLibraryTopic() {
+  DataLibraryTopic toLibraryTopic() {
     switch (this) {
       case ScorerEnum.fti:
-        return api.LibraryTopic.fti;
+        return DataLibraryTopic.fti;
     }
   }
 }
@@ -751,12 +802,12 @@ class Section extends StatelessWidget {
 
 class Description extends StatelessWidget {
   final String text;
-  final api.DataSource? source;
+  final DataSource source;
 
   const Description({
     super.key,
     required this.text,
-    this.source,
+    required this.source,
   });
 
   @override
@@ -770,32 +821,33 @@ class Description extends StatelessWidget {
 
     Widget? sourceWidget;
     switch (source) {
-      case api.DataSource.wiki:
+      case DataSource.wiki:
         sourceWidget = Text("Source: Wikidata", style: sourceStyle);
         break;
-      case api.DataSource.off:
+      case DataSource.off:
         sourceWidget = Text("Source: Open Food Facts", style: sourceStyle);
         break;
-      case api.DataSource.eu:
+      case DataSource.ofr:
+        sourceWidget = Text("Source: Open Food Repo", style: sourceStyle);
+        break;
+      case DataSource.eu:
         sourceWidget = Text("Source: Eu Ecolabel", style: sourceStyle);
         break;
-      case api.DataSource.bCorp:
+      case DataSource.bCorp:
         sourceWidget = Text("Source: B Corp", style: sourceStyle);
         break;
-      case api.DataSource.fti:
+      case DataSource.fti:
         sourceWidget =
             Text("Source: Fashion Transparency Index", style: sourceStyle);
         break;
-      case api.DataSource.tco:
+      case DataSource.tco:
         sourceWidget = Text("Source: TCO", style: sourceStyle);
         break;
-      case api.DataSource.transpaer:
-        sourceWidget = const Text("");
+      case DataSource.transpaer:
+        sourceWidget = null;
         break;
-      case api.DataSource.other:
-        sourceWidget = const Text("");
-        break;
-      case null:
+      case DataSource.other:
+        sourceWidget = null;
         break;
     }
 
@@ -832,7 +884,7 @@ class DescriptionSection extends StatelessWidget {
           for (final description in descriptions)
             Description(
               text: description.text,
-              source: description.source_,
+              source: DataSourceExtension.fromString(description.source_),
             )
         ],
       );
@@ -1031,13 +1083,13 @@ class SourcedImage extends StatelessWidget {
   static const url1 = "https://commons.wikimedia.org/wiki/Special:FilePath";
 
   final String imagePath;
-  final DataSourceEnum imageSource;
+  final DataSource imageSource;
 
   const SourcedImage(this.imagePath, this.imageSource, {super.key});
 
   SourcedImage.fromApi(api.Image image, {super.key})
       : imagePath = image.image,
-        imageSource = image.source_.toEnum();
+        imageSource = DataSourceExtension.fromString(image.source_);
 
   @override
   Widget build(BuildContext context) {
@@ -1045,42 +1097,47 @@ class SourcedImage extends StatelessWidget {
     String url;
     String source;
     switch (imageSource) {
-      case DataSourceEnum.transpaer:
+      case DataSource.transpaer:
         link = imagePath;
         url = imagePath;
         source = "Transpaer";
         break;
-      case DataSourceEnum.wiki:
+      case DataSource.wiki:
         link = "$url1/$imagePath";
         url = "$link?width=200";
         source = "Wikidata";
         break;
-      case DataSourceEnum.off:
+      case DataSource.off:
         link = imagePath;
         url = imagePath;
         source = "Open Food Facts";
         break;
-      case DataSourceEnum.eu:
+      case DataSource.ofr:
+        link = imagePath;
+        url = imagePath;
+        source = "Open Food Repo";
+        break;
+      case DataSource.eu:
         link = imagePath;
         url = imagePath;
         source = "Eu Ecolabel";
         break;
-      case DataSourceEnum.bCorp:
+      case DataSource.bCorp:
         link = imagePath;
         url = imagePath;
         source = "B-Corporations";
         break;
-      case DataSourceEnum.fti:
+      case DataSource.fti:
         link = imagePath;
         url = imagePath;
         source = "Fashion Transparency Index";
         break;
-      case DataSourceEnum.tco:
+      case DataSource.tco:
         link = imagePath;
         url = imagePath;
         source = "TCO";
         break;
-      case DataSourceEnum.other:
+      case DataSource.other:
         log.severe("Unknown image source");
         link = imagePath;
         url = imagePath;
@@ -1139,14 +1196,20 @@ class LibraryContentsView extends StatelessWidget {
         }),
         const Center(
             child: Section(text: "About certifications and data sources")),
-        ...contents.items.map((item) {
-          return ListTile(
-            leading: item.id.image,
-            title: Text(item.title),
-            subtitle: Text(item.summary),
-            onTap: () => navigation.goToDataLibrary(item.id),
-          );
-        }),
+        ...contents.items
+            .map((item) {
+              var topic = DataLibraryTopicExtension.fromString(item.id);
+              if (topic != null) {
+                return ListTile(
+                  leading: topic.image,
+                  title: Text(item.title),
+                  subtitle: Text(item.summary),
+                  onTap: () => navigation.goToDataLibrary(topic),
+                );
+              }
+            })
+            .where((widget) => widget != null)
+            .map((widget) => widget!),
       ],
     );
   }
@@ -1174,7 +1237,7 @@ class LibraryItemView extends StatelessWidget {
         );
       case LibraryTopicType.data:
         return DataLibraryItemView(
-          topic: topic.detail as api.LibraryTopic,
+          topic: topic.detail as DataLibraryTopic,
           fetcher: fetcher,
           navigation: navigation,
         );
@@ -1240,7 +1303,7 @@ class _AssetLibraryItemViewState extends State<AssetLibraryItemView>
 }
 
 class DataLibraryItemView extends StatefulWidget {
-  final api.LibraryTopic topic;
+  final DataLibraryTopic topic;
   final api.DefaultApi fetcher;
   final Navigation navigation;
 
@@ -1262,7 +1325,7 @@ class _DataLibraryItemViewState extends State<DataLibraryItemView>
   @override
   void initState() {
     super.initState();
-    _futureItem = widget.fetcher.getLibraryItem(widget.topic);
+    _futureItem = widget.fetcher.getLibraryItem(widget.topic.id);
   }
 
   @override
@@ -1796,7 +1859,7 @@ class MedallionFrame extends StatelessWidget {
 
 class BCorpMedallion extends StatelessWidget {
   final api.BCorpMedallion medallion;
-  final Function(api.LibraryTopic) onTopic;
+  final Function(DataLibraryTopic) onTopic;
 
   const BCorpMedallion({
     super.key,
@@ -1821,7 +1884,7 @@ class BCorpMedallion extends StatelessWidget {
             child: Row(
               children: [
                 const Spacer(),
-                api.LibraryTopic.bcorp.image,
+                DataLibraryTopic.bcorp.image,
                 const Space(),
                 Text(
                   "BCorporations",
@@ -1845,7 +1908,7 @@ class BCorpMedallion extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.info_outlined),
-              onPressed: () => onTopic(api.LibraryTopic.bcorp),
+              onPressed: () => onTopic(DataLibraryTopic.bcorp),
             ),
             IconButton(
               icon: const Icon(Icons.arrow_outward_outlined),
@@ -1864,7 +1927,7 @@ class BCorpMedallion extends StatelessWidget {
 
 class EuEcolabelMedallion extends StatelessWidget {
   final api.EuEcolabelMedallion medallion;
-  final Function(api.LibraryTopic) onTopic;
+  final Function(DataLibraryTopic) onTopic;
 
   const EuEcolabelMedallion({
     super.key,
@@ -1889,7 +1952,7 @@ class EuEcolabelMedallion extends StatelessWidget {
             child: Row(
               children: [
                 const Spacer(),
-                api.LibraryTopic.euEcolabel.image,
+                DataLibraryTopic.euEcolabel.image,
                 const Space(),
                 Text(
                   "EU Ecolabel",
@@ -1914,7 +1977,7 @@ class EuEcolabelMedallion extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.info_outlined),
-              onPressed: () => onTopic(api.LibraryTopic.euEcolabel),
+              onPressed: () => onTopic(DataLibraryTopic.euEcolabel),
             ),
             IconButton(
               icon: const Icon(Icons.arrow_outward_outlined),
@@ -1934,7 +1997,7 @@ class EuEcolabelMedallion extends StatelessWidget {
 
 class FtiMedallion extends StatelessWidget {
   final api.FtiMedallion medallion;
-  final Function(api.LibraryTopic) onTopic;
+  final Function(DataLibraryTopic) onTopic;
 
   const FtiMedallion({
     super.key,
@@ -1985,7 +2048,7 @@ class FtiMedallion extends StatelessWidget {
           ),
           IconButton(
             icon: const Icon(Icons.info_outlined),
-            onPressed: () => onTopic(api.LibraryTopic.fti),
+            onPressed: () => onTopic(DataLibraryTopic.fti),
           ),
           IconButton(
             icon: const Icon(Icons.arrow_outward_outlined),
@@ -2003,7 +2066,7 @@ class FtiMedallion extends StatelessWidget {
 
 class TcoMedallion extends StatelessWidget {
   final api.TcoMedallion medallion;
-  final Function(api.LibraryTopic) onTopic;
+  final Function(DataLibraryTopic) onTopic;
 
   const TcoMedallion({
     super.key,
@@ -2028,7 +2091,7 @@ class TcoMedallion extends StatelessWidget {
             child: Row(
               children: [
                 const Spacer(),
-                api.LibraryTopic.tco.image,
+                DataLibraryTopic.tco.image,
                 const Space(),
                 Text(
                   "TCO",
@@ -2052,7 +2115,7 @@ class TcoMedallion extends StatelessWidget {
             ),
             IconButton(
               icon: const Icon(Icons.info_outlined),
-              onPressed: () => onTopic(api.LibraryTopic.tco),
+              onPressed: () => onTopic(DataLibraryTopic.tco),
             ),
             IconButton(
               icon: const Icon(Icons.arrow_outward_outlined),
@@ -2071,7 +2134,7 @@ class TcoMedallion extends StatelessWidget {
 
 class MedallionSwitcher extends StatelessWidget {
   final api.Medallion medallion;
-  final Function(api.LibraryTopic) onTopic;
+  final Function(DataLibraryTopic) onTopic;
 
   const MedallionSwitcher({
     super.key,
@@ -2339,7 +2402,7 @@ class DisposalMedallion extends StatelessWidget {
 class OrganisationMedallions extends StatelessWidget {
   final List<api.Medallion> medallions;
   final List<api.Medium> media;
-  final Function(api.LibraryTopic) onTopic;
+  final Function(DataLibraryTopic) onTopic;
 
   const OrganisationMedallions({
     super.key,
@@ -2364,7 +2427,7 @@ class OrganisationMedallions extends StatelessWidget {
 class ProductMedallions extends StatelessWidget {
   final List<api.Medallion> medallions;
   final List<api.Medium> media;
-  final Function(api.LibraryTopic) onTopic;
+  final Function(DataLibraryTopic) onTopic;
 
   const ProductMedallions({
     super.key,
@@ -3211,8 +3274,7 @@ class ProductView extends StatelessWidget {
                         ),
                         const Section(text: 'Barcodes'),
                         product.productIds.gtins.isNotEmpty
-                            ? Description(
-                                text: product.productIds.gtins.join(", "))
+                            ? Text(product.productIds.gtins.join(", "))
                             : const Center(child: Text("No barcodes...")),
                       ],
                     ),
@@ -4319,7 +4381,7 @@ class Navigation {
     );
   }
 
-  void goToDataLibrary(api.LibraryTopic topic) {
+  void goToDataLibrary(DataLibraryTopic topic) {
     Navigator.pushNamed(
       context,
       "$libraryPath${topic.slug}",
@@ -4492,7 +4554,7 @@ class _TranspaerFrontendState extends State<TranspaerFrontend>
     if (path.startsWith(Navigation.libraryPath)) {
       final topicName = path.substring(Navigation.libraryPath.length);
       if (topicName.startsWith("data")) {
-        final topic = api.LibraryTopic.fromJson(topicName);
+        final topic = DataLibraryTopicExtension.fromString(topicName);
         if (topic != null) {
           return AppArguments(
             NavigationPath.library,
