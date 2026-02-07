@@ -2,9 +2,8 @@ name: CI
 
 on:
   push:
-    branches: [main]
-    tags: ['*']
-  pull_request:
+    branches:
+    tags:
 
 jobs:
 
@@ -42,3 +41,14 @@ jobs:
 
       - name: Test
         run: melos run test
+
+  tag:
+    name: Tag
+    needs: ci
+    uses: transpaer/github-workflows/.github/workflows/tag-dart.yml@v0.1.1
+    permissions:
+      contents: write
+    with:
+      pubspec_path: transpaer_frontend/pubspec.yaml
+    secrets:
+      gh_token: ${{ secrets.GITHUB_TOKEN }}

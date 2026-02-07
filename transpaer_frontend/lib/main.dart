@@ -800,14 +800,66 @@ class Section extends StatelessWidget {
   }
 }
 
+class Sources extends StatelessWidget {
+  final List<DataSource> sources;
+
+  const Sources({
+    super.key,
+    required this.sources,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final sourceStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Colors.grey,
+        );
+
+    var sources = [];
+    for (var source in this.sources) {
+      switch (source) {
+        case DataSource.wiki:
+          sources.add("Wikidata");
+          break;
+        case DataSource.off:
+          sources.add("Open Food Facts");
+          break;
+        case DataSource.ofr:
+          sources.add("Open Food Repo");
+          break;
+        case DataSource.eu:
+          sources.add("EU Ecolabel");
+          break;
+        case DataSource.bCorp:
+          sources.add("B Corp");
+          break;
+        case DataSource.fti:
+          sources.add("Fashion Transparency Index");
+          break;
+        case DataSource.tco:
+          sources.add("TCO");
+          break;
+        case DataSource.transpaer:
+        case DataSource.other:
+          break;
+      }
+    }
+
+    var text = "???";
+    if (sources.isNotEmpty) {
+      text = sources.join(", ");
+    }
+    return Text("Sources: $text", style: sourceStyle);
+  }
+}
+
 class Description extends StatelessWidget {
   final String text;
-  final DataSource source;
+  final List<DataSource> sources;
 
   const Description({
     super.key,
     required this.text,
-    required this.source,
+    required this.sources,
   });
 
   @override
@@ -815,51 +867,14 @@ class Description extends StatelessWidget {
     final textStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
           color: Colors.black,
         );
-    final sourceStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Colors.grey,
-        );
-
-    Widget? sourceWidget;
-    switch (source) {
-      case DataSource.wiki:
-        sourceWidget = Text("Source: Wikidata", style: sourceStyle);
-        break;
-      case DataSource.off:
-        sourceWidget = Text("Source: Open Food Facts", style: sourceStyle);
-        break;
-      case DataSource.ofr:
-        sourceWidget = Text("Source: Open Food Repo", style: sourceStyle);
-        break;
-      case DataSource.eu:
-        sourceWidget = Text("Source: Eu Ecolabel", style: sourceStyle);
-        break;
-      case DataSource.bCorp:
-        sourceWidget = Text("Source: B Corp", style: sourceStyle);
-        break;
-      case DataSource.fti:
-        sourceWidget =
-            Text("Source: Fashion Transparency Index", style: sourceStyle);
-        break;
-      case DataSource.tco:
-        sourceWidget = Text("Source: TCO", style: sourceStyle);
-        break;
-      case DataSource.transpaer:
-        sourceWidget = null;
-        break;
-      case DataSource.other:
-        sourceWidget = null;
-        break;
-    }
 
     return Card(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SelectableText(text, style: textStyle),
-          if (sourceWidget != null) ...[
-            const Space(),
-            sourceWidget,
-          ]
+          const Space(),
+          Sources(sources: sources),
         ],
       ),
     );
@@ -884,7 +899,9 @@ class DescriptionSection extends StatelessWidget {
           for (final description in descriptions)
             Description(
               text: description.text,
-              source: DataSourceExtension.fromString(description.source_),
+              sources: description.sources
+                  .map(DataSourceExtension.fromString)
+                  .toList(),
             )
         ],
       );
