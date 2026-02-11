@@ -1,4 +1,4 @@
-package dev.transpaer.frontend
+package app.transpaer.frontend
 
 import io.flutter.embedding.android.FlutterActivity
 
